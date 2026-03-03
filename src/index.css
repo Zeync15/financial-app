@@ -1,0 +1,14 @@
+@import 'tailwindcss';
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+/* Make Ant Design sider children a flex column so the bottom menu always sticks to the bottom */
+.ant-layout-sider-children {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
