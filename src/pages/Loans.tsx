@@ -275,8 +275,8 @@ export default function Loans() {
           >
             <Select
               options={[
-                { value: "fixed", label: "Fixed (Equal Installments)" },
-                { value: "reducing_balance", label: "Reducing Balance" },
+                { value: "fixed", label: "Fixed Rate (Flat Rate / Hire Purchase)" },
+                { value: "reducing_balance", label: "Variable Rate (Reducing Balance / Amortization)" },
               ]}
             />
           </Form.Item>
