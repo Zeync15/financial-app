@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Card, Form, Input, Button, Typography, message, Divider } from "antd";
-import { MailOutlined, LockOutlined } from "@ant-design/icons";
+import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { signIn } from "@/lib/auth-client";
 
 const { Title, Text } = Typography;
@@ -11,15 +11,15 @@ export default function Login() {
   const navigate = useNavigate();
   const [form] = Form.useForm();
 
-  const onFinish = async (values: { email: string; password: string }) => {
+  const onFinish = async (values: { username: string; password: string }) => {
     setLoading(true);
     try {
-      const result = await signIn.email({
-        email: values.email,
+      const result = await signIn.username({
+        username: values.username,
         password: values.password,
       });
       if (result.error) {
-        message.error(result.error.message ?? "Invalid email or password");
+        message.error(result.error.message ?? "Invalid username or password");
       } else {
         navigate("/");
       }
@@ -46,16 +46,17 @@ export default function Login() {
           requiredMark={false}
         >
           <Form.Item
-            name="email"
+            name="username"
             rules={[
-              { required: true, type: "email", message: "Enter a valid email" },
+              { required: true, message: "Enter your username" },
+              { min: 5, message: "At least 5 characters" },
             ]}
           >
             <Input
-              prefix={<MailOutlined />}
-              placeholder="Email"
+              prefix={<UserOutlined />}
+              placeholder="Username"
               size="large"
-              autoComplete="email"
+              autoComplete="username"
             />
           </Form.Item>
           <Form.Item

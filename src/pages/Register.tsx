@@ -12,16 +12,17 @@ export default function Register() {
   const [form] = Form.useForm();
 
   const onFinish = async (values: {
-    name: string;
+    username: string;
     email: string;
     password: string;
   }) => {
     setLoading(true);
     try {
-      const result = await signUp.email({
-        name: values.name,
+      const result = await (signUp.email as Function)({
+        name: values.username,
         email: values.email,
         password: values.password,
+        username: values.username,
       });
       if (result.error) {
         message.error(result.error.message ?? "Registration failed");
@@ -52,13 +53,21 @@ export default function Register() {
           requiredMark={false}
         >
           <Form.Item
-            name="name"
-            rules={[{ required: true, message: "Enter your name" }]}
+            name="username"
+            rules={[
+              { required: true, message: "Enter a username" },
+              { min: 5, message: "At least 5 characters" },
+              {
+                pattern: /^[a-zA-Z0-9_.]+$/,
+                message: "Letters, numbers, _ and . only",
+              },
+            ]}
           >
             <Input
               prefix={<UserOutlined />}
-              placeholder="Full Name"
+              placeholder="Username"
               size="large"
+              autoComplete="username"
             />
           </Form.Item>
           <Form.Item
@@ -67,12 +76,17 @@ export default function Register() {
               { required: true, type: "email", message: "Enter a valid email" },
             ]}
           >
-            <Input prefix={<MailOutlined />} placeholder="Email" size="large" />
+            <Input
+              prefix={<MailOutlined />}
+              placeholder="Email"
+              size="large"
+              autoComplete="email"
+            />
           </Form.Item>
           <Form.Item
             name="password"
             rules={[
-              { required: true, min: 8, message: "At least 8 characters" },
+              { required: true, min: 5, message: "At least 5 characters" },
             ]}
           >
             <Input.Password
