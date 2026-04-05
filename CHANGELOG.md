@@ -1,5 +1,41 @@
 # Changelog
 
+## 2026-04-05 - Mobile-first UI Overhaul (Phase 1–3 Complete)
+
+### Added
+- **Bottom navigation** (`src/components/navigation/BottomNav.tsx`) — 5-tab mobile nav (Dashboard, Wallets, Transactions, Budgets, More) with "More" drawer (Categories, Investments, Loans, theme toggle, sign out)
+- **Floating Action Button** (`src/components/common/FloatingActionButton.tsx`) — green FAB above bottom nav, navigates to `/transactions/new`; hidden on form pages
+- **Transaction timeline** (`TransactionTimeline.tsx`, `TransactionRow.tsx`, `CashFlowHeader.tsx`) — Spendee-style date-grouped list replacing Ant Design Table; daily totals, colored icon circles, tap-to-edit
+- **Route-based transaction form** (`src/pages/TransactionForm.tsx`) — full-screen fixed overlay at `/transactions/new` and `/transactions/:id/edit`; back gesture unmounts naturally; 2-column layout
+- **Transaction editing** — `PUT /api/transactions/:id` with balance reversal/re-application
+- **Categories page** (`src/pages/Categories.tsx`) — Income/Expense segmented tabs, full CRUD; system defaults labelled, user categories editable
+- **`/api/categories` backend route** (`server/routes/categories.ts`) — GET, POST, PUT, DELETE extracted from `/api/budgets`
+- **`useIsMobile` hook** (`src/hooks/useIsMobile.ts`) — `window.matchMedia('(max-width: 767px)')` with listener cleanup
+- **`IconCircle` component** (`src/components/common/IconCircle.tsx`) — shared 40px colored icon circle
+- **Category icon mapping** (`src/lib/categoryIcons.tsx`) — name-based icon resolution with `getCategoryIcon()`
+
+### Changed
+- **DashboardLayout** — mobile sidebar replaced with BottomNav + FAB; safe-area bottom padding; content `p-3` on mobile
+- **Transactions page** — Table → timeline; mobile tap → edit route; desktop tap → modal
+- **Accounts page** — Table → tappable card list (icon circle + name + institution + balance); delete in edit modal footer
+- **Budgets page** — removed category management; API updated to `/categories`
+- **Dashboard page** — responsive stacking (`xs={24}`); `RM` prefix; negative net worth in red; compact mobile cards
+- **Loans, Investments pages** — smaller card padding + gutter on mobile; responsive title level
+- **BottomNav** — "Activity" → "Dashboard"; Categories added to More drawer
+- **Desktop sidebar** — Categories added to menu
+- **`index.html`** — `viewport-fit=cover` for notched phones
+- **`src/index.css`** — `--bottom-nav-height: 56px`; `overflow-x: hidden`; `.pb-safe`
+
+### Fixed
+- **DB transaction atomicity** — PUT and DELETE endpoints wrap all balance mutations in `db.transaction()`
+- **N+1 query in budgets GET** — `accountIds` SELECT hoisted out of per-budget loop
+- **Parallel account ownership checks** — PUT fetches old + new account via `Promise.all`
+- **`applyAmount()` helper** — `income → +amount, else → -amount`; replaced redundant expense/transfer ternary arms
+- **Async delete in Accounts modal** — `onConfirm` now `await`s `handleDelete` before closing modal
+- **Dead `initialValues` on Category Modal** — removed duplicate prop (Ant Design ignores it on `<Modal>`)
+
+---
+
 ## 2026-03-03 - MVP (Phase 0 Complete)
 
 ### Architecture Decisions
