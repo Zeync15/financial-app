@@ -20,6 +20,7 @@ import {
 } from "antd";
 import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import { api } from "@/lib/api";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 const { Title, Text } = Typography;
 
@@ -55,6 +56,7 @@ export default function Loans() {
     schedule: AmortRow[];
   } | null>(null);
   const [form] = Form.useForm();
+  const isMobile = useIsMobile();
 
   const load = () => {
     setLoading(true);
@@ -135,7 +137,7 @@ export default function Loans() {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <Title level={3} className="mb-0!">
+        <Title level={isMobile ? 4 : 3} className="mb-0!">
           Loans
         </Title>
         <Button
@@ -153,11 +155,12 @@ export default function Loans() {
       {loans.length === 0 && !loading ? (
         <Empty description="No loans yet" />
       ) : (
-        <Row gutter={[16, 16]}>
+        <Row gutter={isMobile ? [8, 8] : [16, 16]}>
           {loans.map((l) => (
             <Col xs={24} md={12} key={l.id}>
               <Card
                 title={l.name}
+                styles={{ body: { padding: isMobile ? 12 : 24 } }}
                 extra={
                   <div className="flex gap-2">
                     <Button size="small" onClick={() => viewSchedule(l)}>

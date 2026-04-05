@@ -8,6 +8,11 @@ import type { AppEnv } from '../types';
 export const transactionRoutes = new Hono<AppEnv>();
 transactionRoutes.use(requireAuth);
 
+// +amount for income, -amount for expense/transfer (deducts from source)
+function applyAmount(type: string, amount: number) {
+  return type === 'income' ? amount : -amount;
+}
+
 // List transactions (with optional filters)
 transactionRoutes.get('/', async (c) => {
   const user = c.get('user')!;
@@ -15,7 +20,6 @@ transactionRoutes.get('/', async (c) => {
   const from = c.req.query('from');
   const to = c.req.query('to');
 
-  // Get user's account IDs first
   const userAccounts = await db
     .select({ id: financialAccount.id })
     .from(financialAccount)
@@ -24,7 +28,7 @@ transactionRoutes.get('/', async (c) => {
 
   if (accountIds.length === 0) return c.json([]);
 
-  let query = db
+  const rows = await db
     .select({
       id: transaction.id,
       accountId: transaction.accountId,
@@ -54,7 +58,6 @@ transactionRoutes.get('/', async (c) => {
     .orderBy(desc(transaction.date), desc(transaction.createdAt))
     .limit(200);
 
-  const rows = await query;
   return c.json(rows);
 });
 
@@ -63,7 +66,6 @@ transactionRoutes.post('/', async (c) => {
   const user = c.get('user')!;
   const body = await c.req.json();
 
-  // Verify account belongs to user
   const [acc] = await db
     .select()
     .from(financialAccount)
@@ -84,34 +86,92 @@ transactionRoutes.post('/', async (c) => {
     })
     .returning();
 
-  // Update account balance
-  const balanceChange =
-    body.type === 'income'
-      ? Number(body.amount)
-      : body.type === 'expense'
-        ? -Number(body.amount)
-        : -Number(body.amount); // transfer out
-
+  const change = applyAmount(body.type, Number(body.amount));
   await db
     .update(financialAccount)
-    .set({
-      balance: sql`${financialAccount.balance} + ${balanceChange}`,
-      updatedAt: new Date(),
-    })
+    .set({ balance: sql`${financialAccount.balance} + ${change}`, updatedAt: new Date() })
     .where(eq(financialAccount.id, body.accountId));
 
-  // If transfer, credit the target account
   if (body.type === 'transfer' && body.transferToId) {
     await db
       .update(financialAccount)
-      .set({
-        balance: sql`${financialAccount.balance} + ${Number(body.amount)}`,
-        updatedAt: new Date(),
-      })
+      .set({ balance: sql`${financialAccount.balance} + ${Number(body.amount)}`, updatedAt: new Date() })
       .where(eq(financialAccount.id, body.transferToId));
   }
 
   return c.json(tx, 201);
+});
+
+// Update transaction
+transactionRoutes.put('/:id', async (c) => {
+  const user = c.get('user')!;
+  const id = c.req.param('id');
+  const body = await c.req.json();
+
+  const [oldTx] = await db.select().from(transaction).where(eq(transaction.id, id));
+  if (!oldTx) return c.json({ error: 'Not found' }, 404);
+
+  // Verify both accounts belong to this user in parallel
+  const [oldAcc, newAcc] = await Promise.all([
+    db.select().from(financialAccount)
+      .where(and(eq(financialAccount.id, oldTx.accountId), eq(financialAccount.userId, user.id)))
+      .then((r) => r[0]),
+    db.select().from(financialAccount)
+      .where(and(eq(financialAccount.id, body.accountId), eq(financialAccount.userId, user.id)))
+      .then((r) => r[0]),
+  ]);
+  if (!oldAcc) return c.json({ error: 'Not found' }, 404);
+  if (!newAcc) return c.json({ error: 'Account not found' }, 404);
+
+  const updated = await db.transaction(async (tx) => {
+    // Reverse old balance changes
+    const reversal = -applyAmount(oldTx.type, Number(oldTx.amount));
+    await tx
+      .update(financialAccount)
+      .set({ balance: sql`${financialAccount.balance} + ${reversal}`, updatedAt: new Date() })
+      .where(eq(financialAccount.id, oldTx.accountId));
+
+    if (oldTx.type === 'transfer' && oldTx.transferToId) {
+      await tx
+        .update(financialAccount)
+        .set({ balance: sql`${financialAccount.balance} - ${Number(oldTx.amount)}`, updatedAt: new Date() })
+        .where(eq(financialAccount.id, oldTx.transferToId));
+    }
+
+    // Apply new balance changes
+    const change = applyAmount(body.type, Number(body.amount));
+    await tx
+      .update(financialAccount)
+      .set({ balance: sql`${financialAccount.balance} + ${change}`, updatedAt: new Date() })
+      .where(eq(financialAccount.id, body.accountId));
+
+    if (body.type === 'transfer' && body.transferToId) {
+      await tx
+        .update(financialAccount)
+        .set({ balance: sql`${financialAccount.balance} + ${Number(body.amount)}`, updatedAt: new Date() })
+        .where(eq(financialAccount.id, body.transferToId));
+    }
+
+    const [row] = await tx
+      .update(transaction)
+      .set({
+        accountId: body.accountId,
+        categoryId: body.categoryId || null,
+        type: body.type,
+        amount: body.amount,
+        description: body.description || null,
+        notes: body.notes || null,
+        date: body.date,
+        transferToId: body.transferToId || null,
+        updatedAt: new Date(),
+      })
+      .where(eq(transaction.id, id))
+      .returning();
+
+    return row;
+  });
+
+  return c.json(updated);
 });
 
 // Delete transaction
@@ -119,7 +179,6 @@ transactionRoutes.delete('/:id', async (c) => {
   const user = c.get('user')!;
   const id = c.req.param('id');
 
-  // Get the transaction and verify ownership
   const [tx] = await db.select().from(transaction).where(eq(transaction.id, id));
   if (!tx) return c.json({ error: 'Not found' }, 404);
 
@@ -129,32 +188,22 @@ transactionRoutes.delete('/:id', async (c) => {
     .where(and(eq(financialAccount.id, tx.accountId), eq(financialAccount.userId, user.id)));
   if (!acc) return c.json({ error: 'Not found' }, 404);
 
-  // Reverse the balance change
-  const reversal =
-    tx.type === 'income'
-      ? -Number(tx.amount)
-      : tx.type === 'expense'
-        ? Number(tx.amount)
-        : Number(tx.amount);
-
-  await db
-    .update(financialAccount)
-    .set({
-      balance: sql`${financialAccount.balance} + ${reversal}`,
-      updatedAt: new Date(),
-    })
-    .where(eq(financialAccount.id, tx.accountId));
-
-  if (tx.type === 'transfer' && tx.transferToId) {
-    await db
+  await db.transaction(async (dtx) => {
+    const reversal = -applyAmount(tx.type, Number(tx.amount));
+    await dtx
       .update(financialAccount)
-      .set({
-        balance: sql`${financialAccount.balance} - ${Number(tx.amount)}`,
-        updatedAt: new Date(),
-      })
-      .where(eq(financialAccount.id, tx.transferToId));
-  }
+      .set({ balance: sql`${financialAccount.balance} + ${reversal}`, updatedAt: new Date() })
+      .where(eq(financialAccount.id, tx.accountId));
 
-  await db.delete(transaction).where(eq(transaction.id, id));
+    if (tx.type === 'transfer' && tx.transferToId) {
+      await dtx
+        .update(financialAccount)
+        .set({ balance: sql`${financialAccount.balance} - ${Number(tx.amount)}`, updatedAt: new Date() })
+        .where(eq(financialAccount.id, tx.transferToId));
+    }
+
+    await dtx.delete(transaction).where(eq(transaction.id, id));
+  });
+
   return c.json({ success: true });
 });

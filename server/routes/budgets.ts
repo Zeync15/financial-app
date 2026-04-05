@@ -29,18 +29,21 @@ budgetRoutes.get("/", async (c) => {
     .leftJoin(category, eq(budget.categoryId, category.id))
     .where(eq(budget.userId, user.id));
 
-  // Calculate spent for each budget in the current period
+  // Fetch account IDs once, then calculate spent per budget in parallel
+  const userAccounts = await db
+    .select({ id: financialAccount.id })
+    .from(financialAccount)
+    .where(eq(financialAccount.userId, user.id));
+  const accountIds = userAccounts.map((a) => a.id);
+
+  if (accountIds.length === 0) {
+    return c.json(budgets.map((b) => ({ ...b, spent: "0" })));
+  }
+
   const now = new Date();
   const results = await Promise.all(
     budgets.map(async (b) => {
       const { periodStart, periodEnd } = getPeriodRange(b.period!, now);
-
-      // Get user account IDs
-      const userAccounts = await db
-        .select({ id: financialAccount.id })
-        .from(financialAccount)
-        .where(eq(financialAccount.userId, user.id));
-      const accountIds = userAccounts.map((a) => a.id);
 
       if (accountIds.length === 0) return { ...b, spent: "0" };
 
@@ -113,45 +116,6 @@ budgetRoutes.delete("/:id", async (c) => {
     .where(and(eq(budget.id, id), eq(budget.userId, user.id)))
     .returning();
   if (!b) return c.json({ error: "Not found" }, 404);
-  return c.json({ success: true });
-});
-
-// ─── Categories (co-located since budgets need them) ────────────────────────
-
-budgetRoutes.get("/categories", async (c) => {
-  const user = c.get("user")!;
-  const categories = await db
-    .select()
-    .from(category)
-    .where(sql`${category.userId} = ${user.id} OR ${category.userId} IS NULL`)
-    .orderBy(category.sortOrder);
-  return c.json(categories);
-});
-
-budgetRoutes.post("/categories", async (c) => {
-  const user = c.get("user")!;
-  const body = await c.req.json();
-  const [cat] = await db
-    .insert(category)
-    .values({
-      userId: user.id,
-      name: body.name,
-      icon: body.icon || null,
-      color: body.color || "#1677ff",
-      type: body.type,
-    })
-    .returning();
-  return c.json(cat, 201);
-});
-
-budgetRoutes.delete("/categories/:id", async (c) => {
-  const user = c.get("user")!;
-  const id = c.req.param("id");
-  const [cat] = await db
-    .delete(category)
-    .where(and(eq(category.id, id), eq(category.userId, user.id)))
-    .returning();
-  if (!cat) return c.json({ error: "Not found" }, 404);
   return c.json({ success: true });
 });
 
