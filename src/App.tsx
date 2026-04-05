@@ -3,15 +3,18 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ConfigProvider, theme, Spin, Button } from "antd";
 import { SunOutlined, MoonOutlined } from "@ant-design/icons";
 import { useSession } from "@/lib/auth-client";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Dashboard from "@/pages/Dashboard";
 import Accounts from "@/pages/Accounts";
 import Transactions from "@/pages/Transactions";
+import TransactionForm from "@/pages/TransactionForm";
 import Budgets from "@/pages/Budgets";
 import Investments from "@/pages/Investments";
 import Loans from "@/pages/Loans";
+import Categories from "@/pages/Categories";
 
 // --- Theme Context ---
 interface ThemeContextType {
@@ -28,9 +31,11 @@ export function useTheme() {
   return useContext(ThemeContext);
 }
 
-// --- Global theme toggle — fixed top-right, always visible ---
+// --- Global theme toggle — fixed top-right, desktop only (mobile uses "More" drawer) ---
 function ThemeToggle() {
   const { darkMode, toggleDarkMode } = useTheme();
+  const isMobile = useIsMobile();
+  if (isMobile) return null;
   return (
     <Button
       shape="circle"
@@ -119,7 +124,10 @@ export default function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/accounts" element={<Accounts />} />
               <Route path="/transactions" element={<Transactions />} />
+              <Route path="/transactions/new" element={<TransactionForm />} />
+              <Route path="/transactions/:id/edit" element={<TransactionForm />} />
               <Route path="/budgets" element={<Budgets />} />
+              <Route path="/categories" element={<Categories />} />
               <Route path="/investments" element={<Investments />} />
               <Route path="/loans" element={<Loans />} />
             </Route>

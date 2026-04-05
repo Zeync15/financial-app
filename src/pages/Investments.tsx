@@ -15,6 +15,7 @@ import {
 } from "antd";
 import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import { api } from "@/lib/api";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 const { Title, Text } = Typography;
 
@@ -44,6 +45,7 @@ export default function Investments() {
   const [activePortfolio, setActivePortfolio] = useState<string | null>(null);
   const [pForm] = Form.useForm();
   const [hForm] = Form.useForm();
+  const isMobile = useIsMobile();
 
   const load = () => {
     setLoading(true);
@@ -158,7 +160,7 @@ export default function Investments() {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <Title level={3} className="mb-0!">
+        <Title level={isMobile ? 4 : 3} className="mb-0!">
           Investments
         </Title>
         <Button

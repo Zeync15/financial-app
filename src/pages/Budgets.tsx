@@ -8,7 +8,6 @@ import {
   Button,
   Modal,
   Form,
-  Input,
   Select,
   InputNumber,
   message,
@@ -17,6 +16,7 @@ import {
 } from "antd";
 import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import { api } from "@/lib/api";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 const { Title, Text } = Typography;
 
@@ -42,15 +42,14 @@ export default function Budgets() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
-  const [catModalOpen, setCatModalOpen] = useState(false);
   const [form] = Form.useForm();
-  const [catForm] = Form.useForm();
+  const isMobile = useIsMobile();
 
   const load = () => {
     setLoading(true);
     Promise.all([
       api.get<Budget[]>("/budgets"),
-      api.get<Category[]>("/budgets/categories"),
+      api.get<Category[]>("/categories"),
     ])
       .then(([b, c]) => {
         setBudgets(b);
@@ -85,52 +84,30 @@ export default function Budgets() {
     }
   };
 
-  const handleCreateCategory = async () => {
-    const values = await catForm.validateFields();
-    try {
-      await api.post("/budgets/categories", values);
-      message.success("Category created");
-      setCatModalOpen(false);
-      load();
-    } catch (e: any) {
-      message.error(e.message);
-    }
-  };
-
   const expenseCategories = categories.filter((c) => c.type === "expense");
 
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <Title level={3} className="mb-0!">
+        <Title level={isMobile ? 4 : 3} className="mb-0!">
           Budgets
         </Title>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => {
-              catForm.resetFields();
-              setCatModalOpen(true);
-            }}
-          >
-            Add Category
-          </Button>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              form.resetFields();
-              setModalOpen(true);
-            }}
-          >
-            Add Budget
-          </Button>
-        </div>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => {
+            form.resetFields();
+            setModalOpen(true);
+          }}
+        >
+          Add Budget
+        </Button>
       </div>
 
       {budgets.length === 0 && !loading ? (
-        <Empty description="No budgets yet. Create categories first, then add budgets." />
+        <Empty description="No budgets yet" />
       ) : (
-        <Row gutter={[16, 16]}>
+        <Row gutter={isMobile ? [8, 8] : [16, 16]}>
           {budgets.map((b) => {
             const spent = Number(b.spent);
             const budget = Number(b.amount);
@@ -141,6 +118,7 @@ export default function Budgets() {
               <Col xs={24} md={8} key={b.id}>
                 <Card
                   title={b.categoryName || b.name || "Budget"}
+                  styles={{ body: { padding: isMobile ? 12 : 24 } }}
                   extra={
                     <Popconfirm
                       title="Delete?"
@@ -214,35 +192,6 @@ export default function Budgets() {
                 { value: "yearly", label: "Yearly" },
               ]}
             />
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      <Modal
-        title="New Category"
-        open={catModalOpen}
-        onOk={handleCreateCategory}
-        onCancel={() => setCatModalOpen(false)}
-        destroyOnClose
-      >
-        <Form
-          form={catForm}
-          layout="vertical"
-          initialValues={{ type: "expense" }}
-        >
-          <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-            <Input placeholder="e.g. Groceries" />
-          </Form.Item>
-          <Form.Item name="type" label="Type" rules={[{ required: true }]}>
-            <Select
-              options={[
-                { value: "expense", label: "Expense" },
-                { value: "income", label: "Income" },
-              ]}
-            />
-          </Form.Item>
-          <Form.Item name="color" label="Color">
-            <Input placeholder="#1677ff" />
           </Form.Item>
         </Form>
       </Modal>

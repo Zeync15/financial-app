@@ -1,21 +1,14 @@
-import { useEffect, useState } from "react";
-import {
-  Typography,
-  Table,
-  Button,
-  Modal,
-  Form,
-  Input,
-  Select,
-  InputNumber,
-  DatePicker,
-  message,
-  Tag,
-  Popconfirm,
-} from "antd";
-import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
-import dayjs from "dayjs";
+import { useEffect, useState, useMemo } from "react";
+import { Button, Input, Spin, Typography, message } from "antd";
+import { PlusOutlined, SearchOutlined } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import CashFlowHeader from "@/components/transactions/CashFlowHeader";
+import TransactionTimeline from "@/components/transactions/TransactionTimeline";
+import AddTransactionForm, {
+  type EditableTransaction,
+} from "@/components/transactions/AddTransactionForm";
 
 const { Title } = Typography;
 
@@ -30,227 +23,151 @@ interface Transaction {
   categoryName: string | null;
   categoryColor: string | null;
   accountName: string | null;
-}
-
-interface Account {
-  id: string;
-  name: string;
-}
-interface Category {
-  id: string;
-  name: string;
-  type: string;
-  color: string | null;
+  transferToId?: string | null;
 }
 
 export default function Transactions() {
   const [txns, setTxns] = useState<Transaction[]>([]);
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [form] = Form.useForm();
-  const [txType, setTxType] = useState("expense");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingTx, setEditingTx] = useState<EditableTransaction | null>(null);
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   const load = () => {
     setLoading(true);
-    Promise.all([
-      api.get<Transaction[]>("/transactions"),
-      api.get<Account[]>("/accounts"),
-      api.get<Category[]>("/budgets/categories"),
-    ])
-      .then(([t, a, c]) => {
-        setTxns(t);
-        setAccounts(a);
-        setCategories(c);
-      })
+    api
+      .get<Transaction[]>("/transactions")
+      .then(setTxns)
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     load();
+    const handleAdded = () => load();
+    window.addEventListener("transaction-added", handleAdded);
+    return () => window.removeEventListener("transaction-added", handleAdded);
   }, []);
 
-  const handleSubmit = async () => {
-    const values = await form.validateFields();
-    try {
-      await api.post("/transactions", {
-        ...values,
-        amount: String(values.amount),
-        date: values.date.format("YYYY-MM-DD"),
+  const handleEdit = (tx: Transaction) => {
+    if (isMobile) {
+      // Navigate to the form page — back gesture closes it naturally
+      navigate(`/transactions/${tx.id}/edit`, {
+        state: {
+          transaction: {
+            id: tx.id,
+            accountId: tx.accountId,
+            type: tx.type,
+            amount: tx.amount,
+            description: tx.description,
+            date: tx.date,
+            categoryId: tx.categoryId,
+            transferToId: tx.transferToId,
+          } satisfies EditableTransaction,
+        },
       });
-      message.success("Transaction added");
-      setModalOpen(false);
-      load();
-    } catch (e: any) {
-      message.error(e.message);
+    } else {
+      setEditingTx({
+        id: tx.id,
+        accountId: tx.accountId,
+        type: tx.type,
+        amount: tx.amount,
+        description: tx.description,
+        date: tx.date,
+        categoryId: tx.categoryId,
+        transferToId: tx.transferToId,
+      });
+      setFormOpen(true);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      await api.delete(`/transactions/${id}`);
-      message.success("Transaction deleted");
-      load();
-    } catch (e: any) {
-      message.error(e.message);
-    }
+  const handleFormClose = () => {
+    setFormOpen(false);
+    setEditingTx(null);
   };
 
-  const columns = [
-    { title: "Date", dataIndex: "date", key: "date", width: 110 },
-    {
-      title: "Type",
-      dataIndex: "type",
-      key: "type",
-      width: 100,
-      render: (t: string) => (
-        <Tag
-          color={t === "income" ? "green" : t === "expense" ? "red" : "blue"}
-        >
-          {t}
-        </Tag>
-      ),
-    },
-    {
-      title: "Description",
-      dataIndex: "description",
-      key: "description",
-      render: (v: string) => v || "-",
-    },
-    {
-      title: "Category",
-      dataIndex: "categoryName",
-      key: "category",
-      render: (v: string) => v || "-",
-    },
-    { title: "Account", dataIndex: "accountName", key: "account" },
-    {
-      title: "Amount",
-      dataIndex: "amount",
-      key: "amount",
-      align: "right" as const,
-      render: (v: string, r: Transaction) => (
-        <span
-          className={
-            r.type === "income"
-              ? "text-green-600"
-              : r.type === "expense"
-                ? "text-red-600"
-                : ""
-          }
-        >
-          {Number(v).toFixed(2)}
-        </span>
-      ),
-    },
-    {
-      title: "",
-      key: "actions",
-      width: 50,
-      render: (_: unknown, r: Transaction) => (
-        <Popconfirm title="Delete?" onConfirm={() => handleDelete(r.id)}>
-          <Button size="small" danger icon={<DeleteOutlined />} />
-        </Popconfirm>
-      ),
-    },
-  ];
-
-  const filteredCategories = categories.filter(
-    (c) => txType === "transfer" || c.type === txType,
+  const netFlow = useMemo(
+    () =>
+      txns.reduce((sum, tx) => {
+        const amount = Number(tx.amount);
+        if (tx.type === "income") return sum + amount;
+        if (tx.type === "expense") return sum - amount;
+        return sum;
+      }, 0),
+    [txns],
   );
+
+  const filteredTxns = useMemo(() => {
+    if (!searchQuery.trim()) return txns;
+    const q = searchQuery.toLowerCase();
+    return txns.filter(
+      (tx) =>
+        tx.description?.toLowerCase().includes(q) ||
+        tx.categoryName?.toLowerCase().includes(q) ||
+        tx.accountName?.toLowerCase().includes(q),
+    );
+  }, [txns, searchQuery]);
+
+  if (loading) {
+    return <Spin size="large" className="flex justify-center mt-20" />;
+  }
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
-        <Title level={3} className="mb-0!">
-          Transactions
-        </Title>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => {
-            form.resetFields();
-            form.setFieldValue("type", "expense");
-            setTxType("expense");
-            setModalOpen(true);
-          }}
-        >
-          Add Transaction
-        </Button>
-      </div>
-      <Table
-        dataSource={txns}
-        columns={columns}
-        rowKey="id"
-        loading={loading}
-        pagination={{ pageSize: 20 }}
-      />
-      <Modal
-        title="New Transaction"
-        open={modalOpen}
-        onOk={handleSubmit}
-        onCancel={() => setModalOpen(false)}
-        destroyOnClose
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          initialValues={{ type: "expense", date: dayjs() }}
-        >
-          <Form.Item name="type" label="Type" rules={[{ required: true }]}>
-            <Select
-              onChange={(v) => setTxType(v)}
-              options={[
-                { value: "income", label: "Income" },
-                { value: "expense", label: "Expense" },
-                { value: "transfer", label: "Transfer" },
-              ]}
-            />
-          </Form.Item>
-          <Form.Item
-            name="accountId"
-            label="Account"
-            rules={[{ required: true }]}
+      {/* Desktop header with Add button */}
+      {!isMobile && (
+        <div className="flex justify-between items-center mb-4">
+          <Title level={3} className="mb-0!">
+            Transactions
+          </Title>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => {
+              setEditingTx(null);
+              setFormOpen(true);
+            }}
           >
-            <Select
-              options={accounts.map((a) => ({ value: a.id, label: a.name }))}
-              placeholder="Select account"
-            />
-          </Form.Item>
-          {txType === "transfer" && (
-            <Form.Item
-              name="transferToId"
-              label="Transfer To"
-              rules={[{ required: true }]}
-            >
-              <Select
-                options={accounts.map((a) => ({ value: a.id, label: a.name }))}
-                placeholder="Select destination"
-              />
-            </Form.Item>
-          )}
-          <Form.Item name="amount" label="Amount" rules={[{ required: true }]}>
-            <InputNumber className="w-full" precision={2} min={0.01} />
-          </Form.Item>
-          <Form.Item name="categoryId" label="Category">
-            <Select
-              allowClear
-              placeholder="Select category"
-              options={filteredCategories.map((c) => ({
-                value: c.id,
-                label: c.name,
-              }))}
-            />
-          </Form.Item>
-          <Form.Item name="date" label="Date" rules={[{ required: true }]}>
-            <DatePicker className="w-full" />
-          </Form.Item>
-          <Form.Item name="description" label="Description">
-            <Input placeholder="What was this for?" />
-          </Form.Item>
-        </Form>
-      </Modal>
+            Add Transaction
+          </Button>
+        </div>
+      )}
+
+      <CashFlowHeader
+        netFlow={netFlow}
+        searchOpen={searchOpen}
+        onSearchToggle={() => {
+          setSearchOpen((v) => !v);
+          if (searchOpen) setSearchQuery("");
+        }}
+      />
+
+      {searchOpen && (
+        <div className="px-4 pb-2">
+          <Input
+            prefix={<SearchOutlined />}
+            placeholder="Search transactions..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            allowClear
+            autoFocus
+          />
+        </div>
+      )}
+
+      <TransactionTimeline transactions={filteredTxns} onEdit={handleEdit} />
+
+      {/* Desktop-only modal for add/edit */}
+      {!isMobile && (
+        <AddTransactionForm
+          open={formOpen}
+          onClose={handleFormClose}
+          onSuccess={load}
+          transaction={editingTx}
+        />
+      )}
     </div>
   );
 }

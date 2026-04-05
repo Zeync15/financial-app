@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
   Typography,
-  Table,
   Button,
   Modal,
   Form,
@@ -9,14 +8,27 @@ import {
   Select,
   InputNumber,
   message,
-  Space,
-  Tag,
   Popconfirm,
+  Spin,
+  Empty,
+  theme,
 } from "antd";
-import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import {
+  PlusOutlined,
+  BankOutlined,
+  SaveOutlined,
+  CreditCardOutlined,
+  DollarOutlined,
+  MobileOutlined,
+  FundOutlined,
+  FileTextOutlined,
+} from "@ant-design/icons";
 import { api } from "@/lib/api";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import IconCircle from "@/components/common/IconCircle";
 
 const { Title } = Typography;
+const { useToken } = theme;
 
 const ACCOUNT_TYPES = [
   { value: "checking", label: "Checking" },
@@ -28,14 +40,24 @@ const ACCOUNT_TYPES = [
   { value: "loan", label: "Loan" },
 ];
 
+const TYPE_ICONS: Record<string, React.ReactNode> = {
+  checking: <BankOutlined />,
+  savings: <SaveOutlined />,
+  credit_card: <CreditCardOutlined />,
+  cash: <DollarOutlined />,
+  ewallet: <MobileOutlined />,
+  investment: <FundOutlined />,
+  loan: <FileTextOutlined />,
+};
+
 const TYPE_COLORS: Record<string, string> = {
-  checking: "blue",
-  savings: "green",
-  credit_card: "red",
-  cash: "orange",
-  ewallet: "purple",
-  investment: "cyan",
-  loan: "volcano",
+  checking: "#1677ff",
+  savings: "#52c41a",
+  credit_card: "#ff4d4f",
+  cash: "#fa8c16",
+  ewallet: "#722ed1",
+  investment: "#13c2c2",
+  loan: "#fa541c",
 };
 
 interface Account {
@@ -54,6 +76,8 @@ export default function Accounts() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Account | null>(null);
   const [form] = Form.useForm();
+  const isMobile = useIsMobile();
+  const { token } = useToken();
 
   const load = () => {
     setLoading(true);
@@ -111,74 +135,113 @@ export default function Accounts() {
     }
   };
 
-  const columns = [
-    { title: "Name", dataIndex: "name", key: "name" },
-    {
-      title: "Type",
-      dataIndex: "type",
-      key: "type",
-      render: (type: string) => (
-        <Tag color={TYPE_COLORS[type]}>{type.replace("_", " ")}</Tag>
-      ),
-    },
-    {
-      title: "Institution",
-      dataIndex: "institution",
-      key: "institution",
-      render: (v: string) => v || "-",
-    },
-    { title: "Currency", dataIndex: "currency", key: "currency" },
-    {
-      title: "Balance",
-      dataIndex: "balance",
-      key: "balance",
-      align: "right" as const,
-      render: (v: string) => Number(v).toFixed(2),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_: unknown, record: Account) => (
-        <Space>
-          <Button
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => openEdit(record)}
-          />
-          <Popconfirm
-            title="Delete this account?"
-            onConfirm={() => handleDelete(record.id)}
-          >
-            <Button size="small" danger icon={<DeleteOutlined />} />
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
+  if (loading) {
+    return <Spin size="large" className="flex justify-center mt-20" />;
+  }
 
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <Title level={3} className="mb-0!">
+        <Title level={isMobile ? 4 : 3} className="mb-0!">
           Accounts
         </Title>
         <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
           Add Account
         </Button>
       </div>
-      <Table
-        dataSource={accounts}
-        columns={columns}
-        rowKey="id"
-        loading={loading}
-        pagination={false}
-      />
+
+      {accounts.length === 0 ? (
+        <Empty description="No accounts yet" />
+      ) : (
+        <div>
+          {accounts.map((acc) => {
+            const color = TYPE_COLORS[acc.type] || "#8c8c8c";
+            const icon = TYPE_ICONS[acc.type] || <BankOutlined />;
+            const balance = Number(acc.balance);
+            const typeLabel =
+              ACCOUNT_TYPES.find((t) => t.value === acc.type)?.label ||
+              acc.type;
+
+            return (
+              <div
+                key={acc.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => openEdit(acc)}
+                onKeyDown={(e) => e.key === "Enter" && openEdit(acc)}
+                className="flex items-center gap-3 px-4 py-3 cursor-pointer active:opacity-60"
+                style={{
+                  borderBottom: `1px solid ${token.colorBorderSecondary}`,
+                }}
+              >
+                <IconCircle icon={icon} color={color} />
+
+                {/* Text */}
+                <div className="flex-1 min-w-0">
+                  <div
+                    className="font-medium text-sm truncate"
+                    style={{ color: token.colorText }}
+                  >
+                    {acc.name}
+                  </div>
+                  <div
+                    className="text-xs truncate"
+                    style={{ color: token.colorTextTertiary }}
+                  >
+                    {typeLabel}
+                    {acc.institution ? ` \u00B7 ${acc.institution}` : ""}
+                  </div>
+                </div>
+
+                {/* Balance */}
+                <div
+                  className="shrink-0 font-semibold text-sm text-right"
+                  style={{
+                    color:
+                      balance < 0 ? token.colorError : token.colorText,
+                  }}
+                >
+                  {acc.currency}{" "}
+                  {balance.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       <Modal
         title={editing ? "Edit Account" : "New Account"}
         open={modalOpen}
         onOk={handleSubmit}
         onCancel={() => setModalOpen(false)}
         destroyOnClose
+        footer={
+          editing
+            ? [
+                <Popconfirm
+                  key="delete"
+                  title="Delete this account?"
+                  onConfirm={async () => {
+                    await handleDelete(editing.id);
+                    setModalOpen(false);
+                  }}
+                  placement="top"
+                >
+                  <Button danger>Delete</Button>
+                </Popconfirm>,
+                <Button key="cancel" onClick={() => setModalOpen(false)}>
+                  Cancel
+                </Button>,
+                <Button key="save" type="primary" onClick={handleSubmit}>
+                  Save Changes
+                </Button>,
+              ]
+            : undefined
+        }
       >
         <Form
           form={form}
