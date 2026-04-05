@@ -11,6 +11,7 @@ import {
   DollarOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  MenuOutlined,
   UserOutlined,
   LogoutOutlined,
 } from "@ant-design/icons";
@@ -159,10 +160,10 @@ export default function DashboardLayout() {
       >
         {/* Mobile top bar with hamburger */}
         {isMobile && (
-          <div className="sticky top-0 z-10 px-4 py-3 flex items-center border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shrink-0">
+          <div className="sticky top-0 z-10 px-4 py-3 flex items-center shrink-0 border-b border-white/10" style={{ background: "#001529" }}>
             <Button
               type="text"
-              icon={<MenuUnfoldOutlined />}
+              icon={<MenuOutlined style={{ color: "#fff" }} />}
               onClick={() => setMobileOpen(true)}
             />
           </div>
