@@ -67,7 +67,7 @@ export function calculateSummary(
       );
     }
     return {
-      monthlyPayment: Math.round(pmt * 100) / 100,
+      monthlyPayment: Math.ceil(pmt),
       totalInterest,
       remainingBalance,
     };
@@ -126,15 +126,16 @@ export function calculateAmortization(
         ? principal / termMonths
         : (principal * monthlyRate * factor) / (factor - 1);
 
+    const ceilPmt = Math.ceil(pmt);
     let balance = principal;
     for (let i = 1; i <= termMonths; i++) {
       const isLast = i === termMonths;
       const interest = balance * monthlyRate;
       // Last month: pay exactly the remaining balance to avoid residual
-      const principalPart = isLast ? balance : pmt - interest;
+      const principalPart = isLast ? balance : ceilPmt - interest;
       const payment = isLast
         ? Math.round((balance + interest) * 100) / 100
-        : Math.round(pmt * 100) / 100;
+        : ceilPmt;
       balance = Math.max(0, balance - principalPart);
       schedule.push({
         month: i,
