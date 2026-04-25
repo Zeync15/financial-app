@@ -1,14 +1,14 @@
 import { Hono } from "hono";
 import { eq, and } from "drizzle-orm";
-import { db } from "../db";
-import { loan } from "../schema/app";
-import { requireAuth } from "../middleware";
-import type { AppEnv } from "../types";
+import { db } from "../db.js";
+import { loan } from "../schema/app.js";
+import { requireAuth } from "../middleware.js";
+import type { AppEnv } from "../types.js";
 import {
   calculateSummary,
   calculateAmortization,
   getMonthsPaid,
-} from "../lib/loanCalculations";
+} from "../lib/loanCalculations.js";
 
 export const loanRoutes = new Hono<AppEnv>();
 loanRoutes.use(requireAuth);
