@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import { eq, and, sql } from "drizzle-orm";
-import { db } from "../db";
-import { category } from "../schema/app";
-import { requireAuth } from "../middleware";
-import type { AppEnv } from "../types";
+import { db } from "../db.js";
+import { category } from "../schema/app.js";
+import { requireAuth } from "../middleware.js";
+import type { AppEnv } from "../types.js";
 
 export const categoryRoutes = new Hono<AppEnv>();
 categoryRoutes.use(requireAuth);

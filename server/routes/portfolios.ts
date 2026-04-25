@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 import { eq, and } from 'drizzle-orm';
-import { db } from '../db';
-import { portfolio, holding, investmentTransaction } from '../schema/app';
-import { requireAuth } from '../middleware';
-import type { AppEnv } from '../types';
+import { db } from '../db.js';
+import { portfolio, holding, investmentTransaction } from '../schema/app.js';
+import { requireAuth } from '../middleware.js';
+import type { AppEnv } from '../types.js';
 
 export const portfolioRoutes = new Hono<AppEnv>();
 portfolioRoutes.use(requireAuth);

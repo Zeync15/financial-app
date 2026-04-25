@@ -1,6 +1,6 @@
 import { createMiddleware } from 'hono/factory';
-import { auth } from './auth';
-import type { AppEnv } from './types';
+import { auth } from './auth.js';
+import type { AppEnv } from './types.js';
 
 /** Populates c.get('user') and c.get('session') -- does NOT reject. */
 export const sessionMiddleware = createMiddleware<AppEnv>(async (c, next) => {

@@ -2,15 +2,15 @@ import "dotenv/config";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import { auth } from "./auth";
-import { sessionMiddleware } from "./middleware";
-import { accountRoutes } from "./routes/accounts";
-import { transactionRoutes } from "./routes/transactions";
-import { budgetRoutes } from "./routes/budgets";
-import { categoryRoutes } from "./routes/categories";
-import { portfolioRoutes } from "./routes/portfolios";
-import { loanRoutes } from "./routes/loans";
-import { dashboardRoutes } from "./routes/dashboard";
+import { auth } from "./auth.js";
+import { sessionMiddleware } from "./middleware.js";
+import { accountRoutes } from "./routes/accounts.js";
+import { transactionRoutes } from "./routes/transactions.js";
+import { budgetRoutes } from "./routes/budgets.js";
+import { categoryRoutes } from "./routes/categories.js";
+import { portfolioRoutes } from "./routes/portfolios.js";
+import { loanRoutes } from "./routes/loans.js";
+import { dashboardRoutes } from "./routes/dashboard.js";
 
 export const app = new Hono();
 

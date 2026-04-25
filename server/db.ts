@@ -1,8 +1,8 @@
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
-import * as authSchema from './schema/auth';
-import * as appSchema from './schema/app';
+import * as authSchema from './schema/auth.js';
+import * as appSchema from './schema/app.js';
 
 const { Pool } = pg;
 
