@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.0.0",
+    "@better-auth/drizzle-adapter": "^1.5.0",
     "@hono/node-server": "^1.13.0",
     "antd": "^6.0.0",
     "better-auth": "^1.5.0",
