@@ -4,3 +4,6 @@ dist/
 .env.local
 *.log
 .claude/
+
+# DB migration dumps (may contain hashed credentials and personal data)
+*.sql

@@ -11,7 +11,7 @@ import {
   uuid,
   serial,
 } from 'drizzle-orm/pg-core';
-import { user } from './auth';
+import { user } from './auth.js';
 
 // ─── Enums ──────────────────────────────────────────────────────────────────
 

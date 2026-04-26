@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 import { eq, and, sql, gte, lte } from 'drizzle-orm';
-import { db } from '../db';
-import { financialAccount, transaction, loan } from '../schema/app';
-import { requireAuth } from '../middleware';
-import type { AppEnv } from '../types';
+import { db } from '../db.js';
+import { financialAccount, transaction, loan } from '../schema/app.js';
+import { requireAuth } from '../middleware.js';
+import type { AppEnv } from '../types.js';
 
 export const dashboardRoutes = new Hono<AppEnv>();
 dashboardRoutes.use(requireAuth);
