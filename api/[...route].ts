@@ -1,38 +1,20 @@
-console.log("[probe] file evaluation start");
-
 import { handle } from "hono/vercel";
-console.log("[probe] hono/vercel imported");
-
-let appPromise: Promise<any> | null = null;
-function loadApp() {
-  if (!appPromise) {
-    console.log("[probe] starting dynamic import of server/app");
-    appPromise = import("../server/app.js")
-      .then((m) => {
-        console.log("[probe] server/app imported");
-        return m.app;
-      })
-      .catch((err) => {
-        console.error("[probe] server/app import FAILED:", err);
-        throw err;
-      });
-  }
-  return appPromise;
-}
+import { app } from "../server/app.js";
 
 export const config = { runtime: "nodejs" };
 
+const honoHandler = handle(app);
+
 export default async function handler(req: Request) {
-  console.log("[probe] handler invoked, url:", req.url);
-  try {
-    const app = await loadApp();
-    console.log("[probe] calling handle(app)");
-    return await handle(app)(req);
-  } catch (err) {
-    console.error("[probe] handler error:", err);
-    return new Response(
-      JSON.stringify({ error: String(err) }),
-      { status: 500, headers: { "content-type": "application/json" } }
-    );
+  // Vercel's Node runtime passes `req.url` as a relative path
+  // (e.g. "/api/health?..."). Hono's getPath() assumes a full URL
+  // and mis-parses relative URLs, treating "/api" as the host and
+  // routing to "/health" — causing every route to 404.
+  // Wrap the request with a synthesized origin so getPath works.
+  if (!/^https?:\/\//.test(req.url)) {
+    const host = req.headers.get("host") ?? "localhost";
+    const proto = req.headers.get("x-forwarded-proto") ?? "https";
+    req = new Request(`${proto}://${host}${req.url}`, req);
   }
+  return honoHandler(req);
 }
