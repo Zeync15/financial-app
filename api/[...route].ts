@@ -1,25 +1,38 @@
-import { handle } from "hono/vercel";
+import { Readable } from "node:stream";
 import { app } from "../server/app.js";
 
 export const config = { runtime: "nodejs" };
 
-const honoHandler = handle(app);
+// Vercel's Node runtime calls our handler with a Node IncomingMessage
+// (req.headers is a plain object, req.url is a relative path like
+// "/api/health?..."). Hono expects a Web Request everywhere — getPath(),
+// CORS middleware, c.req.header(), etc. all call req.headers.get().
+// So we convert IncomingMessage -> Request before dispatching to Hono.
+function toWebRequest(req: any): Request {
+  const headers = new Headers();
+  for (const [key, value] of Object.entries(req.headers ?? {})) {
+    if (Array.isArray(value)) {
+      for (const v of value) headers.append(key, String(v));
+    } else if (value != null) {
+      headers.set(key, String(value));
+    }
+  }
 
-// Vercel's Node runtime passes a Node IncomingMessage (not a Web Request),
-// so req.headers is a plain object and req.url is a relative path like
-// "/api/health?...". Hono's getPath() assumes a full URL and would mis-parse
-// the relative form, treating "/api" as the host and routing to "/health".
-// Read the host the IncomingMessage way and rewrite req.url to a full URL.
-function readHeader(headers: any, name: string): string | undefined {
-  if (typeof headers?.get === "function") return headers.get(name) ?? undefined;
-  return headers?.[name.toLowerCase()];
+  const host = headers.get("host") ?? "localhost";
+  const proto = headers.get("x-forwarded-proto") ?? "https";
+  const url = `${proto}://${host}${req.url ?? "/"}`;
+
+  const method = (req.method ?? "GET").toUpperCase();
+  const init: RequestInit & { duplex?: "half" } = { method, headers };
+
+  if (method !== "GET" && method !== "HEAD") {
+    init.body = Readable.toWeb(req) as unknown as BodyInit;
+    init.duplex = "half";
+  }
+
+  return new Request(url, init);
 }
 
-export default async function handler(req: any) {
-  if (typeof req.url === "string" && !/^https?:\/\//.test(req.url)) {
-    const host = readHeader(req.headers, "host") ?? "localhost";
-    const proto = readHeader(req.headers, "x-forwarded-proto") ?? "https";
-    req.url = `${proto}://${host}${req.url}`;
-  }
-  return honoHandler(req);
+export default async function handler(req: any): Promise<Response> {
+  return app.fetch(toWebRequest(req));
 }
