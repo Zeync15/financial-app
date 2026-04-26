@@ -5,16 +5,21 @@ export const config = { runtime: "nodejs" };
 
 const honoHandler = handle(app);
 
-export default async function handler(req: Request) {
-  // Vercel's Node runtime passes `req.url` as a relative path
-  // (e.g. "/api/health?..."). Hono's getPath() assumes a full URL
-  // and mis-parses relative URLs, treating "/api" as the host and
-  // routing to "/health" — causing every route to 404.
-  // Wrap the request with a synthesized origin so getPath works.
-  if (!/^https?:\/\//.test(req.url)) {
-    const host = req.headers.get("host") ?? "localhost";
-    const proto = req.headers.get("x-forwarded-proto") ?? "https";
-    req = new Request(`${proto}://${host}${req.url}`, req);
+// Vercel's Node runtime passes a Node IncomingMessage (not a Web Request),
+// so req.headers is a plain object and req.url is a relative path like
+// "/api/health?...". Hono's getPath() assumes a full URL and would mis-parse
+// the relative form, treating "/api" as the host and routing to "/health".
+// Read the host the IncomingMessage way and rewrite req.url to a full URL.
+function readHeader(headers: any, name: string): string | undefined {
+  if (typeof headers?.get === "function") return headers.get(name) ?? undefined;
+  return headers?.[name.toLowerCase()];
+}
+
+export default async function handler(req: any) {
+  if (typeof req.url === "string" && !/^https?:\/\//.test(req.url)) {
+    const host = readHeader(req.headers, "host") ?? "localhost";
+    const proto = readHeader(req.headers, "x-forwarded-proto") ?? "https";
+    req.url = `${proto}://${host}${req.url}`;
   }
   return honoHandler(req);
 }
