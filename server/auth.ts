@@ -3,10 +3,17 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { username } from "better-auth/plugins/username";
 import { db } from "./db.js";
 
+// Resolve baseURL: explicit env > Vercel preview URL > localhost.
+// VERCEL_URL is auto-injected on every Vercel deploy (host only, no protocol).
+const baseURL =
+  process.env.BETTER_AUTH_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:5173");
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
   }),
+  baseURL,
   basePath: "/api/auth",
   emailAndPassword: {
     enabled: true,
@@ -25,5 +32,5 @@ export const auth = betterAuth({
       maxAge: 60 * 5,
     },
   },
-  trustedOrigins: [process.env.BETTER_AUTH_URL || "http://localhost:5173"],
+  trustedOrigins: [baseURL],
 });
