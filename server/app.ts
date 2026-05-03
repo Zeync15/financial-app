@@ -1,6 +1,5 @@
 import "dotenv/config";
 import { Hono } from "hono";
-import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { auth } from "./auth.js";
 import { sessionMiddleware } from "./middleware.js";
@@ -15,13 +14,6 @@ import { dashboardRoutes } from "./routes/dashboard.js";
 export const app = new Hono();
 
 app.use(logger());
-app.use(
-  "/api/*",
-  cors({
-    origin: process.env.BETTER_AUTH_URL || "http://localhost:5173",
-    credentials: true,
-  }),
-);
 
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 app.use("/api/*", sessionMiddleware);
