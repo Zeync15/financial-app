@@ -5,25 +5,24 @@ Personal financial management app for family use (1-5 users). Multi-currency sup
 
 ## Tech Stack
 - **Frontend**: React 19 + Vite + React Router 7 + Ant Design 6 + Tailwind CSS 4
-- **Backend**: Hono (Node.js) on port 3001
-- **Database**: PostgreSQL 16 (Docker) + Drizzle ORM
-- **Auth**: Better Auth (email/password, session cookies)
+- **Backend**: None — frontend talks directly to Supabase
+- **Database**: Supabase (PostgreSQL) with Row Level Security
+- **Auth**: Supabase Auth (email/password)
 
 ## Commands
-- `docker compose up -d` - start PostgreSQL
-- `pnpm dev` - start both Vite (5173) and Hono (3001) dev servers
+- `pnpm dev` - start Vite dev server (5173)
 - `pnpm build` - build frontend
-- `pnpm db:push` - push Drizzle schema to database
-- `pnpm db:generate` - generate migration files
 - `npx tsc --noEmit` - type-check entire project
 
+Schema/migrations live in `supabase/migrations/` and are applied via the Supabase SQL Editor (or CLI). There is no Drizzle/Docker DB anymore.
+
 ## Architecture
-- Single project, NOT a monorepo
-- `server/` - Hono backend (API routes, auth, DB schema)
+- Single project, NOT a monorepo. Pure SPA.
 - `src/` - React frontend (pages, components, lib)
-- Vite proxies `/api/*` to Hono during dev
-- All API routes require auth via `requireAuth` middleware
-- All DB queries scoped to `userId` from session (row-level isolation)
+- `src/lib/supabase.ts` - Supabase client (reads `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY`)
+- `src/lib/api.ts` - Supabase-backed data layer; preserves an `api.get/post/put/delete` surface so pages stay unchanged. Routes either to direct table CRUD or to Postgres RPCs (e.g. atomic balance mutations).
+- `supabase/migrations/` - schema, RLS policies, and RPC functions (`*_schema.sql`, `*_rls.sql`, `*_functions.sql`)
+- Row-level isolation via RLS: every table policy gates on `user_id = auth.uid()`. The anon key is safe to expose in the client — RLS is the security boundary.
 
 ## Preferences
 - Keep it simple. MVP first, optimize later.
@@ -36,13 +35,12 @@ Personal financial management app for family use (1-5 users). Multi-currency sup
 - Do NOT create new documentation files unless asked.
 
 ## Key Patterns
-- Server routes: `new Hono<AppEnv>()` with typed context from `server/types.ts`
-- Auth: `c.get('user')!` in routes after `requireAuth` middleware
-- API client: `src/lib/api.ts` wraps fetch with credentials + JSON
-- Money: stored as `DECIMAL(19,4)` strings in DB, parsed with `Number()` for display
-- Dates: stored as ISO date strings (`YYYY-MM-DD`)
-- Balance mutations: always wrap multiple `db.update` calls in `db.transaction()` to prevent partial failures
-- Balance sign helper: `applyAmount(type, amount)` → `income = +amount, else = -amount`
+- Data access: `src/lib/api.ts` wraps `supabase-js`. Page components import `{ api }` and call `api.get/post/put/delete` — they don't talk to supabase-js directly.
+- Auth: `getUserId()` in `src/lib/supabase.ts` reads the current Supabase user; throws if not signed in.
+- Money: stored as `DECIMAL(19,4)` strings in DB, parsed with `Number()` for display.
+- Dates: stored as ISO date strings (`YYYY-MM-DD`).
+- Balance mutations: implemented as Postgres RPCs (`create_transaction`, `update_transaction`, `delete_transaction`) so the multi-row balance update is atomic. Do NOT update balances from the client.
+- Column casing: DB is snake_case; API layer aliases to camelCase in select strings (e.g. `isActive:is_active`) so the UI sees camelCase.
 
 ## Mobile UI Patterns
 - Responsive hook: `useIsMobile()` in `src/hooks/useIsMobile.ts` — `window.matchMedia('(max-width: 767px)')`
@@ -72,7 +70,8 @@ Personal financial management app for family use (1-5 users). Multi-currency sup
 - Pages listen for this event in `useEffect` to re-fetch data
 
 ## Database
-- Schema in `server/schema/auth.ts` (Better Auth tables) and `server/schema/app.ts` (financial tables)
-- Drizzle config: `drizzle.config.ts`
-- Connection: `server/db.ts`
-- Use `db.transaction(async (tx) => { ... })` for any handler that does multiple balance updates
+- Schema: `supabase/migrations/*_schema.sql`
+- RLS policies: `supabase/migrations/*_rls.sql`
+- Atomic mutation RPCs: `supabase/migrations/*_functions.sql`
+- Apply migrations via the Supabase SQL Editor (paste-and-run) — there is no migration runner committed.
+- Multi-row balance changes MUST live in an RPC, not the client, so they're atomic and RLS-safe.
