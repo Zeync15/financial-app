@@ -1,3 +1,6 @@
+// Pure loan math — moved client-side from the old server/lib/loanCalculations.ts.
+// No DB access; safe to run in the browser.
+
 export interface LoanSummary {
   monthlyPayment: number;
   totalInterest: number;
@@ -12,7 +15,7 @@ export interface AmortizationRow {
   balance: number;
 }
 
-// O(1) summary — used by the list endpoint to avoid building full schedules.
+// O(1) summary — used by the loans list to avoid building full schedules.
 export function calculateSummary(
   principal: number,
   annualRate: number,
@@ -40,7 +43,7 @@ export function calculateSummary(
       remainingBalance,
     };
   } else {
-    // Variable rate — use closed-form balance formula: balance_k = P×((1+r)^n−(1+r)^k)/((1+r)^n−1)
+    // Variable rate — closed-form balance formula
     const monthlyRate = annualRate / 100 / 12;
     const factor = Math.pow(1 + monthlyRate, termMonths);
     const pmt =
@@ -85,20 +88,14 @@ export function calculateAmortization(
 
   if (paymentType === "fixed") {
     // Fixed Rate — Malaysian Hire Purchase (flat rate, Hire Purchase Act 1967)
-    // Interest is pre-calculated on the full principal for the entire tenure
-    // and spread evenly; the monthly interest portion never changes.
-    // Banks ceil to the nearest whole ringgit, so the last instalment is
-    // adjusted to clear the exact remaining balance (avoids overpayment).
     const totalInterest = principal * (annualRate / 100) * (termMonths / 12);
     const totalAmount = principal + totalInterest;
     const principalPerMonth = principal / termMonths;
     const interestPerMonth = totalInterest / termMonths;
-    // Ceil to nearest whole ringgit (Malaysian bank convention)
     const monthlyPayment = Math.ceil(totalAmount / termMonths);
 
     for (let i = 1; i <= termMonths; i++) {
       const isLast = i === termMonths;
-      // Last payment = whatever remains after (termMonths-1) full payments
       const payment = isLast
         ? Math.round((totalAmount - (termMonths - 1) * monthlyPayment) * 100) /
           100
@@ -116,10 +113,7 @@ export function calculateAmortization(
       });
     }
   } else {
-    // Variable Rate — Standard compound-interest amortization (PMT formula)
-    // Interest is recalculated each month on the remaining balance (reducing balance).
-    // Equal monthly payments; interest portion shrinks and principal portion grows over time.
-    // The last instalment is adjusted to clear any floating-point residual.
+    // Variable Rate — standard compound-interest amortization (PMT formula)
     const factor = Math.pow(1 + monthlyRate, termMonths);
     const pmt =
       monthlyRate === 0
@@ -131,7 +125,6 @@ export function calculateAmortization(
     for (let i = 1; i <= termMonths; i++) {
       const isLast = i === termMonths;
       const interest = balance * monthlyRate;
-      // Last month: pay exactly the remaining balance to avoid residual
       const principalPart = isLast ? balance : ceilPmt - interest;
       const payment = isLast
         ? Math.round((balance + interest) * 100) / 100

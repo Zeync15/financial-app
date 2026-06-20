@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Card, Form, Input, Button, Typography, message, Divider } from "antd";
-import { UserOutlined, LockOutlined } from "@ant-design/icons";
+import { MailOutlined, LockOutlined } from "@ant-design/icons";
 import { signIn } from "@/lib/auth-client";
 
 const { Title, Text } = Typography;
@@ -11,20 +11,13 @@ export default function Login() {
   const navigate = useNavigate();
   const [form] = Form.useForm();
 
-  const onFinish = async (values: { username: string; password: string }) => {
+  const onFinish = async (values: { email: string; password: string }) => {
     setLoading(true);
     try {
-      const result = await signIn.username({
-        username: values.username,
-        password: values.password,
-      });
-      if (result.error) {
-        message.error(result.error.message ?? "Invalid username or password");
-      } else {
-        navigate("/");
-      }
-    } catch {
-      message.error("An unexpected error occurred");
+      await signIn(values.email, values.password);
+      navigate("/");
+    } catch (e: any) {
+      message.error(e?.message ?? "Invalid email or password");
     } finally {
       setLoading(false);
     }
@@ -46,17 +39,16 @@ export default function Login() {
           requiredMark={false}
         >
           <Form.Item
-            name="username"
+            name="email"
             rules={[
-              { required: true, message: "Enter your username" },
-              { min: 5, message: "At least 5 characters" },
+              { required: true, type: "email", message: "Enter a valid email" },
             ]}
           >
             <Input
-              prefix={<UserOutlined />}
-              placeholder="Username"
+              prefix={<MailOutlined />}
+              placeholder="Email"
               size="large"
-              autoComplete="username"
+              autoComplete="email"
             />
           </Form.Item>
           <Form.Item

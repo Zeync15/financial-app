@@ -14,9 +14,8 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@server/*": ["./server/*"]
+      "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "server", "vite.config.ts", "drizzle.config.ts"]
+  "include": ["src", "vite.config.ts"]
 }

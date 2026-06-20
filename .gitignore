@@ -7,3 +7,6 @@ dist/
 
 # DB migration dumps (may contain hashed credentials and personal data)
 *.sql
+# ...but DO track the Supabase schema migrations (no personal data)
+!supabase/migrations/
+!supabase/migrations/*.sql

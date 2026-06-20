@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Card, Form, Input, Button, Typography, message, Divider } from "antd";
 import { MailOutlined, LockOutlined, UserOutlined } from "@ant-design/icons";
 import { signUp } from "@/lib/auth-client";
+import { supabase } from "@/lib/supabase";
 
 const { Title, Text } = Typography;
 
@@ -12,26 +13,25 @@ export default function Register() {
   const [form] = Form.useForm();
 
   const onFinish = async (values: {
-    username: string;
+    name?: string;
     email: string;
     password: string;
   }) => {
     setLoading(true);
     try {
-      const result = await (signUp.email as Function)({
-        name: values.username,
-        email: values.email,
-        password: values.password,
-        username: values.username,
-      });
-      if (result.error) {
-        message.error(result.error.message ?? "Registration failed");
-      } else {
+      await signUp(values.email, values.password, values.name);
+      // If email confirmation is disabled in Supabase, signUp returns a session
+      // and we can go straight in. Otherwise prompt the user to confirm.
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
         message.success("Account created!");
         navigate("/");
+      } else {
+        message.success("Account created — check your email to confirm, then sign in.");
+        navigate("/login");
       }
-    } catch {
-      message.error("An unexpected error occurred");
+    } catch (e: any) {
+      message.error(e?.message ?? "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -52,22 +52,12 @@ export default function Register() {
           layout="vertical"
           requiredMark={false}
         >
-          <Form.Item
-            name="username"
-            rules={[
-              { required: true, message: "Enter a username" },
-              { min: 5, message: "At least 5 characters" },
-              {
-                pattern: /^[a-zA-Z0-9_.]+$/,
-                message: "Letters, numbers, _ and . only",
-              },
-            ]}
-          >
+          <Form.Item name="name">
             <Input
               prefix={<UserOutlined />}
-              placeholder="Username"
+              placeholder="Display name (optional)"
               size="large"
-              autoComplete="username"
+              autoComplete="name"
             />
           </Form.Item>
           <Form.Item
