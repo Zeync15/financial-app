@@ -4,7 +4,6 @@ import { Layout, Menu } from "antd";
 import type { MenuProps } from "antd";
 import {
   DashboardOutlined,
-  BankOutlined,
   TransactionOutlined,
   FundOutlined,
   PieChartOutlined,
@@ -27,7 +26,6 @@ const SIDER_COLLAPSED_WIDTH = 80;
 
 const topMenuItems: MenuProps["items"] = [
   { key: "/", icon: <DashboardOutlined />, label: "Dashboard" },
-  { key: "/accounts", icon: <BankOutlined />, label: "Accounts" },
   {
     key: "/transactions",
     icon: <TransactionOutlined />,
@@ -55,11 +53,7 @@ export default function DashboardLayout() {
     navigate("/login");
   };
 
-  const contentMarginLeft = isMobile
-    ? 0
-    : collapsed
-      ? SIDER_COLLAPSED_WIDTH
-      : SIDER_WIDTH;
+  const contentMarginLeft = isMobile ? 0 : collapsed ? SIDER_COLLAPSED_WIDTH : SIDER_WIDTH;
 
   const bottomMenuItems: MenuProps["items"] = [
     {
@@ -82,9 +76,7 @@ export default function DashboardLayout() {
   };
 
   // Hide FAB on the form pages (they have their own back button)
-  const isFormPage =
-    location.pathname === "/transactions/new" ||
-    location.pathname.endsWith("/edit");
+  const isFormPage = location.pathname === "/transactions/new" || location.pathname.endsWith("/edit");
 
   return (
     <Layout className="h-screen overflow-hidden">
@@ -136,17 +128,13 @@ export default function DashboardLayout() {
       )}
 
       {/* Main content */}
-      <Layout
-        style={{ marginLeft: contentMarginLeft, transition: "margin 0.2s" }}
-        className="flex flex-col h-screen"
-      >
+      <Layout style={{ marginLeft: contentMarginLeft, transition: "margin 0.2s" }} className="flex flex-col h-screen">
         <Content
           className={isMobile ? "flex-1 overflow-auto p-3" : "flex-1 overflow-auto p-6"}
           style={
             isMobile
               ? {
-                  paddingBottom:
-                    "calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 16px)",
+                  paddingBottom: "calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 16px)",
                 }
               : undefined
           }
@@ -158,9 +146,7 @@ export default function DashboardLayout() {
       </Layout>
 
       {/* Mobile: FAB (hidden on form pages) + bottom nav */}
-      {isMobile && !isFormPage && (
-        <FloatingActionButton onClick={() => navigate("/transactions/new")} />
-      )}
+      {isMobile && !isFormPage && <FloatingActionButton onClick={() => navigate("/transactions/new")} />}
       {isMobile && <BottomNav />}
     </Layout>
   );

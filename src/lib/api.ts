@@ -5,11 +5,7 @@
 // All shapes returned here match what the old Hono API returned (camelCase keys,
 // money as DECIMAL strings) so the UI needs no changes.
 import { supabase, getUserId } from "./supabase";
-import {
-  calculateSummary,
-  calculateAmortization,
-  getMonthsPaid,
-} from "./loanCalculations";
+import { calculateSummary, calculateAmortization, getMonthsPaid } from "./loanCalculations";
 
 // ─── helpers ──────────────────────────────────────────────────────────────
 function unwrap<T>(res: { data: T | null; error: { message: string } | null }): T {
@@ -30,13 +26,10 @@ const today = () => new Date().toISOString().split("T")[0]!;
 type Body = Record<string, any>;
 
 // ─── accounts ───────────────────────────────────────────────────────────────
-const ACCOUNT_COLS =
-  "id, name, type, currency, institution, balance, isActive:is_active, createdAt:created_at";
+const ACCOUNT_COLS = "id, name, type, currency, institution, balance, isActive:is_active, createdAt:created_at";
 
 async function listAccounts() {
-  return unwrap(
-    await supabase.from("financial_account").select(ACCOUNT_COLS).order("created_at"),
-  );
+  return unwrap(await supabase.from("financial_account").select(ACCOUNT_COLS).order("created_at"));
 }
 async function createAccount(b: Body) {
   const user_id = await getUserId();
@@ -82,9 +75,7 @@ const CATEGORY_COLS =
 
 async function listCategories() {
   // RLS exposes own rows + system defaults (user_id IS NULL)
-  return unwrap(
-    await supabase.from("category").select(CATEGORY_COLS).order("sort_order"),
-  );
+  return unwrap(await supabase.from("category").select(CATEGORY_COLS).order("sort_order"));
 }
 async function createCategory(b: Body) {
   const user_id = await getUserId();
@@ -205,13 +196,11 @@ function getPeriodRange(period: string, now: Date) {
 
 async function listBudgets() {
   const rows = unwrap(
-    await supabase
-      .from("budget")
-      .select(
-        `id, categoryId:category_id, name, amount, currency, period,
+    await supabase.from("budget").select(
+      `id, categoryId:category_id, name, amount, currency, period,
          startDate:start_date, endDate:end_date,
          category ( name, color )`,
-      ),
+    ),
   ) as any[];
 
   const now = new Date();
@@ -266,10 +255,7 @@ async function createBudget(b: Body) {
 // ─── portfolios + holdings ──────────────────────────────────────────────────
 async function listPortfolios() {
   const ps = unwrap(
-    await supabase
-      .from("portfolio")
-      .select("id, name, currency, createdAt:created_at")
-      .order("created_at"),
+    await supabase.from("portfolio").select("id, name, currency, createdAt:created_at").order("created_at"),
   ) as any[];
 
   return Promise.all(
@@ -279,12 +265,14 @@ async function listPortfolios() {
           .from("holding")
           .select(
             `id, portfolioId:portfolio_id, symbol, name, type, quantity,
-             avgCostPrice:avg_cost_price, currency`,
+             avgCostPrice:avg_cost_price, currency,
+             currentPrice:current_price, priceUpdatedAt:price_updated_at`,
           )
           .eq("portfolio_id", p.id),
-      ) as Array<{ quantity: string; avgCostPrice: string }>;
+      ) as Array<{ quantity: string; avgCostPrice: string; currentPrice: string | null }>;
+      // Value at market price when known, else fall back to cost basis.
       const totalValue = holdings.reduce(
-        (s, h) => s + Number(h.quantity) * Number(h.avgCostPrice),
+        (s, h) => s + Number(h.quantity) * Number(h.currentPrice ?? h.avgCostPrice),
         0,
       );
       return { id: p.id, name: p.name, currency: p.currency, holdings, totalValue };
@@ -302,9 +290,9 @@ async function createPortfolio(b: Body) {
   );
 }
 async function addHolding(portfolioId: string, b: Body) {
-  const p = unwrap(
-    await supabase.from("portfolio").select("currency").eq("id", portfolioId).single(),
-  ) as { currency: string };
+  const p = unwrap(await supabase.from("portfolio").select("currency").eq("id", portfolioId).single()) as {
+    currency: string;
+  };
   return unwrap(
     await supabase
       .from("holding")
@@ -333,6 +321,8 @@ async function updateHolding(portfolioId: string, holdingId: string, b: Body) {
           quantity: b.quantity,
           avg_cost_price: b.avgCostPrice,
           currency: b.currency,
+          current_price: b.currentPrice,
+          price_updated_at: b.priceUpdatedAt,
           updated_at: nowIso(),
         }),
       )
@@ -348,9 +338,7 @@ const LOAN_COLS =
   "id, name, principal, currency, interestRate:interest_rate, loanTermMonths:loan_term_months, startDate:start_date, paymentType:payment_type, monthlyPayment:monthly_payment, createdAt:created_at";
 
 async function listLoans() {
-  const ls = unwrap(
-    await supabase.from("loan").select(LOAN_COLS).order("created_at"),
-  ) as any[];
+  const ls = unwrap(await supabase.from("loan").select(LOAN_COLS).order("created_at")) as any[];
   return ls.map((l) => {
     const monthsPaid = getMonthsPaid(l.startDate);
     const s = calculateSummary(
@@ -370,15 +358,8 @@ async function listLoans() {
   });
 }
 async function loanSchedule(id: string) {
-  const l = unwrap(
-    await supabase.from("loan").select(LOAN_COLS).eq("id", id).single(),
-  ) as any;
-  return calculateAmortization(
-    Number(l.principal),
-    Number(l.interestRate),
-    l.loanTermMonths,
-    l.paymentType,
-  );
+  const l = unwrap(await supabase.from("loan").select(LOAN_COLS).eq("id", id).single()) as any;
+  return calculateAmortization(Number(l.principal), Number(l.interestRate), l.loanTermMonths, l.paymentType);
 }
 async function createLoan(b: Body) {
   const user_id = await getUserId();
@@ -403,10 +384,7 @@ async function createLoan(b: Body) {
 // ─── dashboard ──────────────────────────────────────────────────────────────
 async function getDashboard() {
   const accounts = unwrap(
-    await supabase
-      .from("financial_account")
-      .select("id, type, balance, isActive:is_active")
-      .eq("is_active", true),
+    await supabase.from("financial_account").select("id, type, balance, isActive:is_active").eq("is_active", true),
   ) as Array<{ type: string; balance: string }>;
 
   const totalAssets = accounts
@@ -424,9 +402,7 @@ async function getDashboard() {
 
   const now = new Date();
   const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-    .toISOString()
-    .split("T")[0]!;
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0]!;
 
   const sumByType = async (type: "income" | "expense") => {
     const rows = unwrap(
@@ -439,10 +415,7 @@ async function getDashboard() {
     ) as Array<{ amount: string }>;
     return rows.reduce((s, t) => s + Number(t.amount), 0);
   };
-  const [monthlyIncome, monthlyExpense] = await Promise.all([
-    sumByType("income"),
-    sumByType("expense"),
-  ]);
+  const [monthlyIncome, monthlyExpense] = await Promise.all([sumByType("income"), sumByType("expense")]);
 
   return {
     netWorth,
@@ -462,21 +435,13 @@ async function deleteRow(table: string, id: string) {
   return { success: true };
 }
 async function deleteHolding(portfolioId: string, holdingId: string) {
-  const { error } = await supabase
-    .from("holding")
-    .delete()
-    .eq("id", holdingId)
-    .eq("portfolio_id", portfolioId);
+  const { error } = await supabase.from("holding").delete().eq("id", holdingId).eq("portfolio_id", portfolioId);
   if (error) throw new Error(error.message);
   return { success: true };
 }
 
 // ─── router ─────────────────────────────────────────────────────────────────
-async function route(
-  method: "GET" | "POST" | "PUT" | "DELETE",
-  path: string,
-  body?: Body,
-): Promise<unknown> {
+async function route(method: "GET" | "POST" | "PUT" | "DELETE", path: string, body?: Body): Promise<unknown> {
   const [, resource, p1, p2, p3] = path.split("?")[0]!.split("/");
 
   switch (resource) {
@@ -511,8 +476,7 @@ async function route(
       break;
 
     case "loans":
-      if (method === "GET")
-        return p1 && p2 === "schedule" ? loanSchedule(p1) : listLoans();
+      if (method === "GET") return p1 && p2 === "schedule" ? loanSchedule(p1) : listLoans();
       if (method === "POST") return createLoan(body!);
       if (method === "DELETE") return deleteRow("loan", p1!);
       break;
@@ -531,9 +495,7 @@ async function route(
 
 export const api = {
   get: <T>(path: string) => route("GET", path) as Promise<T>,
-  post: <T>(path: string, body: unknown) =>
-    route("POST", path, body as Body) as Promise<T>,
-  put: <T>(path: string, body: unknown) =>
-    route("PUT", path, body as Body) as Promise<T>,
+  post: <T>(path: string, body: unknown) => route("POST", path, body as Body) as Promise<T>,
+  put: <T>(path: string, body: unknown) => route("PUT", path, body as Body) as Promise<T>,
   delete: <T>(path: string) => route("DELETE", path) as Promise<T>,
 };

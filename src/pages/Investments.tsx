@@ -9,13 +9,18 @@ import {
   Select,
   InputNumber,
   message,
-  Collapse,
   Popconfirm,
   Empty,
 } from "antd";
-import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
+import { PlusOutlined, DeleteOutlined, ReloadOutlined } from "@ant-design/icons";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 import { api } from "@/lib/api";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { getQuote, isAutoPriceable } from "@/lib/priceService";
+import { getRatesToMYR } from "@/lib/fxService";
+
+dayjs.extend(relativeTime);
 
 const { Title, Text } = Typography;
 
@@ -28,6 +33,8 @@ interface Holding {
   quantity: string;
   avgCostPrice: string;
   currency: string;
+  currentPrice: string | null;
+  priceUpdatedAt: string | null;
 }
 interface Portfolio {
   id: string;
@@ -36,55 +43,158 @@ interface Portfolio {
   holdings: Holding[];
   totalValue: number;
 }
+interface Totals {
+  value: number; // market value, converted to MYR
+  gain: number; // value - cost, in MYR
+  cost: number; // cost basis, in MYR
+  fxOk: boolean; // false if any currency couldn't be converted
+}
+
+const fmt = (n: number) =>
+  n.toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export default function Investments() {
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pModalOpen, setPModalOpen] = useState(false);
   const [hModalOpen, setHModalOpen] = useState(false);
-  const [activePortfolio, setActivePortfolio] = useState<string | null>(null);
-  const [pForm] = Form.useForm();
+  const [refreshing, setRefreshing] = useState(false);
+  const [totals, setTotals] = useState<Totals | null>(null);
   const [hForm] = Form.useForm();
   const isMobile = useIsMobile();
 
+  // All holdings, flattened across the (hidden) portfolio containers.
+  const holdings = portfolios.flatMap((p) => p.holdings);
+
   const load = () => {
     setLoading(true);
-    api
+    return api
       .get<Portfolio[]>("/portfolios")
-      .then(setPortfolios)
+      .then((data) => {
+        setPortfolios(data);
+        return data;
+      })
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => {
-    load();
-  }, []);
+  // Convert every holding's value + cost to MYR for a single grand total.
+  const computeTotals = async (list: Holding[]) => {
+    if (list.length === 0) {
+      setTotals(null);
+      return;
+    }
+    const rates = await getRatesToMYR(list.map((h) => h.currency));
+    let value = 0;
+    let cost = 0;
+    let fxOk = true;
+    for (const h of list) {
+      const rate = rates[h.currency];
+      if (rate == null) {
+        fxOk = false;
+        continue;
+      }
+      const qty = Number(h.quantity);
+      const price = Number(h.currentPrice ?? h.avgCostPrice);
+      value += qty * price * rate;
+      cost += qty * Number(h.avgCostPrice) * rate;
+    }
+    setTotals({ value, gain: value - cost, cost, fxOk });
+  };
 
-  const createPortfolio = async () => {
-    const values = await pForm.validateFields();
+  // A USD holding is "stale" if it has no price or the price isn't from today.
+  const isStale = (h: Holding) =>
+    isAutoPriceable(h.currency) &&
+    (!h.priceUpdatedAt || !dayjs(h.priceUpdatedAt).isSame(dayjs(), "day"));
+
+  // Write the latest Finnhub price back to each holding that needs it.
+  // Returns true if anything changed. Silent on per-symbol failures.
+  const fetchPrices = async (list: Holding[]) => {
+    let changed = false;
+    for (const h of list) {
+      const price = await getQuote(h.symbol);
+      if (price != null) {
+        await api.put(`/portfolios/${h.portfolioId}/holdings/${h.id}`, {
+          currentPrice: String(price),
+          priceUpdatedAt: new Date().toISOString(),
+        });
+        changed = true;
+      }
+    }
+    return changed;
+  };
+
+  // On load, snapshot any USD holdings whose price is missing or stale.
+  // Self-terminating: after a write, the reload sees fresh prices and stops.
+  const autoRefresh = async (data: Portfolio[]) => {
+    const stale = data.flatMap((p) => p.holdings).filter(isStale);
+    if (stale.length === 0) return;
+    if (await fetchPrices(stale)) load();
+  };
+
+  // Manual "Refresh prices" button: force-refresh every USD holding.
+  const refreshPrices = async () => {
+    setRefreshing(true);
     try {
-      await api.post("/portfolios", values);
-      message.success("Portfolio created");
-      setPModalOpen(false);
+      const usd = holdings.filter((h) => isAutoPriceable(h.currency));
+      if (usd.length === 0) {
+        message.info("No US holdings to price. Enter MYR prices manually.");
+        return;
+      }
+      if (await fetchPrices(usd)) {
+        message.success("Prices updated");
+        await load();
+      } else {
+        message.warning("No prices updated — check your Finnhub key and symbols.");
+      }
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // Manual price entry for non-USD holdings (e.g. Bursa Malaysia REITs).
+  const savePrice = async (h: Holding, raw: string) => {
+    const val = Number(raw);
+    if (!raw || isNaN(val) || val <= 0) return;
+    if (h.currentPrice && Number(h.currentPrice) === val) return;
+    try {
+      await api.put(`/portfolios/${h.portfolioId}/holdings/${h.id}`, {
+        currentPrice: String(val),
+        priceUpdatedAt: new Date().toISOString(),
+      });
+      message.success("Price updated");
       load();
     } catch (e: any) {
       message.error(e.message);
     }
   };
 
-  const deletePortfolio = async (id: string) => {
-    try {
-      await api.delete(`/portfolios/${id}`);
-      message.success("Portfolio deleted");
-      load();
-    } catch (e: any) {
-      message.error(e.message);
-    }
+  useEffect(() => {
+    load().then((data) => {
+      if (data) autoRefresh(data);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Recompute the MYR total whenever holdings change.
+  useEffect(() => {
+    computeTotals(holdings);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [portfolios]);
+
+  // Holdings live in a single hidden default portfolio. Create it on first add.
+  const ensureDefaultPortfolio = async (): Promise<string> => {
+    if (portfolios.length > 0) return portfolios[0]!.id;
+    const p = await api.post<{ id: string }>("/portfolios", {
+      name: "My Investments",
+      currency: "MYR",
+    });
+    return p.id;
   };
 
   const addHolding = async () => {
     const values = await hForm.validateFields();
     try {
-      await api.post(`/portfolios/${activePortfolio}/holdings`, {
+      const pid = await ensureDefaultPortfolio();
+      await api.post(`/portfolios/${pid}/holdings`, {
         ...values,
         quantity: String(values.quantity),
         avgCostPrice: String(values.avgCostPrice),
@@ -97,35 +207,42 @@ export default function Investments() {
     }
   };
 
-  const deleteHolding = async (portfolioId: string, holdingId: string) => {
+  const deleteHolding = async (h: Holding) => {
     try {
-      await api.delete(`/portfolios/${portfolioId}/holdings/${holdingId}`);
-      message.success("Holding deleted");
+      await api.delete(`/portfolios/${h.portfolioId}/holdings/${h.id}`);
+      message.success("Holding removed");
       load();
     } catch (e: any) {
       message.error(e.message);
     }
   };
 
-  const holdingColumns = (portfolioId: string) => [
+  const columns = [
     {
       title: "Symbol",
-      dataIndex: "symbol",
       key: "symbol",
-      render: (v: string) => <Text strong>{v}</Text>,
+      render: (_: unknown, r: Holding) => (
+        <div>
+          <Text strong>{r.symbol}</Text>{" "}
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            {r.currency}
+          </Text>
+          {r.name ? (
+            <div>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                {r.name}
+              </Text>
+            </div>
+          ) : null}
+        </div>
+      ),
     },
-    {
-      title: "Name",
-      dataIndex: "name",
-      key: "name",
-      render: (v: string) => v || "-",
-    },
-    { title: "Type", dataIndex: "type", key: "type" },
     {
       title: "Qty",
       dataIndex: "quantity",
       key: "qty",
       align: "right" as const,
+      responsive: ["md" as const],
       render: (v: string) => Number(v).toFixed(2),
     },
     {
@@ -133,24 +250,79 @@ export default function Investments() {
       dataIndex: "avgCostPrice",
       key: "cost",
       align: "right" as const,
+      responsive: ["md" as const],
       render: (v: string) => Number(v).toFixed(2),
     },
     {
-      title: "Value",
+      title: "Price",
+      key: "price",
+      align: "right" as const,
+      render: (_: unknown, r: Holding) => {
+        if (isAutoPriceable(r.currency)) {
+          return r.currentPrice ? Number(r.currentPrice).toFixed(2) : "—";
+        }
+        // Manual entry for non-USD (e.g. Bursa Malaysia) holdings.
+        return (
+          <InputNumber
+            size="small"
+            defaultValue={r.currentPrice ? Number(r.currentPrice) : undefined}
+            precision={2}
+            min={0}
+            placeholder="Set"
+            controls={false}
+            style={{ width: 90 }}
+            onPressEnter={(e) => savePrice(r, (e.target as HTMLInputElement).value)}
+            onBlur={(e) => savePrice(r, e.target.value)}
+          />
+        );
+      },
+    },
+    {
+      title: "Market Value",
       key: "value",
       align: "right" as const,
+      render: (_: unknown, r: Holding) => {
+        const price = Number(r.currentPrice ?? r.avgCostPrice);
+        return `${r.currency} ${fmt(Number(r.quantity) * price)}`;
+      },
+    },
+    {
+      title: "Gain/Loss",
+      key: "gain",
+      align: "right" as const,
+      render: (_: unknown, r: Holding) => {
+        if (r.currentPrice == null) return <Text type="secondary">—</Text>;
+        const cost = Number(r.avgCostPrice);
+        const cur = Number(r.currentPrice);
+        const gain = (cur - cost) * Number(r.quantity);
+        const pct = cost > 0 ? (cur / cost - 1) * 100 : 0;
+        const up = gain >= 0;
+        return (
+          <Text type={up ? "success" : "danger"}>
+            {up ? "+" : ""}
+            {fmt(gain)} ({up ? "+" : ""}
+            {pct.toFixed(1)}%)
+          </Text>
+        );
+      },
+    },
+    {
+      title: "As of",
+      key: "asof",
+      responsive: ["md" as const],
       render: (_: unknown, r: Holding) =>
-        (Number(r.quantity) * Number(r.avgCostPrice)).toFixed(2),
+        r.priceUpdatedAt ? (
+          <Text type="secondary">{dayjs(r.priceUpdatedAt).fromNow()}</Text>
+        ) : (
+          "—"
+        ),
     },
     {
       title: "",
       key: "actions",
       width: 50,
       render: (_: unknown, r: Holding) => (
-        <Popconfirm
-          title="Delete?"
-          onConfirm={() => deleteHolding(portfolioId, r.id)}
-        >
+        <Popconfirm title="Remove holding?" onConfirm={() => deleteHolding(r)}>
           <Button size="small" danger icon={<DeleteOutlined />} />
         </Popconfirm>
       ),
@@ -163,101 +335,71 @@ export default function Investments() {
         <Title level={isMobile ? 4 : 3} className="mb-0!">
           Investments
         </Title>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => {
-            pForm.resetFields();
-            setPModalOpen(true);
-          }}
-        >
-          New Portfolio
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            icon={<ReloadOutlined />}
+            loading={refreshing}
+            onClick={refreshPrices}
+          >
+            {isMobile ? "" : "Refresh prices"}
+          </Button>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => {
+              hForm.resetFields();
+              setHModalOpen(true);
+            }}
+          >
+            {isMobile ? "" : "Add Holding"}
+          </Button>
+        </div>
       </div>
 
-      {portfolios.length === 0 && !loading ? (
-        <Empty description="No portfolios yet" />
-      ) : (
-        <Collapse
-          items={portfolios.map((p) => ({
-            key: p.id,
-            label: (
-              <div className="flex justify-between w-full pr-4">
-                <Text strong>{p.name}</Text>
-                <Text>
-                  Total: {p.currency} {p.totalValue.toFixed(2)}
-                </Text>
-              </div>
-            ),
-            extra: (
-              <Popconfirm
-                title="Delete portfolio?"
-                onConfirm={(e) => {
-                  e?.stopPropagation();
-                  deletePortfolio(p.id);
-                }}
+      {totals && (
+        <div className="flex gap-8 mb-4 flex-wrap">
+          <div>
+            <Text type="secondary">Total Value</Text>
+            <div>
+              <Text strong style={{ fontSize: 20 }}>
+                {totals.fxOk ? "" : "≈ "}RM {fmt(totals.value)}
+              </Text>
+            </div>
+          </div>
+          <div>
+            <Text type="secondary">Total Gain/Loss</Text>
+            <div>
+              <Text
+                strong
+                type={totals.gain >= 0 ? "success" : "danger"}
+                style={{ fontSize: 20 }}
               >
-                <Button
-                  size="small"
-                  danger
-                  icon={<DeleteOutlined />}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </Popconfirm>
-            ),
-            children: (
-              <div>
-                <div className="flex justify-end mb-2">
-                  <Button
-                    size="small"
-                    icon={<PlusOutlined />}
-                    onClick={() => {
-                      setActivePortfolio(p.id);
-                      hForm.resetFields();
-                      setHModalOpen(true);
-                    }}
-                  >
-                    Add Holding
-                  </Button>
-                </div>
-                <Table
-                  dataSource={p.holdings}
-                  columns={holdingColumns(p.id)}
-                  rowKey="id"
-                  pagination={false}
-                  size="small"
-                />
-              </div>
-            ),
-          }))}
-        />
+                {totals.gain >= 0 ? "+" : ""}
+                RM {fmt(totals.gain)}
+                {totals.cost > 0
+                  ? ` (${totals.gain >= 0 ? "+" : ""}${(
+                      (totals.gain / totals.cost) *
+                      100
+                    ).toFixed(1)}%)`
+                  : ""}
+              </Text>
+            </div>
+          </div>
+        </div>
       )}
 
-      <Modal
-        title="New Portfolio"
-        open={pModalOpen}
-        onOk={createPortfolio}
-        onCancel={() => setPModalOpen(false)}
-        destroyOnClose
-      >
-        <Form
-          form={pForm}
-          layout="vertical"
-          initialValues={{ currency: "MYR" }}
-        >
-          <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-            <Input placeholder="e.g. Retirement Fund" />
-          </Form.Item>
-          <Form.Item name="currency" label="Currency">
-            <Select
-              options={["MYR", "USD", "SGD"].map((c) => ({
-                value: c,
-                label: c,
-              }))}
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
+      {holdings.length === 0 && !loading ? (
+        <Empty description="No investments yet — add your first holding" />
+      ) : (
+        <Table
+          dataSource={holdings}
+          columns={columns}
+          rowKey="id"
+          pagination={false}
+          size="small"
+          loading={loading}
+        />
+      )}
 
       <Modal
         title="Add Holding"
@@ -266,27 +408,37 @@ export default function Investments() {
         onCancel={() => setHModalOpen(false)}
         destroyOnClose
       >
-        <Form form={hForm} layout="vertical" initialValues={{ type: "stock" }}>
+        <Form
+          form={hForm}
+          layout="vertical"
+          initialValues={{ type: "etf", currency: "MYR" }}
+        >
           <Form.Item name="symbol" label="Symbol" rules={[{ required: true }]}>
-            <Input placeholder="e.g. AAPL" />
+            <Input placeholder="e.g. VGT" />
           </Form.Item>
           <Form.Item name="name" label="Name">
-            <Input placeholder="e.g. Apple Inc." />
+            <Input placeholder="e.g. Vanguard Information Technology ETF" />
+          </Form.Item>
+          <Form.Item
+            name="currency"
+            label="Currency"
+            rules={[{ required: true }]}
+            extra="USD prices are fetched automatically. Other currencies are entered manually."
+          >
+            <Select
+              options={["MYR", "USD", "SGD"].map((c) => ({ value: c, label: c }))}
+            />
           </Form.Item>
           <Form.Item name="type" label="Type" rules={[{ required: true }]}>
             <Select
               options={[
-                { value: "stock", label: "Stock" },
                 { value: "etf", label: "ETF" },
+                { value: "stock", label: "Stock" },
               ]}
             />
           </Form.Item>
-          <Form.Item
-            name="quantity"
-            label="Quantity"
-            rules={[{ required: true }]}
-          >
-            <InputNumber className="w-full" precision={2} min={0.01} />
+          <Form.Item name="quantity" label="Quantity" rules={[{ required: true }]}>
+            <InputNumber className="w-full" precision={4} min={0.0001} />
           </Form.Item>
           <Form.Item
             name="avgCostPrice"
