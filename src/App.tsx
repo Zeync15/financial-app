@@ -8,7 +8,6 @@ import DashboardLayout from "@/components/layouts/DashboardLayout";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Dashboard from "@/pages/Dashboard";
-import Accounts from "@/pages/Accounts";
 import Transactions from "@/pages/Transactions";
 import TransactionForm from "@/pages/TransactionForm";
 import Budgets from "@/pages/Budgets";
@@ -122,7 +121,8 @@ export default function App() {
               }
             >
               <Route path="/" element={<Dashboard />} />
-              <Route path="/accounts" element={<Accounts />} />
+              {/* Accounts merged into Home; keep old links working */}
+              <Route path="/accounts" element={<Navigate to="/" replace />} />
               <Route path="/transactions" element={<Transactions />} />
               <Route path="/transactions/new" element={<TransactionForm />} />
               <Route path="/transactions/:id/edit" element={<TransactionForm />} />

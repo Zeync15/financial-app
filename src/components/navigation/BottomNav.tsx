@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Drawer, theme } from "antd";
 import {
   UnorderedListOutlined,
-  WalletOutlined,
   PieChartOutlined,
   DashboardOutlined,
   AppstoreOutlined,
@@ -33,13 +32,6 @@ const tabs: NavTab[] = [
     icon: <DashboardOutlined />,
     route: "/",
   },
-
-  {
-    key: "wallets",
-    label: "Wallets",
-    icon: <WalletOutlined />,
-    route: "/accounts",
-  },
   {
     key: "transaction",
     label: "Transactions",
@@ -47,10 +39,16 @@ const tabs: NavTab[] = [
     route: "/transactions",
   },
   {
-    key: "budgets",
-    label: "Budgets",
-    icon: <PieChartOutlined />,
-    route: "/budgets",
+    key: "investments",
+    label: "Investments",
+    icon: <FundOutlined />,
+    route: "/investments",
+  },
+  {
+    key: "loans",
+    label: "Loans",
+    icon: <DollarOutlined />,
+    route: "/loans",
   },
   { key: "more", label: "More", icon: <AppstoreOutlined /> },
 ];
@@ -79,26 +77,18 @@ export default function BottomNav() {
 
   const moreItems = [
     {
+      icon: <PieChartOutlined />,
+      label: "Budgets",
+      onClick: () => {
+        navigate("/budgets");
+        setDrawerOpen(false);
+      },
+    },
+    {
       icon: <TagOutlined />,
       label: "Categories",
       onClick: () => {
         navigate("/categories");
-        setDrawerOpen(false);
-      },
-    },
-    {
-      icon: <FundOutlined />,
-      label: "Investments",
-      onClick: () => {
-        navigate("/investments");
-        setDrawerOpen(false);
-      },
-    },
-    {
-      icon: <DollarOutlined />,
-      label: "Loans",
-      onClick: () => {
-        navigate("/loans");
         setDrawerOpen(false);
       },
     },
@@ -143,13 +133,7 @@ export default function BottomNav() {
         })}
       </nav>
 
-      <Drawer
-        title="More"
-        placement="bottom"
-        height="auto"
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-      >
+      <Drawer title="More" placement="bottom" height="auto" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
         <div className="flex flex-col gap-1">
           {moreItems.map((item) => (
             <button
