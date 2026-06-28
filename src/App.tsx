@@ -1,51 +1,19 @@
-import { createContext, useContext, useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { ConfigProvider, theme, Spin, Button } from "antd";
-import { SunOutlined, MoonOutlined } from "@ant-design/icons";
+import { ConfigProvider, theme, Spin } from "antd";
 import { useSession } from "@/lib/auth-client";
-import { useIsMobile } from "@/hooks/useIsMobile";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import Dashboard from "@/pages/Dashboard";
 import Transactions from "@/pages/Transactions";
-import TransactionForm from "@/pages/TransactionForm";
 import Budgets from "@/pages/Budgets";
 import Investments from "@/pages/Investments";
 import Loans from "@/pages/Loans";
 import Categories from "@/pages/Categories";
 
-// --- Theme Context ---
-interface ThemeContextType {
-  darkMode: boolean;
-  toggleDarkMode: () => void;
-}
+const ACCENT = "#1ec98a";
+const BORDER = "rgba(255,255,255,0.34)";
 
-export const ThemeContext = createContext<ThemeContextType>({
-  darkMode: false,
-  toggleDarkMode: () => {},
-});
-
-export function useTheme() {
-  return useContext(ThemeContext);
-}
-
-// --- Global theme toggle — fixed top-right, desktop only (mobile uses "More" drawer) ---
-function ThemeToggle() {
-  const { darkMode, toggleDarkMode } = useTheme();
-  const isMobile = useIsMobile();
-  if (isMobile) return null;
-  return (
-    <Button
-      shape="circle"
-      icon={darkMode ? <SunOutlined /> : <MoonOutlined />}
-      onClick={toggleDarkMode}
-      style={{ position: "fixed", top: 16, right: 16, zIndex: 1000 }}
-    />
-  );
-}
-
-// --- Route Guards ---
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { data: session, isPending } = useSession();
   if (isPending)
@@ -63,78 +31,67 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  const [darkMode, setDarkMode] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem("darkMode") === "true";
-    } catch {
-      return false;
-    }
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem("darkMode", String(darkMode));
-    } catch {
-      // ignore
-    }
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [darkMode]);
-
-  const toggleDarkMode = () => setDarkMode((prev) => !prev);
-
   return (
-    <ThemeContext.Provider value={{ darkMode, toggleDarkMode }}>
-      <ConfigProvider
-        theme={{
-          token: { colorPrimary: "#1677ff", borderRadius: 6 },
-          algorithm: darkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
-        }}
-      >
-        <ThemeToggle />
-        <BrowserRouter>
-          <Routes>
-            <Route
-              path="/login"
-              element={
-                <PublicRoute>
-                  <Login />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                <PublicRoute>
-                  <Register />
-                </PublicRoute>
-              }
-            />
-            <Route
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route path="/" element={<Dashboard />} />
-              {/* Accounts merged into Home; keep old links working */}
-              <Route path="/accounts" element={<Navigate to="/" replace />} />
-              <Route path="/transactions" element={<Transactions />} />
-              <Route path="/transactions/new" element={<TransactionForm />} />
-              <Route path="/transactions/:id/edit" element={<TransactionForm />} />
-              <Route path="/budgets" element={<Budgets />} />
-              <Route path="/categories" element={<Categories />} />
-              <Route path="/investments" element={<Investments />} />
-              <Route path="/loans" element={<Loans />} />
-            </Route>
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </BrowserRouter>
-      </ConfigProvider>
-    </ThemeContext.Provider>
+    <ConfigProvider
+      theme={{
+        algorithm: theme.darkAlgorithm,
+        token: {
+          colorPrimary: ACCENT,
+          colorBorder: BORDER,
+          borderRadius: 8,
+        },
+        components: {
+          Input: {
+            hoverBorderColor: ACCENT,
+            activeBorderColor: ACCENT,
+          },
+        },
+      }}
+    >
+      <BrowserRouter>
+        <Routes>
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <PublicRoute>
+                <Register />
+              </PublicRoute>
+            }
+          />
+          <Route
+            element={
+              <ProtectedRoute>
+                <DashboardLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/" element={<Dashboard />} />
+            {/* Accounts merged into Home; keep old links working */}
+            <Route path="/accounts" element={<Navigate to="/" replace />} />
+            {/* /new and /:id/edit render the same Transactions page —
+                the drawer auto-opens based on the URL. Closing it navigates
+                back to /transactions. */}
+            <Route path="/transactions" element={<Transactions />} />
+            <Route path="/transactions/new" element={<Transactions />} />
+            <Route path="/transactions/:id/edit" element={<Transactions />} />
+            <Route path="/budgets" element={<Budgets />} />
+            <Route path="/categories" element={<Categories />} />
+            <Route path="/investments" element={<Investments />} />
+            <Route path="/investments/new" element={<Investments />} />
+            <Route path="/loans" element={<Loans />} />
+            <Route path="/loans/new" element={<Loans />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </ConfigProvider>
   );
 }

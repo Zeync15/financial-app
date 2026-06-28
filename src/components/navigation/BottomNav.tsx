@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Drawer, theme } from "antd";
 import {
@@ -10,11 +10,8 @@ import {
   DollarOutlined,
   TagOutlined,
   LogoutOutlined,
-  SunOutlined,
-  MoonOutlined,
 } from "@ant-design/icons";
 import { signOut } from "@/lib/auth-client";
-import { useTheme } from "@/App";
 
 const { useToken } = theme;
 
@@ -58,7 +55,6 @@ export default function BottomNav() {
   const navigate = useNavigate();
   const location = useLocation();
   const { token } = useToken();
-  const { darkMode, toggleDarkMode } = useTheme();
 
   const handleSignOut = async () => {
     await signOut();
@@ -93,11 +89,6 @@ export default function BottomNav() {
       },
     },
     {
-      icon: darkMode ? <SunOutlined /> : <MoonOutlined />,
-      label: darkMode ? "Light Mode" : "Dark Mode",
-      onClick: toggleDarkMode,
-    },
-    {
       icon: <LogoutOutlined />,
       label: "Sign Out",
       onClick: handleSignOut,
@@ -111,7 +102,7 @@ export default function BottomNav() {
         className="fixed bottom-0 left-0 right-0 z-50 flex items-stretch border-t pb-safe"
         style={{
           height: "var(--bottom-nav-height)",
-          background: token.colorBgContainer,
+          background: "var(--sider-bg)",
           borderColor: token.colorBorderSecondary,
         }}
       >
@@ -133,22 +124,42 @@ export default function BottomNav() {
         })}
       </nav>
 
-      <Drawer title="More" placement="bottom" height="auto" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-        <div className="flex flex-col gap-1">
-          {moreItems.map((item) => (
-            <button
-              key={item.label}
-              onClick={item.onClick}
-              className="flex items-center gap-3 px-3 py-3 rounded-lg border-none bg-transparent cursor-pointer text-left w-full"
-              style={{
-                color: item.danger ? token.colorError : token.colorText,
-                fontSize: 16,
-              }}
-            >
-              <span className="text-xl">{item.icon}</span>
-              <span>{item.label}</span>
-            </button>
-          ))}
+      <Drawer
+        placement="bottom"
+        height="auto"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        className="more-sheet"
+        closable={false}
+      >
+        <div className="sheet-grip" />
+        <div className="more-head">
+          <span>More</span>
+          <button
+            className="more-x"
+            onClick={() => setDrawerOpen(false)}
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+        <div className="more-list">
+          {moreItems.map((item, i) => {
+            const isLast = i === moreItems.length - 1 && item.danger;
+            return (
+              <Fragment key={item.label}>
+                {isLast && <div className="more-sep" />}
+                <button
+                  onClick={item.onClick}
+                  className={"more-item" + (item.danger ? " more-danger" : "")}
+                >
+                  <span className="more-ic">{item.icon}</span>
+                  <span className="more-lbl">{item.label}</span>
+                  {!item.danger && <span className="more-chev">›</span>}
+                </button>
+              </Fragment>
+            );
+          })}
         </div>
       </Drawer>
     </>
