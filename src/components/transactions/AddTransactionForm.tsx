@@ -1,18 +1,20 @@
-import { useEffect, useState } from "react";
-import {
-  Modal,
-  Form,
-  Input,
-  Select,
-  InputNumber,
-  DatePicker,
-  Button,
-  Popconfirm,
-  message,
-} from "antd";
-import { DeleteOutlined } from "@ant-design/icons";
+import { useEffect, useMemo, useState } from "react";
+import { message } from "antd";
 import dayjs from "dayjs";
 import { api } from "@/lib/api";
+import {
+  Modal,
+  FormBody,
+  Row,
+  Field,
+  TextInput,
+  AmountInput,
+  DateInput,
+  SelectInput,
+  Segmented,
+  FormFooter,
+  useFormState,
+} from "@/components/forms/FormKit";
 
 interface Account {
   id: string;
@@ -44,64 +46,89 @@ interface AddTransactionFormProps {
   transaction?: EditableTransaction | null;
 }
 
+type TxType = "income" | "expense" | "transfer";
+
+interface FormState {
+  type: TxType;
+  accountId: string;
+  transferToId: string;
+  amount: string;
+  categoryId: string;
+  date: string;
+  description: string;
+}
+
 export default function AddTransactionForm({
   open,
   onClose,
   onSuccess,
   transaction,
 }: AddTransactionFormProps) {
-  const [form] = Form.useForm();
-  const [txType, setTxType] = useState("expense");
+  const isEditing = !!transaction;
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const isEditing = !!transaction;
+
+  const initial: FormState = useMemo(
+    () => ({
+      type: (transaction?.type as TxType) ?? "expense",
+      accountId: transaction?.accountId ?? "",
+      transferToId: transaction?.transferToId ?? "",
+      amount: transaction ? String(Number(transaction.amount)) : "",
+      categoryId: transaction?.categoryId ?? "",
+      date: transaction?.date ?? dayjs().format("YYYY-MM-DD"),
+      description: transaction?.description ?? "",
+    }),
+    [transaction],
+  );
+
+  const { state, set, setState } = useFormState<FormState>(open, initial);
 
   useEffect(() => {
-    if (open) {
-      Promise.all([
-        api.get<Account[]>("/accounts"),
-        api.get<Category[]>("/categories"),
-      ]).then(([a, c]) => {
-        setAccounts(a);
-        setCategories(c);
-      });
+    if (!open) return;
+    setState(initial);
+    Promise.all([
+      api.get<Account[]>("/accounts"),
+      api.get<Category[]>("/categories"),
+    ]).then(([a, c]) => {
+      setAccounts(a);
+      setCategories(c);
+    });
+  }, [open, initial, setState]);
 
-      if (transaction) {
-        setTxType(transaction.type);
-        form.setFieldsValue({
-          type: transaction.type,
-          accountId: transaction.accountId,
-          amount: Number(transaction.amount),
-          categoryId: transaction.categoryId,
-          date: dayjs(transaction.date),
-          description: transaction.description,
-          transferToId: transaction.transferToId,
-        });
-      } else {
-        form.resetFields();
-        form.setFieldsValue({ type: "expense", date: dayjs() });
-        setTxType("expense");
-      }
-    }
-  }, [open, transaction, form]);
+  const filteredCategories = categories.filter(
+    (c) => state.type === "transfer" || c.type === state.type,
+  );
 
   const handleSubmit = async () => {
-    const values = await form.validateFields();
+    if (!state.accountId || !state.amount || !state.date) {
+      message.error("Account, amount, and date are required");
+      return;
+    }
+    if (state.type === "transfer" && !state.transferToId) {
+      message.error("Transfer destination is required");
+      return;
+    }
     setSubmitting(true);
     try {
       const payload = {
-        ...values,
-        amount: String(values.amount),
-        date: values.date.format("YYYY-MM-DD"),
+        type: state.type,
+        accountId: state.accountId,
+        transferToId: state.type === "transfer" ? state.transferToId : null,
+        amount: state.amount,
+        categoryId: state.categoryId || null,
+        date: state.date,
+        description: state.description || null,
       };
-      if (isEditing) {
+      if (isEditing && transaction) {
         await api.put(`/transactions/${transaction.id}`, payload);
         message.success("Transaction updated");
       } else {
         await api.post("/transactions", payload);
         message.success("Transaction added");
       }
+      // Cross-page refresh — Dashboard / other listeners refetch on this.
+      window.dispatchEvent(new Event("transaction-added"));
       onClose();
       onSuccess();
     } catch (e: any) {
@@ -116,6 +143,7 @@ export default function AddTransactionForm({
     try {
       await api.delete(`/transactions/${transaction.id}`);
       message.success("Deleted");
+      window.dispatchEvent(new Event("transaction-added"));
       onClose();
       onSuccess();
     } catch (e: any) {
@@ -123,95 +151,92 @@ export default function AddTransactionForm({
     }
   };
 
-  const filteredCategories = categories.filter(
-    (c) => txType === "transfer" || c.type === txType,
-  );
+  const onTypeChange = (t: TxType) => {
+    set("type", t);
+    set("categoryId", "");
+  };
 
   return (
     <Modal
-      title={isEditing ? "Edit Transaction" : "New Transaction"}
       open={open}
-      onOk={handleSubmit}
-      onCancel={onClose}
-      confirmLoading={submitting}
-      destroyOnClose
-      footer={
-        isEditing
-          ? [
-              <Popconfirm
-                key="delete"
-                title="Delete this transaction?"
-                onConfirm={handleDelete}
-                placement="top"
-              >
-                <Button danger icon={<DeleteOutlined />}>
-                  Delete
-                </Button>
-              </Popconfirm>,
-              <Button key="cancel" onClick={onClose}>
-                Cancel
-              </Button>,
-              <Button
-                key="save"
-                type="primary"
-                onClick={handleSubmit}
-                loading={submitting}
-              >
-                Save Changes
-              </Button>,
-            ]
-          : undefined
-      }
+      onClose={onClose}
+      title={isEditing ? "Edit Transaction" : "New Transaction"}
+      icon={isEditing ? "pencil" : "plus"}
     >
-      <Form
-        form={form}
-        layout="vertical"
-        initialValues={{ type: "expense", date: dayjs() }}
-      >
-        <Form.Item name="type" label="Type" rules={[{ required: true }]}>
-          <Select
-            onChange={(v) => {
-              setTxType(v);
-              form.setFieldValue("categoryId", undefined);
-            }}
+      <FormBody>
+        <Field label="Type" required>
+          <Segmented<TxType>
+            value={state.type}
+            onChange={onTypeChange}
             options={[
               { value: "income", label: "Income" },
               { value: "expense", label: "Expense" },
               { value: "transfer", label: "Transfer" },
             ]}
           />
-        </Form.Item>
-        <Form.Item name="accountId" label="Account" rules={[{ required: true }]}>
-          <Select
-            options={accounts.map((a) => ({ value: a.id, label: a.name }))}
-            placeholder="Select account"
-          />
-        </Form.Item>
-        {txType === "transfer" && (
-          <Form.Item name="transferToId" label="Transfer To" rules={[{ required: true }]}>
-            <Select
+        </Field>
+        <Row>
+          <Field label="Account" required>
+            <SelectInput
+              value={state.accountId}
+              onChange={(v) => set("accountId", v)}
               options={accounts.map((a) => ({ value: a.id, label: a.name }))}
+              placeholder="Select account"
+            />
+          </Field>
+          <Field label="Amount" required>
+            <AmountInput
+              value={state.amount}
+              onChange={(v) => set("amount", v)}
+            />
+          </Field>
+        </Row>
+        {state.type === "transfer" && (
+          <Field label="Transfer To" required>
+            <SelectInput
+              value={state.transferToId}
+              onChange={(v) => set("transferToId", v)}
+              options={accounts
+                .filter((a) => a.id !== state.accountId)
+                .map((a) => ({ value: a.id, label: a.name }))}
               placeholder="Select destination"
             />
-          </Form.Item>
+          </Field>
         )}
-        <Form.Item name="amount" label="Amount" rules={[{ required: true }]}>
-          <InputNumber className="w-full" precision={2} min={0.01} />
-        </Form.Item>
-        <Form.Item name="categoryId" label="Category">
-          <Select
-            allowClear
-            placeholder="Select category"
-            options={filteredCategories.map((c) => ({ value: c.id, label: c.name }))}
+        <Row>
+          <Field label="Category">
+            <SelectInput
+              value={state.categoryId}
+              onChange={(v) => set("categoryId", v)}
+              options={[
+                { value: "", label: "—" },
+                ...filteredCategories.map((c) => ({
+                  value: c.id,
+                  label: c.name,
+                })),
+              ]}
+            />
+          </Field>
+          <Field label="Date" required>
+            <DateInput value={state.date} onChange={(v) => set("date", v)} />
+          </Field>
+        </Row>
+        <Field label="Note">
+          <TextInput
+            value={state.description}
+            onChange={(v) => set("description", v)}
+            placeholder="What was this for?"
           />
-        </Form.Item>
-        <Form.Item name="date" label="Date" rules={[{ required: true }]}>
-          <DatePicker className="w-full" />
-        </Form.Item>
-        <Form.Item name="description" label="Note">
-          <Input placeholder="What was this for?" />
-        </Form.Item>
-      </Form>
+        </Field>
+      </FormBody>
+      <FormFooter
+        primary={isEditing ? "Save Changes" : "Add Transaction"}
+        onPrimary={handleSubmit}
+        onCancel={onClose}
+        loading={submitting}
+        danger={isEditing ? "Delete" : undefined}
+        onDanger={isEditing ? handleDelete : undefined}
+      />
     </Modal>
   );
 }

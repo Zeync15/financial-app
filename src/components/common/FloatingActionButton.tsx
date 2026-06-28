@@ -10,13 +10,12 @@ export default function FloatingActionButton({ onClick }: FABProps) {
       onClick={onClick}
       className="fixed z-50 flex items-center justify-center rounded-full border-none cursor-pointer shadow-lg active:scale-95 transition-transform"
       style={{
-        width: 56,
-        height: 56,
+        width: 48,
+        height: 48,
         right: 16,
-        bottom:
-          "calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 16px)",
-        backgroundColor: "#52c41a",
-        color: "#fff",
+        bottom: "calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 16px)",
+        backgroundColor: "var(--accent)",
+        color: "var(--accent-ink)",
         fontSize: 24,
       }}
     >

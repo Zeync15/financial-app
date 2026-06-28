@@ -7,13 +7,16 @@ interface IconCircleProps {
 export default function IconCircle({ icon, color, size = 40 }: IconCircleProps) {
   return (
     <div
-      className="shrink-0 flex items-center justify-center rounded-full"
+      className="shrink-0"
       style={{
         width: size,
         height: size,
-        backgroundColor: `${color}20`,
+        borderRadius: 11,
+        display: "grid",
+        placeItems: "center",
+        background: `color-mix(in oklab, ${color} 24%, transparent)`,
         color,
-        fontSize: size * 0.45,
+        fontSize: size * 0.5,
       }}
     >
       {icon}

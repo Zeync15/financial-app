@@ -2,17 +2,49 @@
 
 :root {
   --bottom-nav-height: 56px;
+
+  /* Design system tokens */
+  --accent: #1ec98a;
+  --accent-ink: #06241a;
+  --bg: #0d1218;
+  --panel: #161c23;
+  --sider-bg: #11161c;
+  --line: rgba(255, 255, 255, 0.10);
+  --line-soft: rgba(255, 255, 255, 0.06);
+  --t1: rgba(255, 255, 255, 0.95);
+  --t2: rgba(255, 255, 255, 0.6);
+  --t3: rgba(255, 255, 255, 0.42);
+  --t4: rgba(255, 255, 255, 0.28);
+  --pos: #1ec98a;
+  --neg: #ff6b6b;
+
+  /* Tell iOS/macOS to paint browser chrome (scroll bounce area, form
+     controls, scrollbars) in dark mode so the overscroll area is not white. */
+  color-scheme: dark;
 }
 
 html,
 body,
 #root {
-  height: 100%;
   margin: 0;
+  /* Paint the overscroll/bounce area with our app background instead of
+     the browser default (white on iOS Safari/Chrome). */
+  background: var(--bg);
+}
+
+/* Body grows with content so the document itself scrolls naturally on
+   mobile. Desktop layouts that need a fixed viewport set their own
+   100vh on the AntD Layout root. */
+html,
+body,
+#root {
+  min-height: 100vh;
 }
 
 body {
   overflow-x: hidden;
+  /* Stop the bounce from triggering the iOS address-bar pull. */
+  overscroll-behavior-y: none;
 }
 
 /* Make Ant Design sider children a flex column so the bottom menu always sticks to the bottom */
@@ -26,4 +58,948 @@ body {
 /* Safe area padding for notched phones */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ---------------- Auth ---------------- */
+.auth-shell {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 18px;
+  overflow: auto;
+  background: var(--bg);
+}
+
+.auth-card {
+  background: var(--panel) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  width: 384px;
+  max-width: 88%;
+}
+
+.auth-shell .ant-input-affix-wrapper:focus-within,
+.auth-shell .ant-input-affix-wrapper-focused {
+  box-shadow: 0 0 0 3px rgba(30, 201, 138, 0.18) !important;
+}
+
+.auth-shell .ant-btn-primary {
+  transition: filter 0.15s ease, transform 0.05s ease;
+}
+.auth-shell .ant-btn-primary:hover {
+  filter: brightness(1.06);
+}
+.auth-shell .ant-btn-primary:active {
+  transform: translateY(1px);
+}
+
+/* ---------------- App shell ---------------- */
+.app-shell {
+  position: relative;
+  background: var(--bg);
+}
+
+.app-sider {
+  background: var(--sider-bg) !important;
+}
+
+.app-sider .ant-menu,
+.app-sider .ant-menu-sub {
+  background: transparent !important;
+}
+
+.app-shell .ant-layout,
+.app-shell .ant-layout-content {
+  background: transparent !important;
+}
+
+/* ---------------- Panels / cards ---------------- */
+.app-shell .ant-card,
+.panel {
+  background: var(--panel) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 12px;
+  color: var(--t1);
+}
+
+.stat-card-highlight {
+  background: color-mix(in oklab, var(--accent) 15%, var(--panel)) !important;
+  border: 1px solid color-mix(in oklab, var(--accent) 45%, transparent) !important;
+}
+
+/* ---------------- Common bits ---------------- */
+.h1 {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+  color: var(--t1);
+}
+
+.titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.btn-primary-emerald {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-primary-emerald:hover {
+  filter: brightness(1.06);
+}
+
+/* chip */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 13px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--t2);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.chip.is-active {
+  background: color-mix(in oklab, var(--accent) 18%, transparent);
+  border-color: color-mix(in oklab, var(--accent) 50%, transparent);
+  color: #fff;
+}
+
+/* segmented */
+.seg {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--line);
+}
+.seg > span {
+  padding: 6px 14px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--t2);
+  cursor: pointer;
+  user-select: none;
+}
+.seg > span.on {
+  background: color-mix(in oklab, var(--accent) 22%, transparent);
+  color: #fff;
+}
+
+/* search input look (read-only stand-in for AntD Input) */
+.search-pill {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 38px;
+  padding: 0 13px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--t3);
+  font-size: 14px;
+  min-width: 220px;
+}
+
+/* row pattern (lists) */
+.tx-row {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--line-soft);
+}
+.tx-row:first-child {
+  border-top: none;
+}
+.tx-row .meta {
+  flex: 1;
+  min-width: 0;
+}
+.tx-row .lbl {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--t1);
+}
+.tx-row .sub {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 3px;
+  color: var(--t3);
+  font-size: 12px;
+}
+.tx-row .dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--t4);
+}
+.tx-row .amt {
+  flex: 0 0 auto;
+  font-size: 14.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* day group header */
+.day-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 18px 8px;
+  background: rgba(255, 255, 255, 0.02);
+}
+.day-head .d {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--t3);
+}
+.day-head .t {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+/* bar */
+.bar-row {
+  margin-bottom: 14px;
+}
+.bar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+.bar-track {
+  height: 7px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--accent);
+}
+
+/* type-tinted icon circle (different from common/IconCircle which uses AntD tokens) */
+.ic-tint {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+}
+
+/* Categories: drag grip + small bordered icon-buttons */
+.cat-grip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 32px;
+  margin-left: -4px;
+  color: var(--t4);
+  cursor: grab;
+  font-size: 14px;
+  flex-shrink: 0;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.cat-grip:hover {
+  color: var(--t2);
+}
+.cat-grip:active {
+  cursor: grabbing;
+}
+
+.cat-icon-btn {
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--t2);
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.cat-icon-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--t1);
+}
+.cat-icon-btn.danger:hover:not(:disabled) {
+  color: var(--neg);
+  border-color: color-mix(in oklab, var(--neg) 40%, transparent);
+}
+.cat-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* stat label/value used on Loan cards etc */
+.stat-label {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+.stat-val {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--t1);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------- Glass card (alias of .panel) ---------------- */
+.glass {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--t1);
+}
+
+/* ---------------- Icon buttons (header actions) ---------------- */
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--t2);
+  cursor: pointer;
+  font-size: 16px;
+}
+.icon-btn:hover {
+  color: var(--t1);
+  background: rgba(255, 255, 255, 0.07);
+}
+.icon-btn.sm {
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+}
+.icon-btn.danger:hover {
+  color: var(--neg);
+  border-color: color-mix(in oklab, var(--neg) 50%, transparent);
+}
+
+/* ghost button (chip-style for inline actions) */
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--t2);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--t1);
+}
+
+/* ---------------- Pills (gain / loss indicators) ---------------- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.pill.up {
+  background: color-mix(in oklab, var(--pos) 16%, transparent);
+  color: var(--pos);
+}
+.pill.down {
+  background: color-mix(in oklab, var(--neg) 16%, transparent);
+  color: var(--neg);
+}
+
+/* ---------------- Ticker badge (investments) ---------------- */
+.ticker {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* ---------------- ic-circle (loan/investment type badge) ---------------- */
+.ic-circle {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+}
+
+/* ---------------- Tables (amortization etc) ---------------- */
+.lg-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.lg-table th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--t3);
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.lg-table td {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 13px;
+  color: var(--t1);
+}
+.lg-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------- Hide scrollbars ---------------- */
+.noscroll::-webkit-scrollbar {
+  display: none;
+}
+.noscroll {
+  scrollbar-width: none;
+}
+
+/* ---------------- Forms kit ---------------- */
+.fm-modal .ant-modal-content {
+  background: var(--panel) !important;
+  border: 1px solid var(--line);
+  border-radius: 16px !important;
+  padding: 0 !important;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+.fm-modal .ant-modal-close {
+  top: 18px !important;
+  inset-inline-end: 18px !important;
+  color: var(--t3) !important;
+}
+.fm-modal .ant-modal-close:hover {
+  color: var(--t1) !important;
+}
+
+.fm-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 22px 14px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--t1);
+  letter-spacing: -0.01em;
+}
+.fm-head-ic {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--accent) 20%, transparent);
+  color: var(--accent);
+}
+.fm-body {
+  padding: 6px 22px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.fm-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.fm-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 18px 22px 20px;
+  margin-top: 6px;
+}
+.fm-foot-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+/* field */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.field-lbl {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--t1);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.field-lbl .req {
+  color: var(--neg);
+  font-style: normal;
+  font-weight: 600;
+}
+.field-hint {
+  font-size: 11.5px;
+  color: var(--t3);
+  margin-top: -1px;
+}
+
+.fld {
+  position: relative;
+  display: block;
+}
+.fld-input {
+  width: 100%;
+  height: 44px;
+  border: 1.5px solid rgba(255, 255, 255, 0.34);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--t1);
+  font-size: 14.5px;
+  font-family: inherit;
+  padding: 0 14px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.fld-input::placeholder {
+  color: var(--t3);
+}
+.fld-input:hover {
+  border-color: var(--accent);
+}
+.fld-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 18%, transparent);
+}
+.fld-select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 40px;
+  cursor: pointer;
+}
+.fld-select option {
+  color: #fff;
+  background: #11161c;
+}
+.fld-chev {
+  position: absolute;
+  top: 0;
+  right: 12px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: var(--t3);
+  pointer-events: none;
+}
+.fld.has-cur .fld-input {
+  padding-left: 48px;
+}
+.fld-cur {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 44px;
+  width: 40px;
+  display: grid;
+  place-items: center;
+  color: var(--t3);
+  font-size: 13.5px;
+  font-weight: 600;
+  border-right: 1px solid var(--line-soft);
+  pointer-events: none;
+}
+
+/* segmented control (large variant for forms) */
+.seg-lg {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(255, 255, 255, 0.34);
+}
+.seg-lg-item {
+  height: 38px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--t2);
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.seg-lg-item:hover {
+  color: var(--t1);
+}
+.seg-lg-item.on {
+  color: #fff;
+}
+.seg-lg-item.on.tone-accent {
+  background: color-mix(in oklab, var(--accent) 26%, transparent);
+}
+.seg-lg-item.on.tone-pos {
+  background: color-mix(in oklab, var(--pos) 26%, transparent);
+}
+.seg-lg-item.on.tone-neg {
+  background: color-mix(in oklab, var(--neg) 26%, transparent);
+}
+
+/* footer buttons */
+.btn-pill {
+  height: 42px;
+  padding: 0 18px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: filter 0.12s, background 0.12s, border-color 0.12s;
+}
+.btn-pill.btn-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.btn-pill.btn-primary:hover {
+  filter: brightness(1.06);
+}
+.btn-pill.btn-ghost {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--line);
+  color: var(--t1);
+  height: 42px;
+  padding: 0 18px;
+  font-size: 14px;
+}
+.btn-pill.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.btn-pill.btn-danger {
+  background: transparent;
+  border-color: color-mix(in oklab, var(--neg) 45%, transparent);
+  color: var(--neg);
+}
+.btn-pill.btn-danger:hover {
+  background: color-mix(in oklab, var(--neg) 12%, transparent);
+}
+
+/* ---------------- Chip-style native select (filter chips) ---------------- */
+/* Wraps a real <select> so iOS opens the native picker (no focus-zoom) but
+   the visual matches our `.chip`/`.seg` aesthetic. */
+.chip-select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.chip-select select {
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--t1);
+  height: 38px;
+  padding: 0 32px 0 13px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  outline: none;
+  min-width: 150px;
+  cursor: pointer;
+}
+.chip-select select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 18%, transparent);
+}
+.chip-select select option {
+  background: #11161c;
+  color: var(--t1);
+}
+.chip-select-chev {
+  position: absolute;
+  right: 12px;
+  color: var(--t3);
+  pointer-events: none;
+  font-size: 12px;
+}
+@media (max-width: 767px) {
+  .chip-select select {
+    font-size: 16px;
+  }
+}
+
+/* ---------------- AntD DatePicker theming ---------------- */
+/* Use the lighter form-input look so the picker doesn't read as black on
+   our --panel background. */
+.ant-picker {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: var(--line) !important;
+}
+.ant-picker:hover {
+  border-color: var(--accent) !important;
+}
+.ant-picker-focused {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 18%, transparent) !important;
+}
+/* iOS Safari zooms in when a focused input's font-size < 16px. Force 16px
+   on mobile to suppress that without disabling user pinch-zoom. */
+@media (max-width: 767px) {
+  .ant-picker .ant-picker-input > input,
+  .ant-input,
+  .ant-input-number-input,
+  .ant-select-selection-search-input,
+  .ant-select-selection-item {
+    font-size: 16px !important;
+  }
+
+  /* RangePicker shows two month panels side-by-side by default, which
+     overflows a phone viewport. Stack them vertically and constrain the
+     dropdown to the viewport width. */
+  .ant-picker-dropdown {
+    max-width: calc(100vw - 16px) !important;
+    left: 8px !important;
+    right: 8px !important;
+  }
+  .ant-picker-dropdown .ant-picker-panels {
+    flex-direction: column !important;
+  }
+  .ant-picker-dropdown .ant-picker-panel-container {
+    overflow: hidden;
+  }
+  .ant-picker-dropdown .ant-picker-range-arrow {
+    display: none !important;
+  }
+  /* When the start panel is visible, hide the end-side double arrows so the
+     single-column layout reads cleanly. */
+  .ant-picker-dropdown .ant-picker-panels > div:first-child .ant-picker-header {
+    border-bottom: 1px solid var(--line-soft);
+  }
+}
+
+/* ---------------- Form drawer (mobile bottom sheet for form modals) ---------------- */
+.fm-drawer .ant-drawer-content {
+  background: var(--panel) !important;
+  border-top: 1px solid var(--line) !important;
+  border-radius: 22px 22px 0 0 !important;
+}
+.fm-drawer .ant-drawer-header {
+  display: none;
+}
+.fm-drawer .ant-drawer-body {
+  padding: 10px 0 calc(env(safe-area-inset-bottom, 0px) + 8px) !important;
+}
+
+/* ---------------- More sheet (mobile bottom drawer) ---------------- */
+.more-sheet .ant-drawer-content {
+  background: var(--panel) !important;
+  border-top: 1px solid var(--line) !important;
+  border-radius: 22px 22px 0 0 !important;
+}
+.more-sheet .ant-drawer-header {
+  display: none;
+}
+.more-sheet .ant-drawer-body {
+  padding: 10px 18px 26px !important;
+}
+.sheet-grip {
+  width: 38px;
+  height: 4px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 4px auto 16px;
+}
+.more-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 2px 14px;
+}
+.more-head > span {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--t1);
+  letter-spacing: -0.01em;
+}
+.more-x {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--t2);
+  cursor: pointer;
+  font-size: 14px;
+}
+.more-x:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--t1);
+}
+.more-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.more-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 10px;
+  border-radius: 12px;
+  border: 0;
+  background: transparent;
+  color: var(--t1);
+  font-size: 15px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  width: 100%;
+  text-align: left;
+  transition: background 0.14s;
+}
+.more-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.more-ic {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--t2);
+  font-size: 16px;
+}
+.more-lbl {
+  flex: 1;
+}
+.more-sep {
+  height: 1px;
+  background: var(--line-soft);
+  margin: 7px 6px;
+}
+.more-item.more-danger {
+  color: var(--neg);
+}
+.more-item.more-danger .more-ic {
+  background: color-mix(in oklab, var(--neg) 16%, transparent);
+  color: var(--neg);
+}
+.more-chev {
+  color: var(--t4);
+  font-size: 14px;
+}
+
+/* ---------------- Dashboard hero + mini-stats ---------------- */
+.kpi-lbl {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--t3);
+}
+.kpi-val {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  margin-top: 6px;
+  color: var(--t1);
+}
+.stat-click {
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.stat-click:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+.viewlink {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--t3);
+  font-size: 12.5px;
+  text-decoration: none;
+}
+.viewlink:hover {
+  color: var(--t1);
+}
+.grp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 18px 8px;
+}
+.grp-head .d {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--t3);
+}
+.grp-head .t {
+  font-size: 12.5px;
+  font-weight: 600;
 }

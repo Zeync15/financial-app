@@ -74,8 +74,35 @@ const CATEGORY_COLS =
   "id, userId:user_id, name, icon, color, type, parentId:parent_id, sortOrder:sort_order, isActive:is_active";
 
 async function listCategories() {
-  // RLS exposes own rows + system defaults (user_id IS NULL)
-  return unwrap(await supabase.from("category").select(CATEGORY_COLS).order("sort_order"));
+  // RLS exposes own rows + system defaults (user_id IS NULL).
+  // Merge per-user sort overrides from user_category_order.
+  const [cats, overrides] = await Promise.all([
+    supabase.from("category").select(CATEGORY_COLS).order("sort_order"),
+    supabase.from("user_category_order").select("category_id, sort_order"),
+  ]);
+  const rows = unwrap(cats) as any[];
+  const ov = unwrap(overrides) as { category_id: string; sort_order: number }[];
+  const ovMap = new Map(ov.map((r) => [r.category_id, r.sort_order]));
+  return rows
+    .map((r) => ({ ...r, sortOrder: ovMap.get(r.id) ?? r.sortOrder }))
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+async function reorderCategories(body: Body) {
+  const user_id = await getUserId();
+  const order = body.order as { id: string; sortOrder: number }[];
+  if (!Array.isArray(order) || order.length === 0) return { success: true };
+  const rows = order.map((o) => ({
+    user_id,
+    category_id: o.id,
+    sort_order: o.sortOrder,
+    updated_at: nowIso(),
+  }));
+  const { error } = await supabase
+    .from("user_category_order")
+    .upsert(rows, { onConflict: "user_id,category_id" });
+  if (error) throw new Error(error.message);
+  return { success: true };
 }
 async function createCategory(b: Body) {
   const user_id = await getUserId();
@@ -428,6 +455,29 @@ async function getDashboard() {
   };
 }
 
+// ─── user settings (key/value) ─────────────────────────────────────────────
+async function listSettings(): Promise<Record<string, string>> {
+  const rows = unwrap(
+    await supabase.from("user_setting").select("key, value"),
+  ) as Array<{ key: string; value: string | null }>;
+  const out: Record<string, string> = {};
+  for (const r of rows) if (r.value != null) out[r.key] = r.value;
+  return out;
+}
+
+async function upsertSetting(key: string, body: Body) {
+  const user_id = await getUserId();
+  const value = body.value == null ? null : String(body.value);
+  const { error } = await supabase
+    .from("user_setting")
+    .upsert(
+      { user_id, key, value, updated_at: nowIso() },
+      { onConflict: "user_id,key" },
+    );
+  if (error) throw new Error(error.message);
+  return { success: true };
+}
+
 // ─── generic delete by id ─────────────────────────────────────────────────
 async function deleteRow(table: string, id: string) {
   const { error } = await supabase.from(table).delete().eq("id", id);
@@ -458,7 +508,10 @@ async function route(method: "GET" | "POST" | "PUT" | "DELETE", path: string, bo
     case "categories":
       if (method === "GET") return listCategories();
       if (method === "POST") return createCategory(body!);
-      if (method === "PUT") return updateCategory(p1!, body!);
+      if (method === "PUT") {
+        if (p1 === "reorder") return reorderCategories(body!);
+        return updateCategory(p1!, body!);
+      }
       if (method === "DELETE") return deleteRow("category", p1!);
       break;
 
@@ -488,6 +541,13 @@ async function route(method: "GET" | "POST" | "PUT" | "DELETE", path: string, bo
       if (method === "PUT" && p2 === "holdings") return updateHolding(p1!, p3!, body!);
       if (method === "DELETE" && p2 === "holdings") return deleteHolding(p1!, p3!);
       if (method === "DELETE") return deleteRow("portfolio", p1!);
+      break;
+
+    case "settings":
+      // GET /settings        -> { [key]: value }
+      // PUT /settings/:key   -> upsert { value: string }
+      if (method === "GET") return listSettings();
+      if (method === "PUT") return upsertSetting(p1!, body!);
       break;
   }
   throw new Error(`Unhandled API route: ${method} ${path}`);

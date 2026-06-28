@@ -6,10 +6,6 @@ import {
   Col,
   Progress,
   Button,
-  Modal,
-  Form,
-  Select,
-  InputNumber,
   message,
   Popconfirm,
   Empty,
@@ -17,8 +13,17 @@ import {
 import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import { api } from "@/lib/api";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import {
+  Modal,
+  FormBody,
+  Field,
+  AmountInput,
+  SelectInput,
+  FormFooter,
+  useFormState,
+} from "@/components/forms/FormKit";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 interface Budget {
   id: string;
@@ -37,12 +42,29 @@ interface Category {
   type: string;
 }
 
+const PERIOD_OPTS = [
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+  { value: "yearly", label: "Yearly" },
+];
+
+interface BudgetFormState {
+  categoryId: string;
+  amount: string;
+  period: string;
+}
+
 export default function Budgets() {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
-  const [form] = Form.useForm();
+  const [saving, setSaving] = useState(false);
+  const { state, set } = useFormState<BudgetFormState>(modalOpen, {
+    categoryId: "",
+    amount: "",
+    period: "monthly",
+  });
   const isMobile = useIsMobile();
 
   const load = () => {
@@ -63,14 +85,25 @@ export default function Budgets() {
   }, []);
 
   const handleCreate = async () => {
-    const values = await form.validateFields();
+    if (!state.categoryId || !state.amount || !state.period) {
+      message.error("Category, amount, and period are required");
+      return;
+    }
+    setSaving(true);
     try {
-      await api.post("/budgets", { ...values, amount: String(values.amount) });
+      await api.post("/budgets", {
+        categoryId: state.categoryId,
+        amount: String(state.amount),
+        period: state.period,
+        currency: "MYR",
+      });
       message.success("Budget created");
       setModalOpen(false);
       load();
     } catch (e: any) {
       message.error(e.message);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -88,20 +121,17 @@ export default function Budgets() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
-        <Title level={isMobile ? 4 : 3} className="mb-0!">
+      <div className="titlebar">
+        <h1 className="h1" style={{ fontSize: isMobile ? 22 : 26 }}>
           Budgets
-        </Title>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => {
-            form.resetFields();
-            setModalOpen(true);
-          }}
+        </h1>
+        <button
+          className="btn-primary-emerald"
+          onClick={() => setModalOpen(true)}
         >
-          Add Budget
-        </Button>
+          <PlusOutlined />
+          {isMobile ? "Add" : "Add Budget"}
+        </button>
       </div>
 
       {budgets.length === 0 && !loading ? (
@@ -153,47 +183,43 @@ export default function Budgets() {
       )}
 
       <Modal
-        title="New Budget"
         open={modalOpen}
-        onOk={handleCreate}
-        onCancel={() => setModalOpen(false)}
-        destroyOnClose
+        onClose={() => setModalOpen(false)}
+        title="New Budget"
+        icon="plus"
       >
-        <Form
-          form={form}
-          layout="vertical"
-          initialValues={{ period: "monthly", currency: "MYR" }}
-        >
-          <Form.Item
-            name="categoryId"
-            label="Category"
-            rules={[{ required: true }]}
-          >
-            <Select
-              placeholder="Select category"
+        <FormBody>
+          <Field label="Category" required>
+            <SelectInput
+              value={state.categoryId}
+              onChange={(v) => set("categoryId", v)}
               options={expenseCategories.map((c) => ({
                 value: c.id,
                 label: c.name,
               }))}
+              placeholder="Select category"
             />
-          </Form.Item>
-          <Form.Item
-            name="amount"
-            label="Budget Amount"
-            rules={[{ required: true }]}
-          >
-            <InputNumber className="w-full" precision={2} min={0.01} />
-          </Form.Item>
-          <Form.Item name="period" label="Period" rules={[{ required: true }]}>
-            <Select
-              options={[
-                { value: "weekly", label: "Weekly" },
-                { value: "monthly", label: "Monthly" },
-                { value: "yearly", label: "Yearly" },
-              ]}
+          </Field>
+          <Field label="Budget Amount" required>
+            <AmountInput
+              value={state.amount}
+              onChange={(v) => set("amount", v)}
             />
-          </Form.Item>
-        </Form>
+          </Field>
+          <Field label="Period" required>
+            <SelectInput
+              value={state.period}
+              onChange={(v) => set("period", v)}
+              options={PERIOD_OPTS}
+            />
+          </Field>
+        </FormBody>
+        <FormFooter
+          primary="Add Budget"
+          onPrimary={handleCreate}
+          onCancel={() => setModalOpen(false)}
+          loading={saving}
+        />
       </Modal>
     </div>
   );
