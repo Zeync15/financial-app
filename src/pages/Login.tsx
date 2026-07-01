@@ -82,6 +82,7 @@ export default function Login() {
               prefix={<MailOutlined />}
               placeholder="Email"
               size="large"
+              name="email"
               autoComplete="email"
               style={{ height: 44 }}
             />
@@ -95,6 +96,8 @@ export default function Login() {
               prefix={<LockOutlined />}
               placeholder="Password"
               size="large"
+              name="password"
+              autoComplete="current-password"
               style={{ height: 44 }}
             />
           </Form.Item>
