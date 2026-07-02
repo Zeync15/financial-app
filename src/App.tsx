@@ -9,6 +9,7 @@ import Transactions from "@/pages/Transactions";
 import Budgets from "@/pages/Budgets";
 import Investments from "@/pages/Investments";
 import Loans from "@/pages/Loans";
+import Instalments from "@/pages/Instalments";
 import Categories from "@/pages/Categories";
 
 const ACCENT = "#1ec98a";
@@ -88,6 +89,8 @@ export default function App() {
             <Route path="/investments/new" element={<Investments />} />
             <Route path="/loans" element={<Loans />} />
             <Route path="/loans/new" element={<Loans />} />
+            <Route path="/instalments" element={<Instalments />} />
+            <Route path="/instalments/new" element={<Instalments />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

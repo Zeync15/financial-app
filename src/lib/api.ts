@@ -6,6 +6,7 @@
 // money as DECIMAL strings) so the UI needs no changes.
 import { supabase, getUserId } from "./supabase";
 import { calculateSummary, calculateAmortization, getMonthsPaid } from "./loanCalculations";
+import { getRatesToMYR } from "./fxService";
 
 // ─── helpers ──────────────────────────────────────────────────────────────
 function unwrap<T>(res: { data: T | null; error: { message: string } | null }): T {
@@ -296,7 +297,7 @@ async function listPortfolios() {
              currentPrice:current_price, priceUpdatedAt:price_updated_at`,
           )
           .eq("portfolio_id", p.id),
-      ) as Array<{ quantity: string; avgCostPrice: string; currentPrice: string | null }>;
+      ) as Array<{ quantity: string; avgCostPrice: string; currentPrice: string | null; currency: string }>;
       // Value at market price when known, else fall back to cost basis.
       const totalValue = holdings.reduce(
         (s, h) => s + Number(h.quantity) * Number(h.currentPrice ?? h.avgCostPrice),
@@ -408,48 +409,137 @@ async function createLoan(b: Body) {
   );
 }
 
+// ─── instalments ────────────────────────────────────────────────────────────
+// Like loans but with no payment_type — always computed as flat-rate ("fixed").
+const INSTALMENT_COLS =
+  "id, name, principal, currency, interestRate:interest_rate, loanTermMonths:loan_term_months, startDate:start_date, createdAt:created_at";
+
+async function listInstalments() {
+  const rows = unwrap(
+    await supabase.from("instalment").select(INSTALMENT_COLS).order("created_at"),
+  ) as any[];
+  return rows.map((l) => {
+    const monthsPaid = getMonthsPaid(l.startDate);
+    const s = calculateSummary(
+      Number(l.principal),
+      Number(l.interestRate),
+      l.loanTermMonths,
+      "fixed",
+      monthsPaid,
+    );
+    return {
+      ...l,
+      monthlyPayment: s.monthlyPayment,
+      totalInterest: s.totalInterest,
+      remainingBalance: s.remainingBalance,
+      monthsPaid,
+    };
+  });
+}
+async function instalmentSchedule(id: string) {
+  const l = unwrap(
+    await supabase.from("instalment").select(INSTALMENT_COLS).eq("id", id).single(),
+  ) as any;
+  return calculateAmortization(Number(l.principal), Number(l.interestRate), l.loanTermMonths, "fixed");
+}
+async function createInstalment(b: Body) {
+  const user_id = await getUserId();
+  return unwrap(
+    await supabase
+      .from("instalment")
+      .insert({
+        user_id,
+        name: b.name,
+        principal: b.principal,
+        currency: b.currency || "MYR",
+        interest_rate: b.interestRate,
+        loan_term_months: b.loanTermMonths,
+        start_date: b.startDate,
+      })
+      .select()
+      .single(),
+  );
+}
+
+// Total market value of all holdings across portfolios, converted to MYR.
+// Falls back to cost basis when a holding has no live price, and to parity
+// when an FX rate can't be resolved (rather than silently dropping value).
+async function getInvestmentsValueMyr(): Promise<number> {
+  const portfolios = await listPortfolios();
+  const holdings = portfolios.flatMap((p) => p.holdings);
+  if (holdings.length === 0) return 0;
+  const rates = await getRatesToMYR(holdings.map((h) => h.currency));
+  return holdings.reduce((s, h) => {
+    const native = Number(h.quantity) * Number(h.currentPrice ?? h.avgCostPrice);
+    const rate = rates[h.currency] ?? 1;
+    return s + native * rate;
+  }, 0);
+}
+
 // ─── dashboard ──────────────────────────────────────────────────────────────
 async function getDashboard() {
   const accounts = unwrap(
     await supabase.from("financial_account").select("id, type, balance, isActive:is_active").eq("is_active", true),
   ) as Array<{ type: string; balance: string }>;
 
-  const totalAssets = accounts
+  const accountAssets = accounts
     .filter((a) => a.type !== "credit_card" && a.type !== "loan")
     .reduce((s, a) => s + Number(a.balance), 0);
-  const totalLiabilities = accounts
+  const accountLiabilities = accounts
     .filter((a) => a.type === "credit_card" || a.type === "loan")
     .reduce((s, a) => s + Math.abs(Number(a.balance)), 0);
 
-  const loans = unwrap(await supabase.from("loan").select("principal")) as Array<{
-    principal: string;
-  }>;
-  const totalLoanBalance = loans.reduce((s, l) => s + Number(l.principal), 0);
-  const netWorth = totalAssets - totalLiabilities - totalLoanBalance;
+  // Live investment + loan + instalment data, so the dashboard reflects the
+  // Investments, Loans and Instalments pages without the user having to mirror
+  // them as manual accounts.
+  const [investmentsValue, loans, instalments] = await Promise.all([
+    getInvestmentsValueMyr(),
+    listLoans() as Promise<Array<{ remainingBalance: number }>>,
+    listInstalments() as Promise<Array<{ remainingBalance: number }>>,
+  ]);
+  const totalLoanBalance =
+    loans.reduce((s, l) => s + l.remainingBalance, 0) +
+    instalments.reduce((s, l) => s + l.remainingBalance, 0);
+
+  const totalAssets = accountAssets + investmentsValue;
+  const totalLiabilities = accountLiabilities + totalLoanBalance;
+  const netWorth = totalAssets - totalLiabilities;
 
   const now = new Date();
   const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0]!;
+  // Trailing 12 months: from the same day one year ago through today.
+  const ttmStart = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate() + 1)
+    .toISOString()
+    .split("T")[0]!;
+  const todayStr = now.toISOString().split("T")[0]!;
 
-  const sumByType = async (type: "income" | "expense") => {
+  const sumByType = async (type: "income" | "expense", start: string, end: string) => {
     const rows = unwrap(
       await supabase
         .from("transaction")
         .select("amount")
         .eq("type", type)
-        .gte("date", monthStart)
-        .lte("date", monthEnd),
+        .gte("date", start)
+        .lte("date", end),
     ) as Array<{ amount: string }>;
     return rows.reduce((s, t) => s + Number(t.amount), 0);
   };
-  const [monthlyIncome, monthlyExpense] = await Promise.all([sumByType("income"), sumByType("expense")]);
+  const [monthlyIncome, monthlyExpense, ttmIncome, ttmExpense] = await Promise.all([
+    sumByType("income", monthStart, monthEnd),
+    sumByType("expense", monthStart, monthEnd),
+    sumByType("income", ttmStart, todayStr),
+    sumByType("expense", ttmStart, todayStr),
+  ]);
 
   return {
     netWorth,
     totalAssets,
-    totalLiabilities: totalLiabilities + totalLoanBalance,
+    totalLiabilities,
     monthlyIncome,
     monthlyExpense,
+    // Actual net over the trailing 12 months (income − expenses).
+    yearlyGain: ttmIncome - ttmExpense,
     accountCount: accounts.length,
     loanCount: loans.length,
   };
@@ -532,6 +622,12 @@ async function route(method: "GET" | "POST" | "PUT" | "DELETE", path: string, bo
       if (method === "GET") return p1 && p2 === "schedule" ? loanSchedule(p1) : listLoans();
       if (method === "POST") return createLoan(body!);
       if (method === "DELETE") return deleteRow("loan", p1!);
+      break;
+
+    case "instalments":
+      if (method === "GET") return p1 && p2 === "schedule" ? instalmentSchedule(p1) : listInstalments();
+      if (method === "POST") return createInstalment(body!);
+      if (method === "DELETE") return deleteRow("instalment", p1!);
       break;
 
     case "portfolios":

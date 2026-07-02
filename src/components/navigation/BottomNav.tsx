@@ -9,6 +9,7 @@ import {
   FundOutlined,
   DollarOutlined,
   TagOutlined,
+  CreditCardOutlined,
   LogoutOutlined,
 } from "@ant-design/icons";
 import { signOut } from "@/lib/auth-client";
@@ -89,6 +90,14 @@ export default function BottomNav() {
       },
     },
     {
+      icon: <CreditCardOutlined />,
+      label: "Instalments",
+      onClick: () => {
+        navigate("/instalments");
+        setDrawerOpen(false);
+      },
+    },
+    {
       icon: <LogoutOutlined />,
       label: "Sign Out",
       onClick: handleSignOut,
@@ -99,9 +108,12 @@ export default function BottomNav() {
   return (
     <>
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 flex items-stretch border-t pb-safe"
+        className="z-50 flex items-stretch border-t pb-safe shrink-0"
         style={{
           height: "var(--bottom-nav-height)",
+          // Extend the bar's own height past the nav row to fill the safe-area
+          // (home-indicator) inset, since it now sits in normal flow.
+          boxSizing: "content-box",
           background: "var(--sider-bg)",
           borderColor: token.colorBorderSecondary,
         }}

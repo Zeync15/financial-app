@@ -11,6 +11,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
 import { api } from "@/lib/api";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { useFabAction } from "@/hooks/useFabAction";
 import IconCircle from "@/components/common/IconCircle";
 import { getCategoryIcon, DEFAULT_CATEGORY_COLOR } from "@/lib/categoryIcons";
 import AddTransactionForm, {
@@ -134,6 +135,16 @@ export default function Transactions() {
   // the form drawer/modal in response to the URL and navigate back on close.
   const wantsNew = location.pathname.endsWith("/transactions/new");
   const wantsEdit = !!editParamId;
+
+  // FAB opens the add form: full-screen route on mobile, drawer on desktop.
+  useFabAction(() => {
+    if (isMobile) {
+      navigate("/transactions/new");
+    } else {
+      setEditingTx(null);
+      setFormOpen(true);
+    }
+  });
 
   const load = () => {
     setLoading(true);

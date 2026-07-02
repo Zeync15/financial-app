@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Spin, Empty, Popconfirm, message } from "antd";
+import { Spin, Empty, message } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   PlusOutlined,
   ReloadOutlined,
-  DeleteOutlined,
   RiseOutlined,
   FallOutlined,
   AppstoreOutlined,
@@ -13,6 +12,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { api } from "@/lib/api";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { useFabAction } from "@/hooks/useFabAction";
 import { getQuote, isAutoPriceable } from "@/lib/priceService";
 import { getRatesToMYR } from "@/lib/fxService";
 import {
@@ -74,6 +74,10 @@ const CUR_OPTS = ["MYR", "USD", "SGD", "EUR", "GBP"];
 const fmt = (n: number) =>
   n.toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmt0 = (n: number) => Math.round(n).toLocaleString();
+// Per-unit prices keep up to 4 decimals (matches the DECIMAL(19,4) columns),
+// unlike totals/values which round to 2.
+const fmtPrice = (n: number) =>
+  n.toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
 
 interface EnrichedHolding {
   raw: Holding;
@@ -179,17 +183,24 @@ function GLPill({ value, pct }: { value: number; pct: number }) {
 
 function HoldingCardDesktop({
   h,
-  onDelete,
+  onClick,
   onSavePrice,
 }: {
   h: EnrichedHolding;
-  onDelete: () => void;
+  onClick: () => void;
   onSavePrice?: (raw: string) => void;
 }) {
   const down = h.gainNative < 0;
   const typeLabel = TYPE_OPTS.find((t) => t.value === h.raw.type)?.label ?? h.raw.type;
   return (
-    <div className="glass" style={{ padding: 20, marginBottom: 14 }}>
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => e.key === "Enter" && onClick()}
+      className="glass"
+      style={{ padding: 20, marginBottom: 14, cursor: "pointer" }}
+    >
       <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
         <TickerBadge h={h} />
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -235,15 +246,6 @@ function HoldingCardDesktop({
             </div>
           )}
         </div>
-        <Popconfirm title="Remove holding?" onConfirm={onDelete}>
-          <button
-            className="icon-btn sm danger"
-            title="Remove"
-            style={{ marginLeft: 4 }}
-          >
-            <DeleteOutlined />
-          </button>
-        </Popconfirm>
       </div>
 
       <div
@@ -262,13 +264,15 @@ function HoldingCardDesktop({
               placeholder="Set"
               className="fld-input"
               style={{ height: 32, padding: "0 8px", fontSize: 14 }}
+              onClick={(e) => e.stopPropagation()}
               onBlur={(e) => onSavePrice(e.target.value)}
               onKeyDown={(e) => {
+                e.stopPropagation();
                 if (e.key === "Enter") (e.target as HTMLInputElement).blur();
               }}
             />
           ) : (
-            <div className="stat-val">{fmt(h.price)}</div>
+            <div className="stat-val">{fmtPrice(h.price)}</div>
           )}
         </div>
         <div>
@@ -277,7 +281,7 @@ function HoldingCardDesktop({
         </div>
         <div>
           <div className="stat-label">Avg cost</div>
-          <div className="stat-val">{fmt(h.avgCost)}</div>
+          <div className="stat-val">{fmtPrice(h.avgCost)}</div>
         </div>
         <div>
           <div className="stat-label">Gain / Loss</div>
@@ -339,16 +343,23 @@ function HoldingCardDesktop({
 
 function HoldingCardMobile({
   h,
-  onDelete,
+  onClick,
   onSavePrice,
 }: {
   h: EnrichedHolding;
-  onDelete: () => void;
+  onClick: () => void;
   onSavePrice?: (raw: string) => void;
 }) {
   const down = h.gainNative < 0;
   return (
-    <div className="glass" style={{ padding: 15 }}>
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => e.key === "Enter" && onClick()}
+      className="glass"
+      style={{ padding: 15, cursor: "pointer" }}
+    >
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 13 }}>
         <TickerBadge h={h} size={38} />
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -380,11 +391,6 @@ function HoldingCardMobile({
             </div>
           )}
         </div>
-        <Popconfirm title="Remove holding?" onConfirm={onDelete}>
-          <button className="icon-btn sm danger" title="Remove">
-            <DeleteOutlined />
-          </button>
-        </Popconfirm>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
         <div>
@@ -397,14 +403,16 @@ function HoldingCardMobile({
               placeholder="Set"
               className="fld-input"
               style={{ height: 28, padding: "0 8px", fontSize: 13 }}
+              onClick={(e) => e.stopPropagation()}
               onBlur={(e) => onSavePrice(e.target.value)}
               onKeyDown={(e) => {
+                e.stopPropagation();
                 if (e.key === "Enter") (e.target as HTMLInputElement).blur();
               }}
             />
           ) : (
             <div className="stat-val" style={{ fontSize: 14 }}>
-              {fmt(h.price)}
+              {fmtPrice(h.price)}
             </div>
           )}
         </div>
@@ -451,23 +459,34 @@ interface HoldingFormState {
   avgCostPrice: string;
 }
 
-function AddHoldingModal({
+function HoldingModal({
   open,
+  editing,
   onClose,
   onSubmit,
+  onDelete,
 }: {
   open: boolean;
+  editing: Holding | null;
   onClose: () => void;
   onSubmit: (values: HoldingFormState) => Promise<void>;
+  onDelete?: () => void;
 }) {
-  const { state, set } = useFormState<HoldingFormState>(open, {
-    symbol: "",
-    name: "",
-    currency: "MYR",
-    type: "etf",
-    quantity: "",
-    avgCostPrice: "",
-  });
+  const initial: HoldingFormState = useMemo(
+    () => ({
+      symbol: editing?.symbol ?? "",
+      name: editing?.name ?? "",
+      currency: editing?.currency ?? "MYR",
+      type: editing?.type ?? "etf",
+      quantity: editing ? String(Number(editing.quantity)) : "",
+      avgCostPrice: editing ? String(Number(editing.avgCostPrice)) : "",
+    }),
+    [editing],
+  );
+  const { state, set, setState } = useFormState<HoldingFormState>(open, initial);
+  useEffect(() => {
+    if (open) setState(initial);
+  }, [open, initial, setState]);
   const [saving, setSaving] = useState(false);
 
   const submit = async () => {
@@ -484,7 +503,12 @@ function AddHoldingModal({
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Add Holding" icon="plus">
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={editing ? "Edit Holding" : "Add Holding"}
+      icon={editing ? "pencil" : "plus"}
+    >
       <FormBody>
         <Field label="Symbol" required>
           <TextInput
@@ -525,22 +549,26 @@ function AddHoldingModal({
               value={state.quantity}
               onChange={(v) => set("quantity", v)}
               placeholder="0"
+              maxDecimals={6}
             />
           </Field>
-          <Field label="Avg Cost Price" required>
+          <Field label="Avg Cost Price" required hint="Up to 4 decimal places">
             <AmountInput
               value={state.avgCostPrice}
               onChange={(v) => set("avgCostPrice", v)}
               currency={state.currency}
+              maxDecimals={4}
             />
           </Field>
         </Row>
       </FormBody>
       <FormFooter
-        primary="Add Holding"
+        primary={editing ? "Save Changes" : "Add Holding"}
         onPrimary={submit}
         onCancel={onClose}
         loading={saving}
+        danger={editing ? "Delete" : undefined}
+        onDanger={editing ? onDelete : undefined}
       />
     </Modal>
   );
@@ -551,6 +579,9 @@ export default function Investments() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [hModalOpen, setHModalOpen] = useState(false);
+  // Non-null when the holding modal is editing an existing position rather
+  // than adding a new one.
+  const [editingHolding, setEditingHolding] = useState<Holding | null>(null);
   const [rates, setRates] = useState<Record<string, number | null>>({});
   const isMobile = useIsMobile();
   const navigate = useNavigate();
@@ -560,14 +591,31 @@ export default function Investments() {
   const wantsNew = location.pathname.endsWith("/investments/new");
 
   useEffect(() => {
-    if (wantsNew) setHModalOpen(true);
-    else setHModalOpen(false);
+    if (wantsNew) {
+      setEditingHolding(null);
+      setHModalOpen(true);
+    } else {
+      setHModalOpen(false);
+    }
   }, [wantsNew]);
 
-  const closeAddHolding = () => {
+  const openAddHolding = () => {
+    setEditingHolding(null);
+    setHModalOpen(true);
+  };
+  const openEditHolding = (h: Holding) => {
+    setEditingHolding(h);
+    setHModalOpen(true);
+  };
+
+  const closeHoldingModal = () => {
     setHModalOpen(false);
+    setEditingHolding(null);
     if (wantsNew) navigate("/investments", { replace: true });
   };
+
+  // FAB opens the add-holding form: full-screen route on mobile, modal on desktop.
+  useFabAction(() => (isMobile ? navigate("/investments/new") : openAddHolding()));
 
   const holdings = useMemo(
     () => portfolios.flatMap((p) => p.holdings),
@@ -670,29 +718,49 @@ export default function Investments() {
     return p.id;
   };
 
-  const addHolding = async (values: HoldingFormState) => {
+  const submitHolding = async (values: HoldingFormState) => {
     try {
-      const pid = await ensureDefaultPortfolio();
-      await api.post(`/portfolios/${pid}/holdings`, {
-        symbol: values.symbol,
-        name: values.name || null,
-        type: values.type,
-        currency: values.currency,
-        quantity: String(values.quantity),
-        avgCostPrice: String(values.avgCostPrice),
-      });
-      message.success("Holding added");
-      closeAddHolding();
+      if (editingHolding) {
+        await api.put(
+          `/portfolios/${editingHolding.portfolioId}/holdings/${editingHolding.id}`,
+          {
+            symbol: values.symbol,
+            name: values.name || null,
+            type: values.type,
+            currency: values.currency,
+            quantity: String(values.quantity),
+            avgCostPrice: String(values.avgCostPrice),
+          },
+        );
+        message.success("Holding updated");
+      } else {
+        const pid = await ensureDefaultPortfolio();
+        await api.post(`/portfolios/${pid}/holdings`, {
+          symbol: values.symbol,
+          name: values.name || null,
+          type: values.type,
+          currency: values.currency,
+          quantity: String(values.quantity),
+          avgCostPrice: String(values.avgCostPrice),
+        });
+        message.success("Holding added");
+      }
+      closeHoldingModal();
       load();
     } catch (e: any) {
       message.error(e.message);
     }
   };
 
-  const deleteHolding = async (h: Holding) => {
+  // Delete the holding currently open in the edit modal, then close it.
+  const deleteEditingHolding = async () => {
+    if (!editingHolding) return;
     try {
-      await api.delete(`/portfolios/${h.portfolioId}/holdings/${h.id}`);
+      await api.delete(
+        `/portfolios/${editingHolding.portfolioId}/holdings/${editingHolding.id}`,
+      );
       message.success("Holding removed");
+      closeHoldingModal();
       load();
     } catch (e: any) {
       message.error(e.message);
@@ -941,15 +1009,12 @@ export default function Investments() {
           >
             <ReloadOutlined spin={refreshing} />
           </button>
-          <button
-            className="btn-primary-emerald"
-            onClick={() =>
-              isMobile ? navigate("/investments/new") : setHModalOpen(true)
-            }
-          >
-            <PlusOutlined />
-            {isMobile ? "Add" : "Add Holding"}
-          </button>
+          {!isMobile && (
+            <button className="btn-primary-emerald" onClick={openAddHolding}>
+              <PlusOutlined />
+              Add Holding
+            </button>
+          )}
         </div>
       </div>
 
@@ -979,7 +1044,7 @@ export default function Investments() {
             <HoldingCard
               key={h.raw.id}
               h={h}
-              onDelete={() => deleteHolding(h.raw)}
+              onClick={() => openEditHolding(h.raw)}
               onSavePrice={
                 !isAutoPriceable(h.raw.currency)
                   ? (raw) => savePrice(h.raw, raw)
@@ -996,7 +1061,7 @@ export default function Investments() {
               <HoldingCard
                 key={h.raw.id}
                 h={h}
-                onDelete={() => deleteHolding(h.raw)}
+                onClick={() => openEditHolding(h.raw)}
                 onSavePrice={
                   !isAutoPriceable(h.raw.currency)
                     ? (raw) => savePrice(h.raw, raw)
@@ -1008,10 +1073,12 @@ export default function Investments() {
         </div>
       )}
 
-      <AddHoldingModal
+      <HoldingModal
         open={hModalOpen}
-        onClose={closeAddHolding}
-        onSubmit={addHolding}
+        editing={editingHolding}
+        onClose={closeHoldingModal}
+        onSubmit={submitHolding}
+        onDelete={deleteEditingHolding}
       />
     </div>
   );

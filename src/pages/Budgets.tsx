@@ -13,6 +13,7 @@ import {
 import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import { api } from "@/lib/api";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { useFabAction } from "@/hooks/useFabAction";
 import {
   Modal,
   FormBody,
@@ -84,6 +85,8 @@ export default function Budgets() {
     load();
   }, []);
 
+  useFabAction(() => setModalOpen(true));
+
   const handleCreate = async () => {
     if (!state.categoryId || !state.amount || !state.period) {
       message.error("Category, amount, and period are required");
@@ -125,13 +128,15 @@ export default function Budgets() {
         <h1 className="h1" style={{ fontSize: isMobile ? 22 : 26 }}>
           Budgets
         </h1>
-        <button
-          className="btn-primary-emerald"
-          onClick={() => setModalOpen(true)}
-        >
-          <PlusOutlined />
-          {isMobile ? "Add" : "Add Budget"}
-        </button>
+        {!isMobile && (
+          <button
+            className="btn-primary-emerald"
+            onClick={() => setModalOpen(true)}
+          >
+            <PlusOutlined />
+            Add Budget
+          </button>
+        )}
       </div>
 
       {budgets.length === 0 && !loading ? (

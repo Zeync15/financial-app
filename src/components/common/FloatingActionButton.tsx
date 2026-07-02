@@ -8,7 +8,7 @@ export default function FloatingActionButton({ onClick }: FABProps) {
   return (
     <button
       onClick={onClick}
-      className="fixed z-50 flex items-center justify-center rounded-full border-none cursor-pointer shadow-lg active:scale-95 transition-transform"
+      className="absolute z-50 flex items-center justify-center rounded-full border-none cursor-pointer shadow-lg active:scale-95 transition-transform"
       style={{
         width: 48,
         height: 48,

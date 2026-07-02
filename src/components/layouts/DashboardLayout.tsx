@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { Layout, Menu } from "antd";
 import type { MenuProps } from "antd";
@@ -9,6 +9,7 @@ import {
   PieChartOutlined,
   TagOutlined,
   DollarOutlined,
+  CreditCardOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   UserOutlined,
@@ -19,6 +20,7 @@ import { useSession, signOut } from "@/lib/auth-client";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import BottomNav from "@/components/navigation/BottomNav";
 import FloatingActionButton from "@/components/common/FloatingActionButton";
+import { FAB_EVENT } from "@/hooks/useFabAction";
 
 const ACCENT = "#1ec98a";
 const SIDER_BORDER = "rgba(255,255,255,0.08)";
@@ -39,6 +41,7 @@ const topMenuItems: MenuProps["items"] = [
   { key: "/categories", icon: <TagOutlined />, label: "Categories" },
   { key: "/investments", icon: <FundOutlined />, label: "Investments" },
   { key: "/loans", icon: <DollarOutlined />, label: "Loans" },
+  { key: "/instalments", icon: <CreditCardOutlined />, label: "Instalments" },
 ];
 
 export default function DashboardLayout() {
@@ -47,6 +50,27 @@ export default function DashboardLayout() {
   const location = useLocation();
   const { data: session } = useSession();
   const isMobile = useIsMobile();
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Reset scroll to the top on every page navigation. Desktop scrolls inside
+  // the Content pane (overflow-auto); mobile scrolls the document.
+  //
+  // On iOS Chrome/Safari the dynamic bottom toolbar collapses as you scroll;
+  // when you then navigate, the browser re-expands it and reflows the layout.
+  // A single synchronous scroll fires mid-transition and lands short, so we
+  // also re-assert after the next paint and target the scrolling element
+  // directly (window.scrollTo alone is unreliable during that animation).
+  useEffect(() => {
+    const toTop = () => {
+      window.scrollTo(0, 0);
+      const doc = document.scrollingElement ?? document.documentElement;
+      doc.scrollTop = 0;
+      contentRef.current?.scrollTo(0, 0);
+    };
+    toTop();
+    const raf = requestAnimationFrame(toTop);
+    return () => cancelAnimationFrame(raf);
+  }, [location.pathname]);
   const accent = ACCENT;
   const siderBorder = SIDER_BORDER;
   const brandTextColor = "#fff";
@@ -82,13 +106,8 @@ export default function DashboardLayout() {
     else if (key === "collapse") setCollapsed((c) => !c);
   };
 
-  // FAB target depends on the current section: each section has its own
-  // /new route that opens the appropriate add form drawer.
-  const fabTarget = location.pathname.startsWith("/investments")
-    ? "/investments/new"
-    : location.pathname.startsWith("/loans")
-      ? "/loans/new"
-      : "/transactions/new";
+  // The FAB just signals "add" — the mounted page decides which form to open
+  // (via useFabAction), so this stays page-agnostic.
   // Hide FAB on the form routes themselves so it doesn't sit on top of the
   // open drawer/modal.
   const isFormPage =
@@ -97,14 +116,50 @@ export default function DashboardLayout() {
     location.pathname === "/loans/new" ||
     location.pathname.endsWith("/edit");
 
-  // Mobile: let the document body scroll naturally — no nested
-  // overflow-auto container (iOS handles the page scroller far more
-  // reliably than a nested one). Desktop keeps the locked-viewport
-  // architecture so the sidebar can sit fixed alongside a scrollable pane.
+  // Mobile: a fixed-height (100dvh) app shell where the content pane scrolls
+  // internally and the bottom nav sits in normal flow. Because the document
+  // body itself never scrolls, the browser's dynamic bottom toolbar stays put
+  // and the nav doesn't get dragged out of place.
+  if (isMobile) {
+    return (
+      <div
+        className="app-shell"
+        style={{
+          height: "100dvh",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          ref={contentRef}
+          className="p-3"
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: "auto",
+            WebkitOverflowScrolling: "touch",
+            background: "var(--bg)",
+            // Clear the floating action button that overlays the pane's bottom.
+            paddingBottom: "84px",
+          }}
+        >
+          <Outlet />
+        </div>
+        {!isFormPage && (
+          <FloatingActionButton
+            onClick={() => window.dispatchEvent(new Event(FAB_EVENT))}
+          />
+        )}
+        <BottomNav />
+      </div>
+    );
+  }
+
+  // Desktop keeps the locked-viewport architecture so the sidebar can sit
+  // fixed alongside a scrollable content pane.
   return (
-    <Layout
-      className={isMobile ? "app-shell" : "h-screen overflow-hidden app-shell"}
-    >
+    <Layout className="h-screen overflow-hidden app-shell">
       {/* Desktop sidebar */}
       {!isMobile && (
         <Sider
@@ -195,32 +250,12 @@ export default function DashboardLayout() {
       {/* Main content */}
       <Layout
         style={{ marginLeft: contentMarginLeft, transition: "margin 0.2s" }}
-        className={isMobile ? "flex flex-col" : "flex flex-col h-screen"}
+        className="flex flex-col h-screen"
       >
-        <Content
-          // Mobile: no flex-1 / overflow-auto — Content is just a normal
-          // block, the document scrolls. Padding-bottom clears the fixed
-          // BottomNav + FAB.
-          className={isMobile ? "p-3" : "flex-1 overflow-auto p-6"}
-          style={
-            isMobile
-              ? {
-                  paddingBottom:
-                    "calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 16px)",
-                  background: "var(--bg)",
-                }
-              : undefined
-          }
-        >
+        <Content ref={contentRef} className="flex-1 overflow-auto p-6">
           <Outlet />
         </Content>
       </Layout>
-
-      {/* Mobile: FAB (hidden on form pages) + bottom nav */}
-      {isMobile && !isFormPage && (
-        <FloatingActionButton onClick={() => navigate(fabTarget)} />
-      )}
-      {isMobile && <BottomNav />}
     </Layout>
   );
 }
