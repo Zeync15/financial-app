@@ -109,6 +109,8 @@ export function TextInput({
   type = "text",
   inputRef,
   autoFocus,
+  inputMode,
+  maxDecimals,
 }: {
   value?: string | number;
   onChange?: (v: string) => void;
@@ -116,15 +118,25 @@ export function TextInput({
   type?: string;
   inputRef?: React.Ref<HTMLInputElement>;
   autoFocus?: boolean;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  // When set, restrict input to a number with at most this many decimal places
+  // (0 = integers only) and default to a numeric on-screen keyboard.
+  maxDecimals?: number;
 }) {
+  const numeric = maxDecimals != null;
+  const resolvedMode =
+    inputMode ?? (maxDecimals === 0 ? "numeric" : numeric ? "decimal" : undefined);
   return (
     <span className="fld">
       <input
         ref={inputRef}
         className="fld-input"
         type={type}
+        inputMode={resolvedMode}
         value={value ?? ""}
-        onChange={(e) => onChange?.(e.target.value)}
+        onChange={(e) =>
+          onChange?.(numeric ? clampDecimals(e.target.value, maxDecimals) : e.target.value)
+        }
         placeholder={placeholder}
         autoFocus={autoFocus}
       />
@@ -132,16 +144,31 @@ export function TextInput({
   );
 }
 
+// Keep only digits and a single decimal point, capping decimal places at `max`.
+// max <= 0 strips the decimal point entirely (integers only).
+function clampDecimals(raw: string, max: number): string {
+  if (max <= 0) return raw.replace(/[^0-9]/g, "");
+  const s = raw.replace(/[^0-9.]/g, "");
+  const dot = s.indexOf(".");
+  if (dot === -1) return s;
+  const intPart = s.slice(0, dot);
+  const decPart = s.slice(dot + 1).replace(/\./g, "").slice(0, max);
+  return `${intPart}.${decPart}`;
+}
+
 export function AmountInput({
   value,
   onChange,
   currency = "RM",
   placeholder = "0.00",
+  maxDecimals,
 }: {
   value?: string | number;
   onChange?: (v: string) => void;
   currency?: string;
   placeholder?: string;
+  // When set, sanitize input to a number with at most this many decimal places.
+  maxDecimals?: number;
 }) {
   return (
     <span className="fld has-cur">
@@ -150,7 +177,13 @@ export function AmountInput({
         className="fld-input"
         inputMode="decimal"
         value={value ?? ""}
-        onChange={(e) => onChange?.(e.target.value)}
+        onChange={(e) =>
+          onChange?.(
+            maxDecimals != null
+              ? clampDecimals(e.target.value, maxDecimals)
+              : e.target.value,
+          )
+        }
         placeholder={placeholder}
       />
     </span>

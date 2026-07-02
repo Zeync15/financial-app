@@ -35,6 +35,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { api } from "@/lib/api";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { useFabAction } from "@/hooks/useFabAction";
 import { getCategoryIcon, DEFAULT_CATEGORY_COLOR } from "@/lib/categoryIcons";
 import IconCircle from "@/components/common/IconCircle";
 
@@ -245,6 +246,7 @@ export default function Categories() {
     setFormState({ name: "", type: activeTab, color: "#1677ff", icon: "" });
     setModalOpen(true);
   };
+  useFabAction(openCreate);
 
   const openEdit = (cat: Category) => {
     setEditing(cat);
@@ -308,10 +310,12 @@ export default function Categories() {
         <h1 className="h1" style={{ fontSize: isMobile ? 22 : 26 }}>
           Categories
         </h1>
-        <button className="btn-primary-emerald" onClick={openCreate}>
-          <PlusOutlined />
-          {isMobile ? "Add" : "Add Category"}
-        </button>
+        {!isMobile && (
+          <button className="btn-primary-emerald" onClick={openCreate}>
+            <PlusOutlined />
+            Add Category
+          </button>
+        )}
       </div>
 
       <div style={{ marginBottom: 16 }}>

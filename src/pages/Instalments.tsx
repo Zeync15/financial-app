@@ -21,12 +21,11 @@ import {
   TextInput,
   AmountInput,
   DateInput,
-  SelectInput,
   FormFooter,
   useFormState,
 } from "@/components/forms/FormKit";
 
-interface Loan {
+interface Instalment {
   id: string;
   name: string;
   principal: string;
@@ -34,7 +33,6 @@ interface Loan {
   interestRate: string;
   loanTermMonths: number;
   startDate: string;
-  paymentType: string;
   monthlyPayment: number;
   totalInterest: number;
   remainingBalance: number;
@@ -49,16 +47,6 @@ interface AmortRow {
   balance: number;
 }
 
-const PAYMENT_LABEL: Record<string, string> = {
-  fixed: "Fixed rate",
-  reducing_balance: "Reducing balance",
-};
-
-const PAYMENT_OPTS = [
-  { value: "fixed", label: "Fixed Rate (Flat Rate / Hire Purchase)" },
-  { value: "reducing_balance", label: "Reducing Balance (Amortization)" },
-];
-
 function fmt(n: number) {
   return n.toLocaleString(undefined, {
     minimumFractionDigits: 2,
@@ -69,25 +57,25 @@ function fmt0(n: number) {
   return Math.round(n).toLocaleString();
 }
 
-function LoanCard({
-  loan,
+function InstalmentCard({
+  item,
   isMobile,
   onDelete,
 }: {
-  loan: Loan;
+  item: Instalment;
   isMobile: boolean;
   onDelete: (id: string) => void;
 }) {
   const [showSchedule, setShowSchedule] = useState(false);
   const [schedule, setSchedule] = useState<AmortRow[] | null>(null);
-  const pct = Math.round((loan.monthsPaid / loan.loanTermMonths) * 100);
-  const rate = Number(loan.interestRate);
-  const principal = Number(loan.principal);
+  const pct = Math.round((item.monthsPaid / item.loanTermMonths) * 100);
+  const rate = Number(item.interestRate);
+  const principal = Number(item.principal);
 
   const handleToggleSchedule = async () => {
     if (!showSchedule && !schedule) {
       try {
-        const data = await api.get<AmortRow[]>(`/loans/${loan.id}/schedule`);
+        const data = await api.get<AmortRow[]>(`/instalments/${item.id}/schedule`);
         setSchedule(data);
       } catch (e: any) {
         message.error(e.message);
@@ -98,10 +86,7 @@ function LoanCard({
   };
 
   return (
-    <div
-      className="panel"
-      style={{ padding: isMobile ? 16 : 20, marginBottom: 14 }}
-    >
+    <div className="panel" style={{ padding: isMobile ? 16 : 20, marginBottom: 14 }}>
       <div
         style={{
           display: "flex",
@@ -110,11 +95,7 @@ function LoanCard({
           marginBottom: 18,
         }}
       >
-        <IconCircle
-          icon={<FileTextOutlined />}
-          color="#ff6b6b"
-          size={isMobile ? 36 : 40}
-        />
+        <IconCircle icon={<FileTextOutlined />} color="#ff6b6b" size={isMobile ? 36 : 40} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
@@ -123,7 +104,7 @@ function LoanCard({
               color: "var(--t1)",
             }}
           >
-            {loan.name}
+            {item.name}
           </div>
           <div
             style={{
@@ -132,8 +113,7 @@ function LoanCard({
               marginTop: 2,
             }}
           >
-            {PAYMENT_LABEL[loan.paymentType] ?? loan.paymentType} ·{" "}
-            {rate.toFixed(2)}% p.a. · started {loan.startDate}
+            {rate.toFixed(2)}% p.a. · started {item.startDate}
           </div>
         </div>
         {!isMobile && (
@@ -142,7 +122,7 @@ function LoanCard({
               <CalendarOutlined />
               {showSchedule ? "Hide" : "Schedule"}
             </button>
-            <Popconfirm title="Delete?" onConfirm={() => onDelete(loan.id)}>
+            <Popconfirm title="Delete?" onConfirm={() => onDelete(item.id)}>
               <button className="icon-btn sm danger" title="Delete">
                 <DeleteOutlined />
               </button>
@@ -165,23 +145,19 @@ function LoanCard({
         </div>
         <div>
           <div className="stat-label">Monthly payment</div>
-          <div className="stat-val">RM {fmt(loan.monthlyPayment)}</div>
+          <div className="stat-val">RM {fmt(item.monthlyPayment)}</div>
         </div>
         <div>
           <div className="stat-label">Interest rate</div>
           <div className="stat-val">
             {rate.toFixed(2)}
-            <span
-              style={{ fontSize: 12, color: "var(--t3)", fontWeight: 400 }}
-            >
-              % p.a.
-            </span>
+            <span style={{ fontSize: 12, color: "var(--t3)", fontWeight: 400 }}>% p.a.</span>
           </div>
         </div>
         <div>
           <div className="stat-label">Total interest</div>
           <div className="stat-val" style={{ color: "var(--neg)" }}>
-            RM {fmt(loan.totalInterest)}
+            RM {fmt(item.totalInterest)}
           </div>
         </div>
       </div>
@@ -198,8 +174,7 @@ function LoanCard({
         }}
       >
         <span style={{ color: "var(--t2)" }}>
-          {loan.monthsPaid}/{loan.loanTermMonths} months paid{" "}
-          <span style={{ color: "var(--t4)" }}>· {pct}%</span>
+          {item.monthsPaid}/{item.loanTermMonths} months paid <span style={{ color: "var(--t4)" }}>· {pct}%</span>
         </span>
         <span style={{ color: "var(--t2)" }}>
           Remaining{" "}
@@ -210,7 +185,7 @@ function LoanCard({
               fontVariantNumeric: "tabular-nums",
             }}
           >
-            RM {fmt(loan.remainingBalance)}
+            RM {fmt(item.remainingBalance)}
           </span>
         </span>
       </div>
@@ -220,15 +195,11 @@ function LoanCard({
 
       {isMobile && (
         <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-          <button
-            className="btn-ghost"
-            style={{ flex: 1, justifyContent: "center" }}
-            onClick={handleToggleSchedule}
-          >
+          <button className="btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={handleToggleSchedule}>
             <CalendarOutlined />
             {showSchedule ? "Hide schedule" : "View schedule"}
           </button>
-          <Popconfirm title="Delete?" onConfirm={() => onDelete(loan.id)}>
+          <Popconfirm title="Delete?" onConfirm={() => onDelete(item.id)}>
             <button className="icon-btn danger" title="Delete">
               <DeleteOutlined />
             </button>
@@ -296,7 +267,7 @@ function LoanCard({
               borderTop: "1px solid var(--line)",
             }}
           >
-            Showing first 12 of {loan.loanTermMonths} payments
+            Showing first 12 of {item.loanTermMonths} payments
           </div>
         </div>
       )}
@@ -304,42 +275,34 @@ function LoanCard({
   );
 }
 
-interface LoanFormState {
+interface InstalmentFormState {
   name: string;
   principal: string;
   interestRate: string;
   loanTermMonths: string;
   startDate: string;
-  paymentType: string;
 }
 
-function AddLoanModal({
+function AddInstalmentModal({
   open,
   onClose,
   onSubmit,
 }: {
   open: boolean;
   onClose: () => void;
-  onSubmit: (v: LoanFormState) => Promise<void>;
+  onSubmit: (v: InstalmentFormState) => Promise<void>;
 }) {
-  const { state, set } = useFormState<LoanFormState>(open, {
+  const { state, set } = useFormState<InstalmentFormState>(open, {
     name: "",
     principal: "",
     interestRate: "",
     loanTermMonths: "",
     startDate: "",
-    paymentType: "fixed",
   });
   const [saving, setSaving] = useState(false);
 
   const submit = async () => {
-    if (
-      !state.name ||
-      !state.principal ||
-      !state.interestRate ||
-      !state.loanTermMonths ||
-      !state.startDate
-    ) {
+    if (!state.name || !state.principal || !state.interestRate || !state.loanTermMonths || !state.startDate) {
       message.error("All fields are required");
       return;
     }
@@ -352,22 +315,14 @@ function AddLoanModal({
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="New Loan" icon="plus">
+    <Modal open={open} onClose={onClose} title="New Instalment" icon="plus">
       <FormBody>
-        <Field label="Loan Name" required>
-          <TextInput
-            value={state.name}
-            onChange={(v) => set("name", v)}
-            placeholder="e.g. Home Loan"
-            autoFocus
-          />
+        <Field label="Instalment Name" required>
+          <TextInput value={state.name} onChange={(v) => set("name", v)} placeholder="e.g. iPhone 17" autoFocus />
         </Field>
         <Row>
           <Field label="Principal Amount" required>
-            <AmountInput
-              value={state.principal}
-              onChange={(v) => set("principal", v)}
-            />
+            <AmountInput value={state.principal} onChange={(v) => set("principal", v)} />
           </Field>
           <Field label="Interest Rate" required hint="Annual % rate (p.a.)">
             <TextInput
@@ -383,45 +338,30 @@ function AddLoanModal({
             <TextInput
               value={state.loanTermMonths}
               onChange={(v) => set("loanTermMonths", v)}
-              placeholder="e.g. 36"
+              placeholder="e.g. 12"
               maxDecimals={0}
             />
           </Field>
           <Field label="Start Date" required>
-            <DateInput
-              value={state.startDate}
-              onChange={(v) => set("startDate", v)}
-            />
+            <DateInput value={state.startDate} onChange={(v) => set("startDate", v)} />
           </Field>
         </Row>
-        <Field label="Payment Type" required>
-          <SelectInput
-            value={state.paymentType}
-            onChange={(v) => set("paymentType", v)}
-            options={PAYMENT_OPTS}
-          />
-        </Field>
       </FormBody>
-      <FormFooter
-        primary="Add Loan"
-        onPrimary={submit}
-        onCancel={onClose}
-        loading={saving}
-      />
+      <FormFooter primary="Add Instalment" onPrimary={submit} onCancel={onClose} loading={saving} />
     </Modal>
   );
 }
 
-export default function Loans() {
-  const [loans, setLoans] = useState<Loan[]>([]);
+export default function Instalments() {
+  const [items, setItems] = useState<Instalment[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const location = useLocation();
-  // `/loans/new` routes here too — open the form drawer/modal and navigate
-  // back to `/loans` on close.
-  const wantsNew = location.pathname.endsWith("/loans/new");
+  // `/instalments/new` routes here too — open the form and navigate back to
+  // `/instalments` on close.
+  const wantsNew = location.pathname.endsWith("/instalments/new");
 
   useEffect(() => {
     if (wantsNew) setModalOpen(true);
@@ -430,17 +370,17 @@ export default function Loans() {
 
   const closeForm = () => {
     setModalOpen(false);
-    if (wantsNew) navigate("/loans", { replace: true });
+    if (wantsNew) navigate("/instalments", { replace: true });
   };
 
-  // FAB opens the add-loan form: full-screen route on mobile, modal on desktop.
-  useFabAction(() => (isMobile ? navigate("/loans/new") : setModalOpen(true)));
+  // FAB opens the add form: full-screen route on mobile, modal on desktop.
+  useFabAction(() => (isMobile ? navigate("/instalments/new") : setModalOpen(true)));
 
   const load = () => {
     setLoading(true);
     api
-      .get<Loan[]>("/loans")
-      .then(setLoans)
+      .get<Instalment[]>("/instalments")
+      .then(setItems)
       .finally(() => setLoading(false));
   };
 
@@ -448,18 +388,17 @@ export default function Loans() {
     load();
   }, []);
 
-  const handleCreate = async (v: LoanFormState) => {
+  const handleCreate = async (v: InstalmentFormState) => {
     try {
-      await api.post("/loans", {
+      await api.post("/instalments", {
         name: v.name,
         currency: "MYR",
         principal: v.principal,
         interestRate: v.interestRate,
         loanTermMonths: Number(v.loanTermMonths),
         startDate: v.startDate,
-        paymentType: v.paymentType,
       });
-      message.success("Loan added");
+      message.success("Instalment added");
       closeForm();
       load();
     } catch (e: any) {
@@ -469,8 +408,8 @@ export default function Loans() {
 
   const handleDelete = async (id: string) => {
     try {
-      await api.delete(`/loans/${id}`);
-      message.success("Loan deleted");
+      await api.delete(`/instalments/${id}`);
+      message.success("Instalment deleted");
       load();
     } catch (e: any) {
       message.error(e.message);
@@ -478,17 +417,11 @@ export default function Loans() {
   };
 
   const totals = useMemo(() => {
-    const totalDebt = loans.reduce((s, l) => s + l.remainingBalance, 0);
-    const totalMonthly = loans.reduce((s, l) => s + l.monthlyPayment, 0);
-    const totalPrincipal = loans.reduce(
-      (s, l) => s + Number(l.principal),
-      0,
-    );
-    const totalInterest = loans.reduce((s, l) => s + l.totalInterest, 0);
-    const paidOff =
-      totalPrincipal > 0
-        ? Math.round(((totalPrincipal - totalDebt) / totalPrincipal) * 100)
-        : 0;
+    const totalDebt = items.reduce((s, l) => s + l.remainingBalance, 0);
+    const totalMonthly = items.reduce((s, l) => s + l.monthlyPayment, 0);
+    const totalPrincipal = items.reduce((s, l) => s + Number(l.principal), 0);
+    const totalInterest = items.reduce((s, l) => s + l.totalInterest, 0);
+    const paidOff = totalPrincipal > 0 ? Math.round(((totalPrincipal - totalDebt) / totalPrincipal) * 100) : 0;
     return {
       totalDebt,
       totalMonthly,
@@ -496,7 +429,7 @@ export default function Loans() {
       totalInterest,
       paidOff,
     };
-  }, [loans]);
+  }, [items]);
 
   if (loading) {
     return <Spin size="large" className="flex justify-center mt-20" />;
@@ -543,8 +476,8 @@ export default function Loans() {
             color: "var(--t2)",
           },
           {
-            label: "Active loans",
-            val: String(loans.length),
+            label: "Active instalments",
+            val: String(items.length),
             icon: <UnorderedListOutlined />,
             color: "var(--t2)",
           },
@@ -563,8 +496,7 @@ export default function Loans() {
               justifyContent: "space-between",
               paddingBottom: i < arr.length - 1 ? 13 : 0,
               marginBottom: i < arr.length - 1 ? 13 : 0,
-              borderBottom:
-                i < arr.length - 1 ? "1px solid var(--line-soft)" : "none",
+              borderBottom: i < arr.length - 1 ? "1px solid var(--line-soft)" : "none",
             }}
           >
             <span
@@ -599,22 +531,19 @@ export default function Loans() {
     <div>
       <div className="titlebar">
         <h1 className="h1" style={{ fontSize: isMobile ? 22 : 26 }}>
-          Loans
+          Instalments
         </h1>
         {!isMobile && (
-          <button
-            className="btn-primary-emerald"
-            onClick={() => setModalOpen(true)}
-          >
+          <button className="btn-primary-emerald" onClick={() => setModalOpen(true)}>
             <PlusOutlined />
-            Add Loan
+            Add Instalment
           </button>
         )}
       </div>
 
-      {loans.length === 0 ? (
+      {items.length === 0 ? (
         <div className="panel" style={{ padding: 40 }}>
-          <Empty description="No loans yet" />
+          <Empty description="No instalments yet" />
         </div>
       ) : (
         <div
@@ -631,23 +560,14 @@ export default function Loans() {
         >
           {summaryRail}
           <div>
-            {loans.map((l) => (
-              <LoanCard
-                key={l.id}
-                loan={l}
-                isMobile={isMobile}
-                onDelete={handleDelete}
-              />
+            {items.map((l) => (
+              <InstalmentCard key={l.id} item={l} isMobile={isMobile} onDelete={handleDelete} />
             ))}
           </div>
         </div>
       )}
 
-      <AddLoanModal
-        open={modalOpen}
-        onClose={closeForm}
-        onSubmit={handleCreate}
-      />
+      <AddInstalmentModal open={modalOpen} onClose={closeForm} onSubmit={handleCreate} />
     </div>
   );
 }

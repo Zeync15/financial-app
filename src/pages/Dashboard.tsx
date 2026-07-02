@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Spin, Empty, message } from "antd";
 import {
   DollarOutlined,
@@ -10,11 +11,14 @@ import {
   MobileOutlined,
   FundOutlined,
   FileTextOutlined,
+  ScheduleOutlined,
   ArrowUpOutlined,
   ArrowDownOutlined,
 } from "@ant-design/icons";
 import { api } from "@/lib/api";
+import { getRatesToMYR } from "@/lib/fxService";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { useFabAction } from "@/hooks/useFabAction";
 import IconCircle from "@/components/common/IconCircle";
 import {
   Modal,
@@ -34,6 +38,7 @@ interface DashboardData {
   totalLiabilities: number;
   monthlyIncome: number;
   monthlyExpense: number;
+  yearlyGain: number;
   accountCount: number;
   loanCount: number;
 }
@@ -66,6 +71,7 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
   ewallet: <MobileOutlined />,
   investment: <FundOutlined />,
   loan: <FileTextOutlined />,
+  instalment: <ScheduleOutlined />,
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -76,12 +82,25 @@ const TYPE_COLORS: Record<string, string> = {
   ewallet: "#722ed1",
   investment: "#13c2c2",
   loan: "#fa541c",
+  instalment: "#eb2f96",
+};
+
+// Display labels for every row type. Instalment isn't a real account type
+// (it's a synthetic dashboard row), so it lives here rather than ACCOUNT_TYPES.
+const TYPE_LABELS: Record<string, string> = {
+  ...Object.fromEntries(ACCOUNT_TYPES.map((t) => [t.value, t.label])),
+  instalment: "Instalment",
 };
 
 const ASSET_TYPES = new Set(["checking", "savings", "cash", "ewallet", "investment"]);
+// Palette for the per-loan allocation donut (one colour per loan, by index).
+const LOAN_PALETTE = [
+  "#fa541c", "#1677ff", "#722ed1", "#13c2c2", "#eb2f96",
+  "#52c41a", "#faad14", "#ff6b6b", "#9aa3ad", "#2f54eb",
+];
 
 // High-level groupings shown on the Accounts tab. Group totals reflect each
-// row at face value — the "Loans & Instalments" total is rendered negative.
+// row at face value — debt group totals are rendered negative.
 const ACCOUNT_GROUPS: {
   id: string;
   title: string;
@@ -96,8 +115,14 @@ const ACCOUNT_GROUPS: {
   { id: "investments", title: "Investments", types: ["investment"] },
   {
     id: "loans",
-    title: "Loans & Instalments",
+    title: "Loans",
     types: ["credit_card", "loan"],
+    negative: true,
+  },
+  {
+    id: "instalments",
+    title: "Instalments",
+    types: ["instalment"],
     negative: true,
   },
 ];
@@ -315,7 +340,7 @@ function MiniStat({
   );
 }
 
-const DEBT_TYPES = new Set(["credit_card", "loan"]);
+const DEBT_TYPES = new Set(["credit_card", "loan", "instalment"]);
 
 function AcctRow({ a, onClick, showBorder }: { a: Account; onClick: () => void; showBorder: boolean }) {
   const color = TYPE_COLORS[a.type] ?? "#8c8c8c";
@@ -324,7 +349,7 @@ function AcctRow({ a, onClick, showBorder }: { a: Account; onClick: () => void; 
   const isDebt = DEBT_TYPES.has(a.type);
   // Debt-type rows are stored as positive magnitudes but read as negative.
   const balance = isDebt ? -Math.abs(raw) : raw;
-  const typeLabel = ACCOUNT_TYPES.find((t) => t.value === a.type)?.label ?? a.type;
+  const typeLabel = TYPE_LABELS[a.type] ?? a.type;
   return (
     <div
       role="button"
@@ -417,15 +442,126 @@ function Donut({
   );
 }
 
+// One allocation view: a donut with a centred total, plus a labelled bar per
+// slice. Reused for both the assets and the liabilities breakdowns.
+function AllocSection({
+  data,
+  centerLabel,
+  centerValue,
+  isMobile,
+}: {
+  data: { label: string; val: number; pct: number; color: string }[];
+  centerLabel: string;
+  centerValue: number;
+  isMobile: boolean;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: isMobile ? "column" : "row",
+        alignItems: isMobile ? "stretch" : "center",
+        gap: isMobile ? 24 : 56,
+        padding: isMobile ? "20px 18px" : "32px 32px",
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          placeItems: "center",
+          position: "relative",
+          flexShrink: 0,
+          alignSelf: isMobile ? "center" : "auto",
+        }}
+      >
+        <Donut data={data} size={isMobile ? 160 : 190} thick={isMobile ? 20 : 24} />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "grid",
+            placeItems: "center",
+            textAlign: "center",
+          }}
+        >
+          <div>
+            <div style={{ color: "var(--t3)", fontSize: 11 }}>{centerLabel}</div>
+            <div
+              style={{
+                fontWeight: 700,
+                fontSize: isMobile ? 16 : 18,
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              RM {fmt0(centerValue)}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style={{ flex: 1, width: "100%" }}>
+        {data.map((d) => (
+          <div className="bar-row" key={d.label} style={{ marginBottom: 18 }}>
+            <div className="bar-top" style={{ fontSize: 14 }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                <span
+                  style={{
+                    width: 9,
+                    height: 9,
+                    borderRadius: 2,
+                    background: d.color,
+                  }}
+                />
+                <span style={{ color: "var(--t1)", fontWeight: 600 }}>{d.label}</span>
+              </span>
+              <span
+                style={{
+                  color: "var(--t2)",
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                RM {fmt0(d.val)} · {d.pct}%
+              </span>
+            </div>
+            <div className="bar-track" style={{ height: 9 }}>
+              <div className="bar-fill" style={{ width: `${d.pct}%`, background: d.color }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 interface LoanLite {
   id: string;
+  name: string;
+  currency: string;
   monthlyPayment: number;
+  remainingBalance: number;
+}
+
+interface HoldingLite {
+  id: string;
+  symbol: string;
+  name: string | null;
+  quantity: string;
+  avgCostPrice: string;
+  currentPrice: string | null;
+  currency: string;
+}
+interface PortfolioLite {
+  id: string;
+  name: string;
+  holdings: HoldingLite[];
 }
 
 export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loans, setLoans] = useState<LoanLite[]>([]);
+  const [instalments, setInstalments] = useState<LoanLite[]>([]);
+  const [portfolios, setPortfolios] = useState<PortfolioLite[]>([]);
+  const [rates, setRates] = useState<Record<string, number | null>>({});
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Account | null>(null);
@@ -433,6 +569,7 @@ export default function Dashboard() {
   const [incomeOpen, setIncomeOpen] = useState(false);
   const [incomeOverride, setIncomeOverride] = useState<number | null>(null);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   const load = () => {
     setLoading(true);
@@ -440,12 +577,16 @@ export default function Dashboard() {
       api.get<DashboardData>("/dashboard"),
       api.get<Account[]>("/accounts"),
       api.get<LoanLite[]>("/loans"),
+      api.get<LoanLite[]>("/instalments"),
+      api.get<PortfolioLite[]>("/portfolios"),
       api.get<Record<string, string>>("/settings"),
     ])
-      .then(([d, a, l, s]) => {
+      .then(([d, a, l, inst, p, s]) => {
         setData(d);
         setAccounts(a);
         setLoans(l);
+        setInstalments(inst);
+        setPortfolios(p);
         setIncomeOverride(parseStoredIncome(s[INCOME_SETTING_KEY]));
       })
       .finally(() => setLoading(false));
@@ -455,10 +596,25 @@ export default function Dashboard() {
     load();
   }, []);
 
+  // Resolve MYR rates for every holding currency so portfolio values can be
+  // shown as a single MYR figure on the dashboard (mirrors the Investments page).
+  const holdingCurrencies = useMemo(
+    () => portfolios.flatMap((p) => p.holdings.map((h) => h.currency)),
+    [portfolios],
+  );
+  useEffect(() => {
+    if (holdingCurrencies.length === 0) {
+      setRates({});
+      return;
+    }
+    getRatesToMYR(holdingCurrencies).then(setRates);
+  }, [holdingCurrencies]);
+
   const openCreate = () => {
     setEditing(null);
     setModalOpen(true);
   };
+  useFabAction(openCreate);
   const openEdit = (acc: Account) => {
     setEditing(acc);
     setModalOpen(true);
@@ -499,11 +655,72 @@ export default function Dashboard() {
     }
   };
 
+  // Synthetic, read-only account rows sourced from the Investments and Loans
+  // pages so they show on the dashboard without being mirrored as real
+  // financial accounts. Their ids are prefixed so clicks route to the source
+  // page instead of opening the account editor. Values are MYR.
+  const linkedRows = useMemo<Account[]>(() => {
+    // One row per holding (across all portfolios), so each position shows on
+    // the dashboard the same way it appears on the Investments page.
+    const investmentRows = portfolios
+      .flatMap((p) => p.holdings)
+      .map((h) => {
+        const native = Number(h.quantity) * Number(h.currentPrice ?? h.avgCostPrice);
+        const rate = rates[h.currency] ?? 1;
+        return { h, value: native * rate };
+      })
+      .filter(({ value }) => value > 0)
+      .map(({ h, value }) => ({
+        id: `pf-${h.id}`,
+        name: h.name ? `${h.symbol} · ${h.name}` : h.symbol,
+        type: "investment",
+        currency: "MYR",
+        institution: "Investment",
+        balance: String(value),
+        isActive: true,
+      }));
+
+    const loanRows: Account[] = loans.map((l) => ({
+      id: `loan-${l.id}`,
+      name: l.name,
+      type: "loan",
+      currency: l.currency,
+      institution: "Loan",
+      balance: String(l.remainingBalance),
+      isActive: true,
+    }));
+
+    const instalmentRows: Account[] = instalments.map((l) => ({
+      id: `inst-${l.id}`,
+      name: l.name,
+      type: "instalment",
+      currency: l.currency,
+      institution: "Instalment",
+      balance: String(l.remainingBalance),
+      isActive: true,
+    }));
+
+    return [...investmentRows, ...loanRows, ...instalmentRows];
+  }, [portfolios, rates, loans, instalments]);
+
+  const displayAccounts = useMemo(
+    () => [...accounts, ...linkedRows],
+    [accounts, linkedRows],
+  );
+
+  // Synthetic rows link to their source page; real accounts open the editor.
+  const onRowClick = (a: Account) => {
+    if (a.id.startsWith("pf-")) navigate("/investments");
+    else if (a.id.startsWith("loan-")) navigate("/loans");
+    else if (a.id.startsWith("inst-")) navigate("/instalments");
+    else openEdit(a);
+  };
+
   // Group accounts into the three high-level buckets. Each row inside a
   // group keeps its own type icon/colour; only the group total is aggregated.
   const groups = useMemo(() => {
     return ACCOUNT_GROUPS.map((g) => {
-      const list = accounts.filter(
+      const list = displayAccounts.filter(
         (a) => a.isActive && g.types.includes(a.type),
       );
       const sum = list.reduce((s, a) => s + Number(a.balance), 0);
@@ -515,12 +732,12 @@ export default function Dashboard() {
         total: g.negative ? -Math.abs(sum) : sum,
       };
     }).filter((g) => g.accounts.length > 0);
-  }, [accounts]);
+  }, [displayAccounts]);
 
   // Allocation: by type, MYR-treating balances at face value.
   const allocation = useMemo(() => {
     const map = new Map<string, number>();
-    for (const a of accounts) {
+    for (const a of displayAccounts) {
       if (!a.isActive) continue;
       if (!ASSET_TYPES.has(a.type)) continue;
       const bal = Number(a.balance);
@@ -538,7 +755,23 @@ export default function Dashboard() {
         color: TYPE_COLORS[value] ?? "#8c8c8c",
       };
     });
-  }, [accounts]);
+  }, [displayAccounts]);
+
+  // Loans allocation: one slice per individual loan, by remaining balance.
+  const loanAllocation = useMemo(() => {
+    const active = loans.filter((l) => l.remainingBalance > 0);
+    const total = active.reduce((s, l) => s + l.remainingBalance, 0) || 1;
+    return active.map((l, i) => ({
+      label: l.name,
+      val: l.remainingBalance,
+      pct: Math.round((l.remainingBalance / total) * 100),
+      color: LOAN_PALETTE[i % LOAN_PALETTE.length]!,
+    }));
+  }, [loans]);
+  const totalLoanDebt = useMemo(
+    () => loanAllocation.reduce((s, d) => s + d.val, 0),
+    [loanAllocation],
+  );
 
   if (loading && !data) {
     return <Spin size="large" className="flex justify-center mt-20" />;
@@ -549,12 +782,11 @@ export default function Dashboard() {
   const totalLiabilities = data?.totalLiabilities ?? 0;
   const monthlyIncome = data?.monthlyIncome ?? 0;
   const monthlyExpense = data?.monthlyExpense ?? 0;
-  const monthlyNet = monthlyIncome - monthlyExpense;
-  // Yearly gain = annualised monthly net (no historical snapshots yet).
-  const yearlyGain = monthlyNet * 12;
+  // Yearly gain = actual net (income − expenses) over the trailing 12 months.
+  const yearlyGain = data?.yearlyGain ?? 0;
   // DSR = monthly loan obligations / net monthly income, as a percentage.
-  // Prefer the user's stored net income (after-tax) when set, otherwise
-  // fall back to the dashboard's actual recorded monthly income.
+  // Instalments are excluded by design. Prefer the user's stored net income
+  // (after-tax) when set, otherwise fall back to the recorded monthly income.
   const monthlyDebt = loans.reduce((s, l) => s + l.monthlyPayment, 0);
   const dsrIncome = incomeOverride ?? monthlyIncome;
   const dsr = dsrIncome > 0 ? (monthlyDebt / dsrIncome) * 100 : null;
@@ -626,13 +858,13 @@ export default function Dashboard() {
         <MiniStat
           icon={<ArrowUpOutlined />}
           label="Income"
-          value={`RM ${fmt0(monthlyIncome)}`}
+          value={`RM ${fmt(monthlyIncome)}`}
           color="var(--pos)"
         />
         <MiniStat
           icon={<ArrowDownOutlined />}
           label="Expenses"
-          value={`RM ${fmt0(monthlyExpense)}`}
+          value={`RM ${fmt(monthlyExpense)}`}
           color="var(--neg)"
         />
       </div>
@@ -659,10 +891,12 @@ export default function Dashboard() {
         <h1 className="h1" style={{ fontSize: isMobile ? 22 : 26 }}>
           Dashboard
         </h1>
-        <button className="btn-primary-emerald" onClick={openCreate}>
-          <PlusOutlined />
-          {isMobile ? "Add" : "Add Account"}
-        </button>
+        {!isMobile && (
+          <button className="btn-primary-emerald" onClick={openCreate}>
+            <PlusOutlined />
+            Add Account
+          </button>
+        )}
       </div>
 
       {/* glance band */}
@@ -701,7 +935,7 @@ export default function Dashboard() {
       {/* tabbed list */}
       <div className="panel" style={{ overflow: "hidden", display: "flex", flexDirection: "column" }}>
         {tab === "accounts" ? (
-          accounts.length === 0 ? (
+          displayAccounts.length === 0 ? (
             <div style={{ padding: 40 }}>
               <Empty description="No accounts yet — add your first account" />
             </div>
@@ -730,7 +964,7 @@ export default function Dashboard() {
                       <AcctRow
                         key={a.id}
                         a={a}
-                        onClick={() => openEdit(a)}
+                        onClick={() => onRowClick(a)}
                         showBorder={i < g.accounts.length - 1}
                       />
                     ))}
@@ -739,83 +973,38 @@ export default function Dashboard() {
               })}
             </div>
           )
-        ) : allocation.length === 0 ? (
+        ) : allocation.length === 0 && loanAllocation.length === 0 ? (
           <div style={{ padding: 40 }}>
-            <Empty description="No asset accounts yet" />
+            <Empty description="No accounts yet" />
           </div>
         ) : (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: isMobile ? "column" : "row",
-              alignItems: isMobile ? "stretch" : "center",
-              gap: isMobile ? 24 : 56,
-              padding: isMobile ? "20px 18px" : "32px 32px",
-            }}
-          >
-            <div
-              style={{
-                display: "grid",
-                placeItems: "center",
-                position: "relative",
-                flexShrink: 0,
-                alignSelf: isMobile ? "center" : "auto",
-              }}
-            >
-              <Donut data={allocation} size={isMobile ? 160 : 190} thick={isMobile ? 20 : 24} />
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  display: "grid",
-                  placeItems: "center",
-                  textAlign: "center",
-                }}
-              >
-                <div>
-                  <div style={{ color: "var(--t3)", fontSize: 11 }}>Total assets</div>
-                  <div
-                    style={{
-                      fontWeight: 700,
-                      fontSize: isMobile ? 16 : 18,
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
-                    RM {fmt0(totalAssets)}
-                  </div>
+          <div>
+            {allocation.length > 0 && (
+              <>
+                <div className="grp-head" style={{ borderTop: "1px solid var(--line-soft)" }}>
+                  <span className="d">Assets</span>
                 </div>
-              </div>
-            </div>
-            <div style={{ flex: 1, width: "100%" }}>
-              {allocation.map((d) => (
-                <div className="bar-row" key={d.label} style={{ marginBottom: 18 }}>
-                  <div className="bar-top" style={{ fontSize: 14 }}>
-                    <span style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                      <span
-                        style={{
-                          width: 9,
-                          height: 9,
-                          borderRadius: 2,
-                          background: d.color,
-                        }}
-                      />
-                      <span style={{ color: "var(--t1)", fontWeight: 600 }}>{d.label}</span>
-                    </span>
-                    <span
-                      style={{
-                        color: "var(--t2)",
-                        fontVariantNumeric: "tabular-nums",
-                      }}
-                    >
-                      RM {fmt0(d.val)} · {d.pct}%
-                    </span>
-                  </div>
-                  <div className="bar-track" style={{ height: 9 }}>
-                    <div className="bar-fill" style={{ width: `${d.pct}%`, background: d.color }} />
-                  </div>
+                <AllocSection
+                  data={allocation}
+                  centerLabel="Total assets"
+                  centerValue={totalAssets}
+                  isMobile={isMobile}
+                />
+              </>
+            )}
+            {loanAllocation.length > 0 && (
+              <>
+                <div className="grp-head" style={{ borderTop: "1px solid var(--line-soft)" }}>
+                  <span className="d">Loans</span>
                 </div>
-              ))}
-            </div>
+                <AllocSection
+                  data={loanAllocation}
+                  centerLabel="Total loans"
+                  centerValue={totalLoanDebt}
+                  isMobile={isMobile}
+                />
+              </>
+            )}
           </div>
         )}
       </div>

@@ -47,6 +47,20 @@ body {
   overscroll-behavior-y: none;
 }
 
+/* Mobile: pin the document to the dynamic viewport so the page body never
+   scrolls — only the in-app content pane (DashboardLayout) does. With no
+   document scroll, the browser's collapsing bottom toolbar stays put, so the
+   fixed bottom nav no longer rides up and down out of place. */
+@media (max-width: 767px) {
+  html,
+  body,
+  #root {
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+}
+
 /* Make Ant Design sider children a flex column so the bottom menu always sticks to the bottom */
 .ant-layout-sider-children {
   display: flex !important;
@@ -555,7 +569,10 @@ body {
 }
 .fm-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* minmax(0,1fr) lets columns shrink below their content's intrinsic width.
+     Native date inputs (iOS) have a wide min-content size and would otherwise
+     push the column — and the dialog — off the screen. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 14px;
 }
 .fm-foot {
@@ -604,6 +621,9 @@ body {
 }
 .fld-input {
   width: 100%;
+  /* Allow the input to shrink inside grid/flex tracks so wide native controls
+     (e.g. date pickers) don't overflow the form. */
+  min-width: 0;
   height: 44px;
   border: 1.5px solid rgba(255, 255, 255, 0.34);
   border-radius: 10px;
@@ -617,6 +637,22 @@ body {
 }
 .fld-input::placeholder {
   color: var(--t3);
+}
+/* iOS/WebKit gives native date inputs a wide intrinsic min-width and won't let
+   them shrink while the default appearance is on — strip it so the field
+   honours width:100%/min-width:0 and stays inside the form on narrow phones. */
+.fld-input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+.fld-input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+  margin: 0;
+  min-width: 0;
+}
+.fld-input[type="date"]::-webkit-calendar-picker-indicator {
+  margin: 0 0 0 auto;
+  flex-shrink: 0;
 }
 .fld-input:hover {
   border-color: var(--accent);
