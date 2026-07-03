@@ -4,6 +4,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   PlusOutlined,
   DeleteOutlined,
+  EditOutlined,
+  ControlOutlined,
   CalendarOutlined,
   UnorderedListOutlined,
   PercentageOutlined,
@@ -39,6 +41,7 @@ interface Loan {
   totalInterest: number;
   remainingBalance: number;
   monthsPaid: number;
+  payoffMonths: number;
 }
 
 interface AmortRow {
@@ -48,6 +51,20 @@ interface AmortRow {
   interest: number;
   balance: number;
 }
+
+interface LoanEventRow {
+  id: string;
+  effectiveDate: string;
+  type: "extra_payment" | "payment_change" | "rate_change";
+  amount: string;
+  note: string | null;
+}
+
+const EVENT_LABEL: Record<LoanEventRow["type"], string> = {
+  extra_payment: "Extra payment",
+  payment_change: "New installment",
+  rate_change: "Rate change",
+};
 
 const PAYMENT_LABEL: Record<string, string> = {
   fixed: "Fixed rate",
@@ -72,17 +89,34 @@ function fmt0(n: number) {
 function LoanCard({
   loan,
   isMobile,
+  onEdit,
+  onManageEvents,
   onDelete,
+  scheduleNonce,
 }: {
   loan: Loan;
   isMobile: boolean;
+  onEdit: (loan: Loan) => void;
+  onManageEvents: (loan: Loan) => void;
   onDelete: (id: string) => void;
+  scheduleNonce: number;
 }) {
   const [showSchedule, setShowSchedule] = useState(false);
   const [schedule, setSchedule] = useState<AmortRow[] | null>(null);
-  const pct = Math.round((loan.monthsPaid / loan.loanTermMonths) * 100);
+  const isReducing = loan.paymentType === "reducing_balance";
+  const payoff = loan.payoffMonths || loan.loanTermMonths;
+  const pct = Math.min(100, Math.round((loan.monthsPaid / payoff) * 100));
+  const earlyPayoff = payoff < loan.loanTermMonths;
   const rate = Number(loan.interestRate);
   const principal = Number(loan.principal);
+
+  // Adjustments can change the schedule while it's open — refetch on nonce bump.
+  useEffect(() => {
+    if (showSchedule && schedule) {
+      api.get<AmortRow[]>(`/loans/${loan.id}/schedule`).then(setSchedule).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scheduleNonce]);
 
   const handleToggleSchedule = async () => {
     if (!showSchedule && !schedule) {
@@ -142,6 +176,14 @@ function LoanCard({
               <CalendarOutlined />
               {showSchedule ? "Hide" : "Schedule"}
             </button>
+            {isReducing && (
+              <button className="icon-btn sm" title="Adjustments" onClick={() => onManageEvents(loan)}>
+                <ControlOutlined />
+              </button>
+            )}
+            <button className="icon-btn sm" title="Edit" onClick={() => onEdit(loan)}>
+              <EditOutlined />
+            </button>
             <Popconfirm title="Delete?" onConfirm={() => onDelete(loan.id)}>
               <button className="icon-btn sm danger" title="Delete">
                 <DeleteOutlined />
@@ -198,8 +240,13 @@ function LoanCard({
         }}
       >
         <span style={{ color: "var(--t2)" }}>
-          {loan.monthsPaid}/{loan.loanTermMonths} months paid{" "}
+          {Math.min(loan.monthsPaid, payoff)}/{payoff} months paid{" "}
           <span style={{ color: "var(--t4)" }}>· {pct}%</span>
+          {earlyPayoff && (
+            <span style={{ color: "var(--pos)" }}>
+              {" "}· paid off {loan.loanTermMonths - payoff} mo early
+            </span>
+          )}
         </span>
         <span style={{ color: "var(--t2)" }}>
           Remaining{" "}
@@ -226,7 +273,15 @@ function LoanCard({
             onClick={handleToggleSchedule}
           >
             <CalendarOutlined />
-            {showSchedule ? "Hide schedule" : "View schedule"}
+            {showSchedule ? "Hide" : "Schedule"}
+          </button>
+          {isReducing && (
+            <button className="icon-btn" title="Adjustments" onClick={() => onManageEvents(loan)}>
+              <ControlOutlined />
+            </button>
+          )}
+          <button className="icon-btn" title="Edit" onClick={() => onEdit(loan)}>
+            <EditOutlined />
           </button>
           <Popconfirm title="Delete?" onConfirm={() => onDelete(loan.id)}>
             <button className="icon-btn danger" title="Delete">
@@ -296,7 +351,7 @@ function LoanCard({
               borderTop: "1px solid var(--line)",
             }}
           >
-            Showing first 12 of {loan.loanTermMonths} payments
+            Showing first 12 of {schedule.length} payments
           </div>
         </div>
       )}
@@ -317,18 +372,20 @@ function AddLoanModal({
   open,
   onClose,
   onSubmit,
+  editing,
 }: {
   open: boolean;
   onClose: () => void;
   onSubmit: (v: LoanFormState) => Promise<void>;
+  editing?: Loan | null;
 }) {
   const { state, set } = useFormState<LoanFormState>(open, {
-    name: "",
-    principal: "",
-    interestRate: "",
-    loanTermMonths: "",
-    startDate: "",
-    paymentType: "fixed",
+    name: editing?.name ?? "",
+    principal: editing ? String(Number(editing.principal)) : "",
+    interestRate: editing ? String(Number(editing.interestRate)) : "",
+    loanTermMonths: editing ? String(editing.loanTermMonths) : "",
+    startDate: editing?.startDate ?? "",
+    paymentType: editing?.paymentType ?? "fixed",
   });
   const [saving, setSaving] = useState(false);
 
@@ -352,7 +409,12 @@ function AddLoanModal({
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="New Loan" icon="plus">
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={editing ? "Edit Loan" : "New Loan"}
+      icon={editing ? "pencil" : "plus"}
+    >
       <FormBody>
         <Field label="Loan Name" required>
           <TextInput
@@ -403,7 +465,7 @@ function AddLoanModal({
         </Field>
       </FormBody>
       <FormFooter
-        primary="Add Loan"
+        primary={editing ? "Save Changes" : "Add Loan"}
         onPrimary={submit}
         onCancel={onClose}
         loading={saving}
@@ -412,10 +474,170 @@ function AddLoanModal({
   );
 }
 
+function LoanEventsModal({
+  open,
+  onClose,
+  loan,
+  onChanged,
+}: {
+  open: boolean;
+  onClose: () => void;
+  loan: Loan | null;
+  onChanged: () => void;
+}) {
+  const [events, setEvents] = useState<LoanEventRow[]>([]);
+  const [type, setType] = useState<LoanEventRow["type"]>("extra_payment");
+  const [effectiveDate, setEffectiveDate] = useState("");
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const loadEvents = () => {
+    if (!loan) return;
+    api.get<LoanEventRow[]>(`/loans/${loan.id}/events`).then(setEvents).catch(() => {});
+  };
+  useEffect(() => {
+    if (open && loan) {
+      setType("extra_payment");
+      setEffectiveDate("");
+      setAmount("");
+      setNote("");
+      loadEvents();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, loan?.id]);
+
+  const isRate = type === "rate_change";
+  const amountLabel =
+    type === "extra_payment"
+      ? "Extra Amount"
+      : type === "payment_change"
+        ? "New Installment"
+        : "New Rate";
+
+  const add = async () => {
+    if (!loan) return;
+    if (!effectiveDate || !amount) {
+      message.error("Effective date and amount are required");
+      return;
+    }
+    setSaving(true);
+    try {
+      await api.post(`/loans/${loan.id}/events`, {
+        effectiveDate,
+        type,
+        amount,
+        note: note || null,
+      });
+      setEffectiveDate("");
+      setAmount("");
+      setNote("");
+      loadEvents();
+      onChanged();
+    } catch (e: any) {
+      message.error(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const del = async (id: string) => {
+    if (!loan) return;
+    try {
+      await api.delete(`/loans/${loan.id}/events/${id}`);
+      loadEvents();
+      onChanged();
+    } catch (e: any) {
+      message.error(e.message);
+    }
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title={`Adjustments · ${loan?.name ?? ""}`} icon="pencil">
+      <FormBody>
+        <Field label="Type" required>
+          <SelectInput
+            value={type}
+            onChange={(v) => setType(v as LoanEventRow["type"])}
+            options={[
+              { value: "extra_payment", label: "Extra payment (one-off)" },
+              { value: "payment_change", label: "New installment (permanent)" },
+              { value: "rate_change", label: "Interest rate change" },
+            ]}
+          />
+        </Field>
+        <Row>
+          <Field label="Effective Date" required>
+            <DateInput value={effectiveDate} onChange={setEffectiveDate} />
+          </Field>
+          <Field label={amountLabel} required hint={isRate ? "Annual % rate (p.a.)" : undefined}>
+            {isRate ? (
+              <TextInput value={amount} onChange={setAmount} placeholder="0.00" maxDecimals={4} />
+            ) : (
+              <AmountInput value={amount} onChange={setAmount} />
+            )}
+          </Field>
+        </Row>
+        <Field label="Note (optional)">
+          <TextInput
+            value={note}
+            onChange={setNote}
+            placeholder="e.g. OPR hike, bonus prepayment"
+          />
+        </Field>
+        {events.length > 0 && (
+          <div style={{ marginTop: 4 }}>
+            <div className="stat-label" style={{ marginBottom: 6 }}>
+              Timeline
+            </div>
+            {events.map((ev) => (
+              <div
+                key={ev.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "8px 0",
+                  borderTop: "1px solid var(--line-soft)",
+                }}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ color: "var(--t1)", fontSize: 13, fontWeight: 600 }}>
+                    {EVENT_LABEL[ev.type]}{" "}
+                    <span style={{ color: "var(--t3)", fontWeight: 400 }}>
+                      ·{" "}
+                      {ev.type === "rate_change"
+                        ? `${Number(ev.amount).toFixed(2)}% p.a.`
+                        : `RM ${fmt(Number(ev.amount))}`}
+                    </span>
+                  </div>
+                  <div style={{ color: "var(--t3)", fontSize: 11.5 }}>
+                    {ev.effectiveDate}
+                    {ev.note ? ` · ${ev.note}` : ""}
+                  </div>
+                </div>
+                <Popconfirm title="Remove?" onConfirm={() => del(ev.id)}>
+                  <button className="icon-btn sm danger" title="Remove">
+                    <DeleteOutlined />
+                  </button>
+                </Popconfirm>
+              </div>
+            ))}
+          </div>
+        )}
+      </FormBody>
+      <FormFooter primary="Add Adjustment" onPrimary={add} onCancel={onClose} loading={saving} />
+    </Modal>
+  );
+}
+
 export default function Loans() {
   const [loans, setLoans] = useState<Loan[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingLoan, setEditingLoan] = useState<Loan | null>(null);
+  const [eventsLoan, setEventsLoan] = useState<Loan | null>(null);
+  const [scheduleNonce, setScheduleNonce] = useState(0);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const location = useLocation();
@@ -424,17 +646,31 @@ export default function Loans() {
   const wantsNew = location.pathname.endsWith("/loans/new");
 
   useEffect(() => {
-    if (wantsNew) setModalOpen(true);
-    else setModalOpen(false);
+    if (wantsNew) {
+      setEditingLoan(null);
+      setModalOpen(true);
+    } else {
+      setModalOpen(false);
+    }
   }, [wantsNew]);
 
   const closeForm = () => {
     setModalOpen(false);
+    setEditingLoan(null);
     if (wantsNew) navigate("/loans", { replace: true });
   };
 
+  const openAdd = () => {
+    setEditingLoan(null);
+    setModalOpen(true);
+  };
+  const openEdit = (loan: Loan) => {
+    setEditingLoan(loan);
+    setModalOpen(true);
+  };
+
   // FAB opens the add-loan form: full-screen route on mobile, modal on desktop.
-  useFabAction(() => (isMobile ? navigate("/loans/new") : setModalOpen(true)));
+  useFabAction(() => (isMobile ? navigate("/loans/new") : openAdd()));
 
   const load = () => {
     setLoading(true);
@@ -448,23 +684,34 @@ export default function Loans() {
     load();
   }, []);
 
-  const handleCreate = async (v: LoanFormState) => {
+  const handleSubmitLoan = async (v: LoanFormState) => {
+    const payload = {
+      name: v.name,
+      currency: "MYR",
+      principal: v.principal,
+      interestRate: v.interestRate,
+      loanTermMonths: Number(v.loanTermMonths),
+      startDate: v.startDate,
+      paymentType: v.paymentType,
+    };
     try {
-      await api.post("/loans", {
-        name: v.name,
-        currency: "MYR",
-        principal: v.principal,
-        interestRate: v.interestRate,
-        loanTermMonths: Number(v.loanTermMonths),
-        startDate: v.startDate,
-        paymentType: v.paymentType,
-      });
-      message.success("Loan added");
+      if (editingLoan) {
+        await api.put(`/loans/${editingLoan.id}`, payload);
+        message.success("Loan updated");
+      } else {
+        await api.post("/loans", payload);
+        message.success("Loan added");
+      }
       closeForm();
       load();
     } catch (e: any) {
       message.error(e.message);
     }
+  };
+
+  const onEventsChanged = () => {
+    load();
+    setScheduleNonce((n) => n + 1);
   };
 
   const handleDelete = async (id: string) => {
@@ -602,10 +849,7 @@ export default function Loans() {
           Loans
         </h1>
         {!isMobile && (
-          <button
-            className="btn-primary-emerald"
-            onClick={() => setModalOpen(true)}
-          >
+          <button className="btn-primary-emerald" onClick={openAdd}>
             <PlusOutlined />
             Add Loan
           </button>
@@ -636,7 +880,10 @@ export default function Loans() {
                 key={l.id}
                 loan={l}
                 isMobile={isMobile}
+                onEdit={openEdit}
+                onManageEvents={setEventsLoan}
                 onDelete={handleDelete}
+                scheduleNonce={scheduleNonce}
               />
             ))}
           </div>
@@ -646,7 +893,14 @@ export default function Loans() {
       <AddLoanModal
         open={modalOpen}
         onClose={closeForm}
-        onSubmit={handleCreate}
+        onSubmit={handleSubmitLoan}
+        editing={editingLoan}
+      />
+      <LoanEventsModal
+        open={!!eventsLoan}
+        onClose={() => setEventsLoan(null)}
+        loan={eventsLoan}
+        onChanged={onEventsChanged}
       />
     </div>
   );

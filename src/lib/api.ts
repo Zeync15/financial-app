@@ -5,8 +5,15 @@
 // All shapes returned here match what the old Hono API returned (camelCase keys,
 // money as DECIMAL strings) so the UI needs no changes.
 import { supabase, getUserId } from "./supabase";
-import { calculateSummary, calculateAmortization, getMonthsPaid } from "./loanCalculations";
+import {
+  calculateSummary,
+  calculateAmortization,
+  getMonthsPaid,
+  simulateReducingBalance,
+  type LoanEvent,
+} from "./loanCalculations";
 import { getRatesToMYR } from "./fxService";
+import { firstOccurrenceOnOrAfter, lastOccurrenceForTerm } from "./recurrence";
 
 // ─── helpers ──────────────────────────────────────────────────────────────
 function unwrap<T>(res: { data: T | null; error: { message: string } | null }): T {
@@ -365,10 +372,41 @@ async function updateHolding(portfolioId: string, holdingId: string, b: Body) {
 const LOAN_COLS =
   "id, name, principal, currency, interestRate:interest_rate, loanTermMonths:loan_term_months, startDate:start_date, paymentType:payment_type, monthlyPayment:monthly_payment, createdAt:created_at";
 
+const LOAN_EVENT_COLS =
+  "id, loanId:loan_id, effectiveDate:effective_date, type, amount, note, createdAt:created_at";
+
 async function listLoans() {
   const ls = unwrap(await supabase.from("loan").select(LOAN_COLS).order("created_at")) as any[];
+  // RLS limits loan_event rows to the user's own loans; fetch once and group.
+  const evs = unwrap(
+    await supabase.from("loan_event").select(LOAN_EVENT_COLS).order("effective_date"),
+  ) as any[];
+  const evByLoan = new Map<string, LoanEvent[]>();
+  for (const e of evs) {
+    const arr = evByLoan.get(e.loanId) ?? [];
+    arr.push({ effectiveDate: e.effectiveDate, type: e.type, amount: Number(e.amount) });
+    evByLoan.set(e.loanId, arr);
+  }
   return ls.map((l) => {
     const monthsPaid = getMonthsPaid(l.startDate);
+    if (l.paymentType === "reducing_balance") {
+      const sim = simulateReducingBalance(
+        Number(l.principal),
+        Number(l.interestRate),
+        l.loanTermMonths,
+        l.startDate,
+        evByLoan.get(l.id) ?? [],
+        monthsPaid,
+      );
+      return {
+        ...l,
+        monthlyPayment: sim.monthlyPayment,
+        totalInterest: sim.totalInterest,
+        remainingBalance: sim.remainingBalance,
+        payoffMonths: sim.payoffMonths,
+        monthsPaid,
+      };
+    }
     const s = calculateSummary(
       Number(l.principal),
       Number(l.interestRate),
@@ -381,13 +419,75 @@ async function listLoans() {
       monthlyPayment: s.monthlyPayment,
       totalInterest: s.totalInterest,
       remainingBalance: s.remainingBalance,
+      payoffMonths: l.loanTermMonths,
       monthsPaid,
     };
   });
 }
 async function loanSchedule(id: string) {
   const l = unwrap(await supabase.from("loan").select(LOAN_COLS).eq("id", id).single()) as any;
+  if (l.paymentType === "reducing_balance") {
+    const evs = unwrap(
+      await supabase
+        .from("loan_event")
+        .select(LOAN_EVENT_COLS)
+        .eq("loan_id", id)
+        .order("effective_date"),
+    ) as any[];
+    return simulateReducingBalance(
+      Number(l.principal),
+      Number(l.interestRate),
+      l.loanTermMonths,
+      l.startDate,
+      evs.map((e) => ({ effectiveDate: e.effectiveDate, type: e.type, amount: Number(e.amount) })),
+      getMonthsPaid(l.startDate),
+    ).schedule;
+  }
   return calculateAmortization(Number(l.principal), Number(l.interestRate), l.loanTermMonths, l.paymentType);
+}
+async function updateLoan(id: string, b: Body) {
+  return unwrap(
+    await supabase
+      .from("loan")
+      .update(
+        clean({
+          name: b.name,
+          principal: b.principal,
+          interest_rate: b.interestRate,
+          loan_term_months: b.loanTermMonths,
+          start_date: b.startDate,
+          payment_type: b.paymentType,
+          updated_at: nowIso(),
+        }),
+      )
+      .eq("id", id)
+      .select(LOAN_COLS)
+      .single(),
+  );
+}
+async function listLoanEvents(loanId: string) {
+  return unwrap(
+    await supabase
+      .from("loan_event")
+      .select(LOAN_EVENT_COLS)
+      .eq("loan_id", loanId)
+      .order("effective_date"),
+  );
+}
+async function createLoanEvent(loanId: string, b: Body) {
+  return unwrap(
+    await supabase
+      .from("loan_event")
+      .insert({
+        loan_id: loanId,
+        effective_date: b.effectiveDate,
+        type: b.type,
+        amount: b.amount,
+        note: b.note || null,
+      })
+      .select(LOAN_EVENT_COLS)
+      .single(),
+  );
 }
 async function createLoan(b: Body) {
   const user_id = await getUserId();
@@ -412,7 +512,7 @@ async function createLoan(b: Body) {
 // ─── instalments ────────────────────────────────────────────────────────────
 // Like loans but with no payment_type — always computed as flat-rate ("fixed").
 const INSTALMENT_COLS =
-  "id, name, principal, currency, interestRate:interest_rate, loanTermMonths:loan_term_months, startDate:start_date, createdAt:created_at";
+  "id, name, principal, currency, interestRate:interest_rate, loanTermMonths:loan_term_months, startDate:start_date, paymentDay:payment_day, accountId:account_id, categoryId:category_id, createdAt:created_at";
 
 async function listInstalments() {
   const rows = unwrap(
@@ -444,7 +544,7 @@ async function instalmentSchedule(id: string) {
 }
 async function createInstalment(b: Body) {
   const user_id = await getUserId();
-  return unwrap(
+  const inst = unwrap(
     await supabase
       .from("instalment")
       .insert({
@@ -455,10 +555,133 @@ async function createInstalment(b: Body) {
         interest_rate: b.interestRate,
         loan_term_months: b.loanTermMonths,
         start_date: b.startDate,
+        payment_day: b.paymentDay ?? null,
+        account_id: b.accountId || null,
+        category_id: b.categoryId || null,
+      })
+      .select()
+      .single(),
+  ) as any;
+
+  // Wire the instalment into the recurring engine: it posts a monthly expense
+  // (its computed flat-rate payment) from start_date until the term ends.
+  if (b.accountId && b.paymentDay) {
+    const term = Number(b.loanTermMonths);
+    const { monthlyPayment } = calculateSummary(
+      Number(b.principal),
+      Number(b.interestRate),
+      term,
+      "fixed",
+      0,
+    );
+    const dayOfMonth = Number(b.paymentDay);
+    await supabase.from("recurring_transaction").insert({
+      user_id,
+      account_id: b.accountId,
+      category_id: b.categoryId || null,
+      type: "expense",
+      amount: String(monthlyPayment),
+      description: b.name,
+      day_of_month: dayOfMonth,
+      start_date: b.startDate,
+      end_date: lastOccurrenceForTerm(b.startDate, dayOfMonth, term),
+      next_run_date: firstOccurrenceOnOrAfter(b.startDate, dayOfMonth),
+      source: "instalment",
+      instalment_id: inst.id,
+    });
+  }
+  return inst;
+}
+
+// ─── recurring transactions ─────────────────────────────────────────────────
+async function listRecurring() {
+  const rows = unwrap(
+    await supabase
+      .from("recurring_transaction")
+      .select(
+        `id, accountId:account_id, categoryId:category_id, type, amount,
+         description, notes, dayOfMonth:day_of_month, startDate:start_date,
+         endDate:end_date, nextRunDate:next_run_date, isActive:is_active,
+         source, instalmentId:instalment_id, createdAt:created_at,
+         category ( name, color ),
+         account:financial_account!recurring_transaction_account_id_fkey ( name )`,
+      )
+      .order("created_at", { ascending: false }),
+  ) as any[];
+  return rows.map((r) => ({
+    id: r.id,
+    accountId: r.accountId,
+    categoryId: r.categoryId,
+    type: r.type,
+    amount: r.amount,
+    description: r.description,
+    notes: r.notes,
+    dayOfMonth: r.dayOfMonth,
+    startDate: r.startDate,
+    endDate: r.endDate,
+    nextRunDate: r.nextRunDate,
+    isActive: r.isActive,
+    source: r.source,
+    instalmentId: r.instalmentId,
+    categoryName: r.category?.name ?? null,
+    categoryColor: r.category?.color ?? null,
+    accountName: r.account?.name ?? null,
+  }));
+}
+async function createRecurring(b: Body) {
+  const user_id = await getUserId();
+  const dayOfMonth = Number(b.dayOfMonth);
+  return unwrap(
+    await supabase
+      .from("recurring_transaction")
+      .insert({
+        user_id,
+        account_id: b.accountId,
+        category_id: b.categoryId || null,
+        type: b.type,
+        amount: b.amount,
+        description: b.description || null,
+        notes: b.notes || null,
+        day_of_month: dayOfMonth,
+        start_date: b.startDate,
+        end_date: b.endDate || null,
+        next_run_date: firstOccurrenceOnOrAfter(b.startDate, dayOfMonth),
+        source: "manual",
       })
       .select()
       .single(),
   );
+}
+// Edits apply to future (unposted) occurrences only — already-posted months are
+// independent transaction snapshots. Changing the pay day recomputes the cursor
+// forward (from today) so it never re-posts or skips.
+async function updateRecurring(id: string, b: Body) {
+  const patch: Record<string, unknown> = clean({
+    account_id: b.accountId,
+    category_id: b.categoryId,
+    type: b.type,
+    amount: b.amount,
+    description: b.description,
+    notes: b.notes,
+    day_of_month: b.dayOfMonth == null ? undefined : Number(b.dayOfMonth),
+    end_date: b.endDate,
+    is_active: b.isActive,
+    updated_at: nowIso(),
+  });
+  if (b.dayOfMonth != null) {
+    // Anchor the recomputed cursor at the later of today and the (unchanged)
+    // start date so a future-dated series is never pulled earlier. ISO dates
+    // compare lexicographically.
+    const floor = b.startDate && b.startDate > today() ? b.startDate : today();
+    patch.next_run_date = firstOccurrenceOnOrAfter(floor, Number(b.dayOfMonth));
+  }
+  return unwrap(
+    await supabase.from("recurring_transaction").update(patch).eq("id", id).select().single(),
+  );
+}
+async function runDueRecurring() {
+  const posted = unwrap(await supabase.rpc("run_due_recurring")) as number;
+  return { posted };
 }
 
 // Total market value of all holdings across portfolios, converted to MYR.
@@ -619,15 +842,33 @@ async function route(method: "GET" | "POST" | "PUT" | "DELETE", path: string, bo
       break;
 
     case "loans":
-      if (method === "GET") return p1 && p2 === "schedule" ? loanSchedule(p1) : listLoans();
-      if (method === "POST") return createLoan(body!);
-      if (method === "DELETE") return deleteRow("loan", p1!);
+      if (method === "GET") {
+        if (p1 && p2 === "schedule") return loanSchedule(p1);
+        if (p1 && p2 === "events") return listLoanEvents(p1);
+        return listLoans();
+      }
+      if (method === "POST") {
+        if (p1 && p2 === "events") return createLoanEvent(p1, body!);
+        return createLoan(body!);
+      }
+      if (method === "PUT") return updateLoan(p1!, body!);
+      if (method === "DELETE") {
+        if (p2 === "events") return deleteRow("loan_event", p3!);
+        return deleteRow("loan", p1!);
+      }
       break;
 
     case "instalments":
       if (method === "GET") return p1 && p2 === "schedule" ? instalmentSchedule(p1) : listInstalments();
       if (method === "POST") return createInstalment(body!);
       if (method === "DELETE") return deleteRow("instalment", p1!);
+      break;
+
+    case "recurring-transactions":
+      if (method === "GET") return listRecurring();
+      if (method === "POST") return p1 === "run" ? runDueRecurring() : createRecurring(body!);
+      if (method === "PUT") return updateRecurring(p1!, body!);
+      if (method === "DELETE") return deleteRow("recurring_transaction", p1!);
       break;
 
     case "portfolios":

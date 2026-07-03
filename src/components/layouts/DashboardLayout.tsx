@@ -10,6 +10,7 @@ import {
   TagOutlined,
   DollarOutlined,
   CreditCardOutlined,
+  RetweetOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   UserOutlined,
@@ -17,6 +18,7 @@ import {
   WalletOutlined,
 } from "@ant-design/icons";
 import { useSession, signOut } from "@/lib/auth-client";
+import { api } from "@/lib/api";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import BottomNav from "@/components/navigation/BottomNav";
 import FloatingActionButton from "@/components/common/FloatingActionButton";
@@ -42,6 +44,7 @@ const topMenuItems: MenuProps["items"] = [
   { key: "/investments", icon: <FundOutlined />, label: "Investments" },
   { key: "/loans", icon: <DollarOutlined />, label: "Loans" },
   { key: "/instalments", icon: <CreditCardOutlined />, label: "Instalments" },
+  { key: "/recurring", icon: <RetweetOutlined />, label: "Recurring" },
 ];
 
 export default function DashboardLayout() {
@@ -51,6 +54,21 @@ export default function DashboardLayout() {
   const { data: session } = useSession();
   const isMobile = useIsMobile();
   const contentRef = useRef<HTMLDivElement>(null);
+  const catchUpRan = useRef(false);
+
+  // Catch-up: on app open, post any recurring transactions that have come due
+  // since last open (there is no server scheduler). Runs once per mount, then
+  // signals listeners to refetch. Failures are non-fatal.
+  useEffect(() => {
+    if (catchUpRan.current) return;
+    catchUpRan.current = true;
+    api
+      .post("/recurring-transactions/run", {})
+      .then((res: any) => {
+        if (res?.posted > 0) window.dispatchEvent(new Event("transaction-added"));
+      })
+      .catch(() => {});
+  }, []);
 
   // Reset scroll to the top on every page navigation. Desktop scrolls inside
   // the Content pane (overflow-auto); mobile scrolls the document.

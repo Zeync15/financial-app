@@ -10,6 +10,7 @@ import Budgets from "@/pages/Budgets";
 import Investments from "@/pages/Investments";
 import Loans from "@/pages/Loans";
 import Instalments from "@/pages/Instalments";
+import RecurringTransactions from "@/pages/RecurringTransactions";
 import Categories from "@/pages/Categories";
 
 const ACCENT = "#1ec98a";
@@ -91,6 +92,8 @@ export default function App() {
             <Route path="/loans/new" element={<Loans />} />
             <Route path="/instalments" element={<Instalments />} />
             <Route path="/instalments/new" element={<Instalments />} />
+            <Route path="/recurring" element={<RecurringTransactions />} />
+            <Route path="/recurring/new" element={<RecurringTransactions />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

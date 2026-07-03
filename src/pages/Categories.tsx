@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button, Popconfirm, message, Spin, Empty } from "antd";
+import { Button, Popconfirm, message, Spin, Empty, ColorPicker } from "antd";
 import {
   Modal,
   FormBody,
@@ -428,10 +428,21 @@ export default function Categories() {
             />
           </Field>
           <Field label="Color">
-            <TextInput
+            <ColorPicker
               value={formState.color}
-              onChange={(v) => setField("color", v)}
-              placeholder="#1677ff"
+              onChange={(c) => setField("color", c.toHexString())}
+              showText
+              disabledAlpha
+              presets={[
+                {
+                  label: "Palette",
+                  colors: [
+                    "#1677ff", "#52c41a", "#faad14", "#ff6b6b",
+                    "#722ed1", "#13c2c2", "#eb2f96", "#fa8c16",
+                    "#2f54eb", "#9aa3ad", "#f5222d", "#a0d911",
+                  ],
+                },
+              ]}
             />
           </Field>
           <Field label="Icon (optional)">
