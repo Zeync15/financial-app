@@ -21,6 +21,7 @@ import {
   TextInput,
   AmountInput,
   DateInput,
+  SelectInput,
   FormFooter,
   useFormState,
 } from "@/components/forms/FormKit";
@@ -33,6 +34,9 @@ interface Instalment {
   interestRate: string;
   loanTermMonths: number;
   startDate: string;
+  paymentDay: number | null;
+  accountId: string | null;
+  categoryId: string | null;
   monthlyPayment: number;
   totalInterest: number;
   remainingBalance: number;
@@ -114,6 +118,7 @@ function InstalmentCard({
             }}
           >
             {rate.toFixed(2)}% p.a. · started {item.startDate}
+            {item.paymentDay ? ` · pays day ${item.paymentDay}` : ""}
           </div>
         </div>
         {!isMobile && (
@@ -281,6 +286,19 @@ interface InstalmentFormState {
   interestRate: string;
   loanTermMonths: string;
   startDate: string;
+  paymentDay: string;
+  accountId: string;
+  categoryId: string;
+}
+
+interface AccountLite {
+  id: string;
+  name: string;
+}
+interface CategoryLite {
+  id: string;
+  name: string;
+  type: string;
 }
 
 function AddInstalmentModal({
@@ -298,12 +316,37 @@ function AddInstalmentModal({
     interestRate: "",
     loanTermMonths: "",
     startDate: "",
+    paymentDay: "",
+    accountId: "",
+    categoryId: "",
   });
+  const [accounts, setAccounts] = useState<AccountLite[]>([]);
+  const [categories, setCategories] = useState<CategoryLite[]>([]);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    Promise.all([
+      api.get<AccountLite[]>("/accounts"),
+      api.get<CategoryLite[]>("/categories"),
+    ]).then(([a, c]) => {
+      setAccounts(a);
+      setCategories(c.filter((x) => x.type === "expense"));
+    });
+  }, [open]);
 
   const submit = async () => {
     if (!state.name || !state.principal || !state.interestRate || !state.loanTermMonths || !state.startDate) {
       message.error("All fields are required");
+      return;
+    }
+    if (!state.accountId) {
+      message.error("Select the account this instalment is paid from");
+      return;
+    }
+    const day = Number(state.paymentDay);
+    if (!state.paymentDay || day < 1 || day > 31) {
+      message.error("Enter a payment day between 1 and 31");
       return;
     }
     setSaving(true);
@@ -346,6 +389,31 @@ function AddInstalmentModal({
             <DateInput value={state.startDate} onChange={(v) => set("startDate", v)} />
           </Field>
         </Row>
+        <Row>
+          <Field label="Pay From Account" required hint="Balance deducted monthly">
+            <SelectInput
+              value={state.accountId}
+              onChange={(v) => set("accountId", v)}
+              options={accounts.map((a) => ({ value: a.id, label: a.name }))}
+              placeholder="Select account"
+            />
+          </Field>
+          <Field label="Payment Day" required hint="Day of month (1–31)">
+            <TextInput
+              value={state.paymentDay}
+              onChange={(v) => set("paymentDay", v)}
+              placeholder="e.g. 5"
+              maxDecimals={0}
+            />
+          </Field>
+        </Row>
+        <Field label="Category" hint="Optional — used on each posted payment">
+          <SelectInput
+            value={state.categoryId}
+            onChange={(v) => set("categoryId", v)}
+            options={[{ value: "", label: "—" }, ...categories.map((c) => ({ value: c.id, label: c.name }))]}
+          />
+        </Field>
       </FormBody>
       <FormFooter primary="Add Instalment" onPrimary={submit} onCancel={onClose} loading={saving} />
     </Modal>
@@ -397,7 +465,13 @@ export default function Instalments() {
         interestRate: v.interestRate,
         loanTermMonths: Number(v.loanTermMonths),
         startDate: v.startDate,
+        paymentDay: Number(v.paymentDay),
+        accountId: v.accountId,
+        categoryId: v.categoryId || null,
       });
+      // A due-today payment should post immediately; refresh listeners too.
+      await api.post("/recurring-transactions/run", {});
+      window.dispatchEvent(new Event("transaction-added"));
       message.success("Instalment added");
       closeForm();
       load();

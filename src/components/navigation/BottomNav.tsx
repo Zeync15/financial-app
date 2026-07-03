@@ -10,6 +10,7 @@ import {
   DollarOutlined,
   TagOutlined,
   CreditCardOutlined,
+  RetweetOutlined,
   LogoutOutlined,
 } from "@ant-design/icons";
 import { signOut } from "@/lib/auth-client";
@@ -94,6 +95,14 @@ export default function BottomNav() {
       label: "Instalments",
       onClick: () => {
         navigate("/instalments");
+        setDrawerOpen(false);
+      },
+    },
+    {
+      icon: <RetweetOutlined />,
+      label: "Recurring",
+      onClick: () => {
+        navigate("/recurring");
         setDrawerOpen(false);
       },
     },

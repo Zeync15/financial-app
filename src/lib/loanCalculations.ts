@@ -151,3 +151,121 @@ export function getMonthsPaid(startDate: string): number {
     (now.getMonth() - start.getMonth())
   );
 }
+
+// ── Reducing-balance simulation with an effective-dated event timeline ────────
+// Only reducing-balance loans use this; fixed-rate loans stay on the closed-form
+// calculateSummary/calculateAmortization above (their interest is precomputed).
+
+export type LoanEventType = "extra_payment" | "payment_change" | "rate_change";
+
+export interface LoanEvent {
+  effectiveDate: string; // YYYY-MM-DD
+  type: LoanEventType;
+  amount: number; // extra_payment: lump sum · payment_change: new installment · rate_change: new annual %
+}
+
+export interface LoanSimulation {
+  schedule: AmortizationRow[];
+  monthlyPayment: number; // installment currently in effect
+  totalInterest: number;
+  remainingBalance: number;
+  payoffMonths: number;
+}
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+// Whole months from `start` to `date` (same convention as getMonthsPaid).
+function monthDiff(start: string, date: string): number {
+  const s = new Date(start);
+  const d = new Date(date);
+  return (d.getFullYear() - s.getFullYear()) * 12 + (d.getMonth() - s.getMonth());
+}
+
+// Standard amortizing payment for `balance` over `nMonths` at `annualRate`.
+function pmt(balance: number, annualRate: number, nMonths: number): number {
+  const r = annualRate / 100 / 12;
+  if (nMonths <= 0) return balance;
+  if (r === 0) return balance / nMonths;
+  const f = Math.pow(1 + r, nMonths);
+  return (balance * r * f) / (f - 1);
+}
+
+export function simulateReducingBalance(
+  principal: number,
+  annualRate: number,
+  termMonths: number,
+  startDate: string,
+  events: LoanEvent[],
+  monthsPaid: number,
+): LoanSimulation {
+  // Bucket events by the payment-month they first take effect (1-indexed).
+  const byMonth = new Map<
+    number,
+    { extra: number; newPayment?: number; newRate?: number }
+  >();
+  for (const ev of events) {
+    const m = Math.max(1, monthDiff(startDate, ev.effectiveDate));
+    const b = byMonth.get(m) ?? { extra: 0 };
+    if (ev.type === "extra_payment") b.extra += ev.amount;
+    else if (ev.type === "payment_change") b.newPayment = ev.amount;
+    else if (ev.type === "rate_change") b.newRate = ev.amount;
+    byMonth.set(m, b);
+  }
+
+  const CAP = 1200;
+  const schedule: AmortizationRow[] = [];
+  let balance = principal;
+  let rate = annualRate;
+  let payment = Math.ceil(pmt(principal, annualRate, termMonths));
+  let currentInstallment = payment;
+  const nowMonth = Math.max(1, monthsPaid + 1); // the next payment due
+
+  for (let i = 1; i <= CAP && balance > 0.005; i++) {
+    const ev = byMonth.get(i);
+    if (ev?.newRate != null) {
+      rate = ev.newRate;
+      // Keep the original payoff date: re-amortize the current balance over the
+      // remaining contractual months. Installment rises/falls, tenure fixed.
+      payment = Math.ceil(pmt(balance, rate, Math.max(1, termMonths - (i - 1))));
+    }
+    if (ev?.newPayment != null) payment = ev.newPayment;
+
+    if (i === nowMonth) currentInstallment = payment;
+
+    const interest = balance * (rate / 100 / 12);
+    let principalPart = payment - interest;
+    // Guard against a payment that can't cover interest (non-amortizing).
+    if (principalPart < 0) principalPart = 0;
+    if (principalPart > balance) principalPart = balance;
+    balance -= principalPart;
+
+    // One-off lump sum this month → straight principal reduction (cuts tenure).
+    let paid = interest + principalPart;
+    if (ev?.extra) {
+      const extra = Math.min(ev.extra, balance);
+      balance -= extra;
+      principalPart += extra;
+      paid += extra;
+    }
+
+    schedule.push({
+      month: i,
+      payment: round2(paid),
+      principal: round2(principalPart),
+      interest: round2(interest),
+      balance: round2(Math.max(0, balance)),
+    });
+  }
+
+  const payoffMonths = schedule.length;
+  const totalInterest = round2(schedule.reduce((s, r) => s + r.interest, 0));
+  const remainingBalance =
+    monthsPaid <= 0
+      ? round2(principal)
+      : monthsPaid >= payoffMonths
+        ? 0
+        : schedule[monthsPaid - 1]!.balance;
+  const monthlyPayment = nowMonth > payoffMonths ? 0 : currentInstallment;
+
+  return { schedule, monthlyPayment, totalInterest, remainingBalance, payoffMonths };
+}

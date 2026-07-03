@@ -54,6 +54,52 @@ function dayLabel(date: string) {
   return dayjs(date).format("MMMM D");
 }
 
+// Dependency-free donut chart (same technique as the Dashboard allocation
+// donut): each slice is a stroked circle arc via strokeDasharray.
+function Donut({
+  data,
+  size = 168,
+  thick = 22,
+}: {
+  data: { color: string; pct: number }[];
+  size?: number;
+  thick?: number;
+}) {
+  const r = (size - thick) / 2;
+  const c = 2 * Math.PI * r;
+  let off = 0;
+  return (
+    <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        stroke="rgba(255,255,255,0.06)"
+        strokeWidth={thick}
+      />
+      {data.map((d, i) => {
+        const len = (d.pct / 100) * c;
+        const seg = (
+          <circle
+            key={i}
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            fill="none"
+            stroke={d.color}
+            strokeWidth={thick}
+            strokeDasharray={`${len} ${c - len}`}
+            strokeDashoffset={-off}
+          />
+        );
+        off += len;
+        return seg;
+      })}
+    </svg>
+  );
+}
+
 function TxRow({
   tx,
   onClick,
@@ -123,10 +169,8 @@ export default function Transactions() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingTx, setEditingTx] = useState<EditableTransaction | null>(null);
   const [mobileTab, setMobileTab] = useState<"list" | "insights">("list");
-  const [mobileMonth, setMobileMonth] = useState(() => dayjs().startOf("month"));
-  const [insightRange, setInsightRange] = useState<
-    [dayjs.Dayjs, dayjs.Dayjs] | null
-  >(() => [dayjs().startOf("month"), dayjs().endOf("month")]);
+  // One month drives both List and Insights (mobile + desktop).
+  const [selectedMonth, setSelectedMonth] = useState(() => dayjs().startOf("month"));
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const location = useLocation();
@@ -240,12 +284,10 @@ export default function Transactions() {
 
   const filteredTxns = useMemo(() => {
     let out = txns;
-    // On mobile List tab, filter by selected month.
-    if (isMobile && mobileTab === "list") {
-      const start = mobileMonth.format("YYYY-MM-DD");
-      const end = mobileMonth.endOf("month").format("YYYY-MM-DD");
-      out = out.filter((t) => t.date >= start && t.date <= end);
-    }
+    // Scope to the shared selected month.
+    const start = selectedMonth.startOf("month").format("YYYY-MM-DD");
+    const end = selectedMonth.endOf("month").format("YYYY-MM-DD");
+    out = out.filter((t) => t.date >= start && t.date <= end);
     if (direction === "in") out = out.filter((t) => t.type === "income");
     else if (direction === "out")
       out = out.filter((t) => t.type === "expense");
@@ -262,15 +304,7 @@ export default function Transactions() {
       );
     }
     return out;
-  }, [
-    txns,
-    searchQuery,
-    direction,
-    categoryFilter,
-    isMobile,
-    mobileTab,
-    mobileMonth,
-  ]);
+  }, [txns, searchQuery, direction, categoryFilter, selectedMonth]);
 
   // Horizontal swipe → change month on mobile List. touch-action: pan-y keeps
   // vertical scroll natural; we only react once the swipe is clearly horizontal.
@@ -294,7 +328,7 @@ export default function Transactions() {
     if (swipeStartX.current == null) return;
     const dx = x - swipeStartX.current;
     if (swipeActive.current && Math.abs(dx) > 60) {
-      setMobileMonth((m) =>
+      setSelectedMonth((m) =>
         dx > 0 ? m.subtract(1, "month") : m.add(1, "month"),
       );
     }
@@ -340,15 +374,12 @@ export default function Transactions() {
       .sort((a, b) => (a.date > b.date ? -1 : 1));
   }, [filteredTxns]);
 
-  // Insights tab filters all transactions by the date range picker.
-  // Mobile mirrors the List-tab month when no range is set yet.
+  // Insights use the same selected month as the List.
   const insightTxns = useMemo(() => {
-    if (!insightRange) return txns;
-    const [s, e] = insightRange;
-    const start = s.format("YYYY-MM-DD");
-    const end = e.format("YYYY-MM-DD");
+    const start = selectedMonth.startOf("month").format("YYYY-MM-DD");
+    const end = selectedMonth.endOf("month").format("YYYY-MM-DD");
     return txns.filter((t) => t.date >= start && t.date <= end);
-  }, [txns, insightRange]);
+  }, [txns, selectedMonth]);
 
   const summary = useMemo(() => {
     let income = 0;
@@ -361,20 +392,8 @@ export default function Transactions() {
     return { income, expense, net: income - expense };
   }, [insightTxns]);
 
-  // Monthly net for the mobile List hero (uses the selected mobile month).
-  const mobileMonthNet = useMemo(() => {
-    const start = mobileMonth.format("YYYY-MM-DD");
-    const end = mobileMonth.endOf("month").format("YYYY-MM-DD");
-    let income = 0;
-    let expense = 0;
-    for (const tx of txns) {
-      if (tx.date < start || tx.date > end) continue;
-      const a = Number(tx.amount);
-      if (tx.type === "income") income += a;
-      else if (tx.type === "expense") expense += a;
-    }
-    return income - expense;
-  }, [txns, mobileMonth]);
+  // Monthly net for the mobile List hero (uses the shared selected month).
+  const monthNet = summary.net;
 
   const spendByCategory = useMemo(() => {
     const map = new Map<string, { val: number; color: string }>();
@@ -388,52 +407,29 @@ export default function Transactions() {
       map.set(name, cur);
     }
     const total = [...map.values()].reduce((s, v) => s + v.val, 0) || 1;
-    return [...map.entries()]
-      .map(([label, { val, color }]) => ({
-        label,
-        val,
-        color,
-        pct: Math.round((val / total) * 100),
-      }))
-      .sort((a, b) => b.val - a.val)
-      .slice(0, 6);
-  }, [txns]);
+    const ranked = [...map.entries()]
+      .map(([label, { val, color }]) => ({ label, val, color }))
+      .sort((a, b) => b.val - a.val);
+    // Keep the top 5 slices; roll the rest into a single "Other" slice so the
+    // donut always sums to the month's total.
+    let slices = ranked;
+    if (ranked.length > 6) {
+      const top = ranked.slice(0, 5);
+      const restVal = ranked.slice(5).reduce((s, d) => s + d.val, 0);
+      slices = [...top, { label: "Other", val: restVal, color: DEFAULT_CATEGORY_COLOR }];
+    }
+    return {
+      total,
+      slices: slices.map((d) => ({ ...d, pct: Math.round((d.val / total) * 100) })),
+    };
+  }, [insightTxns]);
 
   if (loading) {
     return <Spin size="large" className="flex justify-center mt-20" />;
   }
 
-  const rangeBar = isMobile && mobileTab === "insights" ? (
-    <div style={{ marginBottom: 12 }}>
-      <DatePicker.RangePicker
-        value={insightRange}
-        onChange={(v) =>
-          setInsightRange(
-            v && v[0] && v[1] ? [v[0], v[1]] : null,
-          )
-        }
-        style={{ width: "100%" }}
-        allowClear
-      />
-    </div>
-  ) : null;
-
   const summaryRail = (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      {!isMobile && (
-        <div style={{ marginBottom: 2 }}>
-          <DatePicker.RangePicker
-            value={insightRange}
-            onChange={(v) =>
-              setInsightRange(
-                v && v[0] && v[1] ? [v[0], v[1]] : null,
-              )
-            }
-            style={{ width: "100%" }}
-            allowClear
-          />
-        </div>
-      )}
       <div className="panel" style={{ padding: "18px 20px" }}>
         {[
           {
@@ -507,7 +503,7 @@ export default function Transactions() {
         </div>
       </div>
 
-      {spendByCategory.length > 0 && (
+      {spendByCategory.slices.length > 0 && (
         <div className="panel" style={{ padding: "18px 20px" }}>
           <div
             style={{
@@ -519,47 +515,92 @@ export default function Transactions() {
           >
             Spending by category
           </div>
-          {spendByCategory.map((d) => {
-            const max = spendByCategory[0].val || 1;
-            return (
-              <div className="bar-row" key={d.label}>
-                <div className="bar-top">
-                  <span
-                    style={{ display: "flex", alignItems: "baseline", gap: 8 }}
-                  >
-                    <span style={{ color: "var(--t2)" }}>{d.label}</span>
-                    <span
-                      style={{
-                        color: "var(--t3)",
-                        fontSize: 12,
-                        fontVariantNumeric: "tabular-nums",
-                      }}
-                    >
-                      {d.pct}%
-                    </span>
-                  </span>
-                  <span
-                    style={{
-                      color: "var(--t1)",
-                      fontWeight: 600,
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
-                    RM {fmt(d.val)}
-                  </span>
-                </div>
-                <div className="bar-track">
-                  <div
-                    className="bar-fill"
-                    style={{
-                      width: `${(d.val / max) * 100}%`,
-                      background: d.color,
-                    }}
-                  />
-                </div>
-              </div>
-            );
-          })}
+          <div
+            style={{
+              position: "relative",
+              display: "flex",
+              justifyContent: "center",
+              marginBottom: 18,
+            }}
+          >
+            <Donut data={spendByCategory.slices} />
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <span style={{ color: "var(--t3)", fontSize: 11.5 }}>Total</span>
+              <span
+                style={{
+                  color: "var(--t1)",
+                  fontWeight: 700,
+                  fontSize: 16,
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                RM {fmt(spendByCategory.total)}
+              </span>
+            </div>
+          </div>
+          {spendByCategory.slices.map((d) => (
+            <div
+              key={d.label}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 10,
+              }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                <span
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: 3,
+                    background: d.color,
+                    flexShrink: 0,
+                  }}
+                />
+                <span
+                  style={{
+                    color: "var(--t2)",
+                    fontSize: 13,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {d.label}
+                </span>
+                <span
+                  style={{
+                    color: "var(--t3)",
+                    fontSize: 12,
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {d.pct}%
+                </span>
+              </span>
+              <span
+                style={{
+                  color: "var(--t1)",
+                  fontWeight: 600,
+                  fontSize: 13,
+                  fontVariantNumeric: "tabular-nums",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                RM {fmt(d.val)}
+              </span>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -628,6 +669,25 @@ export default function Transactions() {
         )}
       </div>
 
+      {/* Shared month picker — drives both List and Insights. */}
+      <div
+        style={{
+          marginBottom: 12,
+          display: "flex",
+          justifyContent: isMobile ? "center" : "flex-start",
+        }}
+      >
+        <DatePicker
+          picker="month"
+          value={selectedMonth}
+          onChange={(v) => v && setSelectedMonth(v.startOf("month"))}
+          allowClear={false}
+          format="MMMM YYYY"
+          inputReadOnly
+          style={{ width: isMobile ? "100%" : 220 }}
+        />
+      </div>
+
       {/* Mobile tabs — same .seg style as Categories / Dashboard. */}
       {isMobile && (
         <div style={{ marginBottom: 12 }}>
@@ -650,70 +710,47 @@ export default function Transactions() {
         </div>
       )}
 
-      {/* Mobile month label (swipe the list left/right to change) + net hero */}
+      {/* Mobile List net hero (swipe the list left/right to change month) */}
       {isMobile && mobileTab === "list" && (
-        <>
+        <div
+          className="panel"
+          style={{
+            padding: "15px 16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 12,
+          }}
+        >
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 12,
-              marginBottom: 12,
+              color: monthNet >= 0 ? "var(--pos)" : "var(--neg)",
+              fontSize: 26,
+              fontWeight: 700,
+              letterSpacing: "-0.01em",
+              fontVariantNumeric: "tabular-nums",
             }}
           >
-            <span
-              style={{
-                fontSize: 18,
-                fontWeight: 700,
-                color: "var(--t1)",
-                letterSpacing: "-0.01em",
-                textAlign: "center",
-              }}
-            >
-              {mobileMonth.format("MMMM YYYY")}
-            </span>
+            {monthNet >= 0 ? "+" : "−"}RM {fmt(Math.abs(monthNet))}
           </div>
-          <div
-            className="panel"
+          <span
             style={{
-              padding: "15px 16px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 12,
+              width: 42,
+              height: 42,
+              borderRadius: 12,
+              display: "grid",
+              placeItems: "center",
+              background:
+                monthNet >= 0
+                  ? "color-mix(in oklab, var(--pos) 20%, transparent)"
+                  : "color-mix(in oklab, var(--neg) 20%, transparent)",
+              color: monthNet >= 0 ? "var(--pos)" : "var(--neg)",
+              fontSize: 20,
             }}
           >
-            <div
-              style={{
-                color: mobileMonthNet >= 0 ? "var(--pos)" : "var(--neg)",
-                fontSize: 26,
-                fontWeight: 700,
-                letterSpacing: "-0.01em",
-                fontVariantNumeric: "tabular-nums",
-              }}
-            >
-              {mobileMonthNet >= 0 ? "+" : "−"}RM {fmt(Math.abs(mobileMonthNet))}
-            </div>
-            <span
-              style={{
-                width: 42,
-                height: 42,
-                borderRadius: 12,
-                display: "grid",
-                placeItems: "center",
-                background:
-                  mobileMonthNet >= 0
-                    ? "color-mix(in oklab, var(--pos) 20%, transparent)"
-                    : "color-mix(in oklab, var(--neg) 20%, transparent)",
-                color: mobileMonthNet >= 0 ? "var(--pos)" : "var(--neg)",
-                fontSize: 20,
-              }}
-            >
-              {mobileMonthNet >= 0 ? <RiseOutlined /> : <FallOutlined />}
-            </span>
-          </div>
-        </>
+            {monthNet >= 0 ? <RiseOutlined /> : <FallOutlined />}
+          </span>
+        </div>
       )}
 
       {/* Filter bar — desktop always; mobile only on List tab */}
@@ -769,8 +806,6 @@ export default function Transactions() {
           )}
         </div>
       )}
-
-      {rangeBar}
 
       {isMobile && searchOpen && (
         <div style={{ marginBottom: 12 }}>
