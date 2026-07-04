@@ -94,11 +94,6 @@ const TYPE_LABELS: Record<string, string> = {
 
 const ASSET_TYPES = new Set(["checking", "savings", "cash", "ewallet", "investment"]);
 // Palette for the per-loan allocation donut (one colour per loan, by index).
-const LOAN_PALETTE = [
-  "#fa541c", "#1677ff", "#722ed1", "#13c2c2", "#eb2f96",
-  "#52c41a", "#faad14", "#ff6b6b", "#9aa3ad", "#2f54eb",
-];
-
 // High-level groupings shown on the Accounts tab. Group totals reflect each
 // row at face value — debt group totals are rendered negative.
 const ACCOUNT_GROUPS: {
@@ -166,7 +161,7 @@ function AccountModal({
       type: editing?.type ?? "savings",
       institution: editing?.institution ?? "",
       currency: editing?.currency ?? "MYR",
-      balance: editing ? String(Number(editing.balance)) : "0",
+      balance: editing ? String(Number(editing.balance)) : "",
     }),
     [editing],
   );
@@ -625,7 +620,7 @@ export default function Dashboard() {
       if (editing) {
         await api.put(`/accounts/${editing.id}`, {
           ...v,
-          balance: String(v.balance),
+          balance: String(v.balance || 0),
           isActive: editing.isActive,
         });
         message.success("Account updated");
@@ -756,22 +751,6 @@ export default function Dashboard() {
       };
     });
   }, [displayAccounts]);
-
-  // Loans allocation: one slice per individual loan, by remaining balance.
-  const loanAllocation = useMemo(() => {
-    const active = loans.filter((l) => l.remainingBalance > 0);
-    const total = active.reduce((s, l) => s + l.remainingBalance, 0) || 1;
-    return active.map((l, i) => ({
-      label: l.name,
-      val: l.remainingBalance,
-      pct: Math.round((l.remainingBalance / total) * 100),
-      color: LOAN_PALETTE[i % LOAN_PALETTE.length]!,
-    }));
-  }, [loans]);
-  const totalLoanDebt = useMemo(
-    () => loanAllocation.reduce((s, d) => s + d.val, 0),
-    [loanAllocation],
-  );
 
   if (loading && !data) {
     return <Spin size="large" className="flex justify-center mt-20" />;
@@ -940,71 +919,78 @@ export default function Dashboard() {
               <Empty description="No accounts yet — add your first account" />
             </div>
           ) : (
-            <div>
-              {groups.map((g) => {
-                const neg = g.total < 0;
-                return (
-                  <div key={g.id}>
-                    <div
-                      className="grp-head"
-                      style={{ borderTop: "1px solid var(--line-soft)" }}
-                    >
-                      <span className="d">{g.title}</span>
-                      <span
-                        className="t"
-                        style={{
-                          color: neg ? "var(--neg)" : "var(--t1)",
-                          fontVariantNumeric: "tabular-nums",
-                        }}
-                      >
-                        {neg ? "−" : ""}RM {fmt(Math.abs(g.total))}
-                      </span>
-                    </div>
-                    {g.accounts.map((a, i) => (
-                      <AcctRow
-                        key={a.id}
-                        a={a}
-                        onClick={() => onRowClick(a)}
-                        showBorder={i < g.accounts.length - 1}
-                      />
-                    ))}
-                  </div>
-                );
-              })}
+            <div
+              style={
+                isMobile
+                  ? undefined
+                  : { display: "grid", gridTemplateColumns: "1fr 1fr" }
+              }
+            >
+              {[
+                groups.filter(
+                  (g) => g.id === "banking" || g.id === "investments",
+                ),
+                groups.filter(
+                  (g) => g.id === "loans" || g.id === "instalments",
+                ),
+              ].map((col, ci) => (
+                <div
+                  key={ci}
+                  style={
+                    !isMobile && ci === 1
+                      ? { borderLeft: "1px solid var(--line-soft)" }
+                      : undefined
+                  }
+                >
+                  {col.map((g) => {
+                    const neg = g.total < 0;
+                    return (
+                      <div key={g.id}>
+                        <div
+                          className="grp-head"
+                          style={{ borderTop: "1px solid var(--line-soft)" }}
+                        >
+                          <span className="d">{g.title}</span>
+                          <span
+                            className="t"
+                            style={{
+                              color: neg ? "var(--neg)" : "var(--t1)",
+                              fontVariantNumeric: "tabular-nums",
+                            }}
+                          >
+                            {neg ? "−" : ""}RM {fmt(Math.abs(g.total))}
+                          </span>
+                        </div>
+                        {g.accounts.map((a, i) => (
+                          <AcctRow
+                            key={a.id}
+                            a={a}
+                            onClick={() => onRowClick(a)}
+                            showBorder={i < g.accounts.length - 1}
+                          />
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           )
-        ) : allocation.length === 0 && loanAllocation.length === 0 ? (
+        ) : allocation.length === 0 ? (
           <div style={{ padding: 40 }}>
             <Empty description="No accounts yet" />
           </div>
         ) : (
           <div>
-            {allocation.length > 0 && (
-              <>
-                <div className="grp-head" style={{ borderTop: "1px solid var(--line-soft)" }}>
-                  <span className="d">Assets</span>
-                </div>
-                <AllocSection
-                  data={allocation}
-                  centerLabel="Total assets"
-                  centerValue={totalAssets}
-                  isMobile={isMobile}
-                />
-              </>
-            )}
-            {loanAllocation.length > 0 && (
-              <>
-                <div className="grp-head" style={{ borderTop: "1px solid var(--line-soft)" }}>
-                  <span className="d">Loans</span>
-                </div>
-                <AllocSection
-                  data={loanAllocation}
-                  centerLabel="Total loans"
-                  centerValue={totalLoanDebt}
-                  isMobile={isMobile}
-                />
-              </>
-            )}
+            <div className="grp-head" style={{ borderTop: "1px solid var(--line-soft)" }}>
+              <span className="d">Assets</span>
+            </div>
+            <AllocSection
+              data={allocation}
+              centerLabel="Total assets"
+              centerValue={totalAssets}
+              isMobile={isMobile}
+            />
           </div>
         )}
       </div>

@@ -93,6 +93,11 @@ export default function AddTransactionForm({
     ]).then(([a, c]) => {
       setAccounts(a);
       setCategories(c);
+      // On a new transaction, default the Account field to the first option
+      // (editing keeps the transaction's own account).
+      if (!transaction && a.length > 0) {
+        set("accountId", a[0]!.id);
+      }
     });
   }, [open, initial, setState]);
 

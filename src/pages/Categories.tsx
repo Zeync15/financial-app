@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button, Popconfirm, message, Spin, Empty, ColorPicker } from "antd";
+import { Button, message, Spin, Empty, ColorPicker } from "antd";
 import {
   Modal,
   FormBody,
@@ -7,6 +7,7 @@ import {
   TextInput,
   SelectInput,
   FormFooter,
+  useConfirmDelete,
 } from "@/components/forms/FormKit";
 import {
   PlusOutlined,
@@ -82,6 +83,7 @@ function SortableTile({
   const color = cat.color || DEFAULT_CATEGORY_COLOR;
   const icon = getCategoryIcon(cat.name, cat.icon);
   const isUserOwned = !!cat.userId;
+  const confirmDelete = useConfirmDelete();
 
   const grip = (
     <span
@@ -109,15 +111,17 @@ function SortableTile({
         <EditOutlined />
       </button>
       {isUserOwned ? (
-        <Popconfirm
-          title="Delete this category?"
-          onConfirm={() => onDelete(cat.id)}
-          placement="left"
+        <button
+          className="cat-icon-btn danger"
+          title="Delete"
+          onClick={() =>
+            confirmDelete(() => onDelete(cat.id), {
+              title: "Delete this category?",
+            })
+          }
         >
-          <button className="cat-icon-btn danger" title="Delete">
-            <DeleteOutlined />
-          </button>
-        </Popconfirm>
+          <DeleteOutlined />
+        </button>
       ) : (
         <button
           className="cat-icon-btn danger"

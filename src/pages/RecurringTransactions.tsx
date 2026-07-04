@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Popconfirm, Empty, Spin, message, Tag, Switch } from "antd";
+import { Empty, Spin, message, Tag, Switch } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   PlusOutlined,
-  DeleteOutlined,
   EditOutlined,
   SyncOutlined,
 } from "@ant-design/icons";
@@ -85,11 +84,13 @@ function RecurringForm({
   open,
   onClose,
   onSaved,
+  onDelete,
   editing,
 }: {
   open: boolean;
   onClose: () => void;
   onSaved: () => void;
+  onDelete?: () => void;
   editing: Recurring | null;
 }) {
   const isEditing = !!editing;
@@ -247,6 +248,8 @@ function RecurringForm({
         onPrimary={submit}
         onCancel={onClose}
         loading={saving}
+        danger={isEditing ? "Delete" : undefined}
+        onDanger={isEditing ? onDelete : undefined}
       />
     </Modal>
   );
@@ -257,13 +260,11 @@ function RecurringCard({
   item,
   isMobile,
   onEdit,
-  onDelete,
   onToggle,
 }: {
   item: Recurring;
   isMobile: boolean;
   onEdit: (r: Recurring) => void;
-  onDelete: (id: string) => void;
   onToggle: (r: Recurring, active: boolean) => void;
 }) {
   const isInstalment = item.source === "instalment";
@@ -347,11 +348,6 @@ function RecurringCard({
               <button className="icon-btn sm" title="Edit" onClick={() => onEdit(item)}>
                 <EditOutlined />
               </button>
-              <Popconfirm title="Delete this recurring?" onConfirm={() => onDelete(item.id)}>
-                <button className="icon-btn sm danger" title="Delete">
-                  <DeleteOutlined />
-                </button>
-              </Popconfirm>
             </>
           )}
         </span>
@@ -416,6 +412,7 @@ export default function RecurringTransactions() {
     try {
       await api.delete(`/recurring-transactions/${id}`);
       message.success("Recurring deleted");
+      closeForm();
       load();
     } catch (e: any) {
       message.error(e.message);
@@ -520,7 +517,6 @@ export default function RecurringTransactions() {
                 item={r}
                 isMobile={isMobile}
                 onEdit={openEdit}
-                onDelete={handleDelete}
                 onToggle={handleToggle}
               />
             ))}
@@ -528,7 +524,13 @@ export default function RecurringTransactions() {
         </div>
       )}
 
-      <RecurringForm open={modalOpen} onClose={closeForm} onSaved={load} editing={editing} />
+      <RecurringForm
+        open={modalOpen}
+        onClose={closeForm}
+        onSaved={load}
+        onDelete={editing ? () => handleDelete(editing.id) : undefined}
+        editing={editing}
+      />
     </div>
   );
 }

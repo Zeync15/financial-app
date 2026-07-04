@@ -15,7 +15,6 @@ import {
   MenuUnfoldOutlined,
   UserOutlined,
   LogoutOutlined,
-  WalletOutlined,
 } from "@ant-design/icons";
 import { useSession, signOut } from "@/lib/auth-client";
 import { api } from "@/lib/api";
@@ -202,27 +201,12 @@ export default function DashboardLayout() {
           <div
             className="h-16 flex items-center shrink-0"
             style={{
-              justifyContent: collapsed ? "center" : "flex-start",
+              justifyContent: "center",
               padding: collapsed ? 0 : "0 16px",
               gap: 10,
               borderBottom: `1px solid ${siderBorder}`,
             }}
           >
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 9,
-                background: accent,
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: `0 4px 10px ${accent}55`,
-                flexShrink: 0,
-              }}
-            >
-              <WalletOutlined style={{ fontSize: 18, color: "#06241a" }} />
-            </div>
             {!collapsed && (
               <span
                 style={{

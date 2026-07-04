@@ -300,7 +300,7 @@ async function listPortfolios() {
           .from("holding")
           .select(
             `id, portfolioId:portfolio_id, symbol, name, type, quantity,
-             avgCostPrice:avg_cost_price, currency,
+             avgCostPrice:avg_cost_price, currency, color,
              currentPrice:current_price, priceUpdatedAt:price_updated_at`,
           )
           .eq("portfolio_id", p.id),
@@ -339,6 +339,7 @@ async function addHolding(portfolioId: string, b: Body) {
         quantity: b.quantity,
         avg_cost_price: b.avgCostPrice,
         currency: b.currency || p.currency,
+        color: b.color ?? null,
       })
       .select()
       .single(),
@@ -356,6 +357,7 @@ async function updateHolding(portfolioId: string, holdingId: string, b: Body) {
           quantity: b.quantity,
           avg_cost_price: b.avgCostPrice,
           currency: b.currency,
+          color: b.color,
           current_price: b.currentPrice,
           price_updated_at: b.priceUpdatedAt,
           updated_at: nowIso(),
@@ -370,7 +372,7 @@ async function updateHolding(portfolioId: string, holdingId: string, b: Body) {
 
 // ─── loans ────────────────────────────────────────────────────────────────
 const LOAN_COLS =
-  "id, name, principal, currency, interestRate:interest_rate, loanTermMonths:loan_term_months, startDate:start_date, paymentType:payment_type, monthlyPayment:monthly_payment, createdAt:created_at";
+  "id, name, principal, currency, interestRate:interest_rate, loanTermMonths:loan_term_months, startDate:start_date, paymentType:payment_type, monthlyPayment:monthly_payment, color, createdAt:created_at";
 
 const LOAN_EVENT_COLS =
   "id, loanId:loan_id, effectiveDate:effective_date, type, amount, note, createdAt:created_at";
@@ -457,6 +459,7 @@ async function updateLoan(id: string, b: Body) {
           loan_term_months: b.loanTermMonths,
           start_date: b.startDate,
           payment_type: b.paymentType,
+          color: b.color,
           updated_at: nowIso(),
         }),
       )
@@ -503,6 +506,7 @@ async function createLoan(b: Body) {
         loan_term_months: b.loanTermMonths,
         start_date: b.startDate,
         payment_type: b.paymentType,
+        color: b.color ?? null,
       })
       .select()
       .single(),

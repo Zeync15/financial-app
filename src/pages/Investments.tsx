@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Spin, Empty, message } from "antd";
+import { Spin, Empty, message, ColorPicker } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   PlusOutlined,
@@ -40,6 +40,7 @@ interface Holding {
   currency: string;
   currentPrice: string | null;
   priceUpdatedAt: string | null;
+  color: string | null;
 }
 interface Portfolio {
   id: string;
@@ -457,6 +458,7 @@ interface HoldingFormState {
   type: string;
   quantity: string;
   avgCostPrice: string;
+  color: string;
 }
 
 function HoldingModal({
@@ -480,6 +482,11 @@ function HoldingModal({
       type: editing?.type ?? "etf",
       quantity: editing ? String(Number(editing.quantity)) : "",
       avgCostPrice: editing ? String(Number(editing.avgCostPrice)) : "",
+      // Editing keeps the holding's stored color, or the hashed palette color
+      // it currently shows. New holdings start on the first palette color.
+      color: editing
+        ? editing.color ?? colorFor(editing.symbol)
+        : PALETTE[0]!,
     }),
     [editing],
   );
@@ -561,6 +568,15 @@ function HoldingModal({
             />
           </Field>
         </Row>
+        <Field label="Color">
+          <ColorPicker
+            value={state.color}
+            onChange={(c) => set("color", c.toHexString())}
+            showText
+            disabledAlpha
+            presets={[{ label: "Palette", colors: PALETTE }]}
+          />
+        </Field>
       </FormBody>
       <FormFooter
         primary={editing ? "Save Changes" : "Add Holding"}
@@ -730,6 +746,7 @@ export default function Investments() {
             currency: values.currency,
             quantity: String(values.quantity),
             avgCostPrice: String(values.avgCostPrice),
+            color: values.color,
           },
         );
         message.success("Holding updated");
@@ -742,6 +759,7 @@ export default function Investments() {
           currency: values.currency,
           quantity: String(values.quantity),
           avgCostPrice: String(values.avgCostPrice),
+          color: values.color,
         });
         message.success("Holding added");
       }
@@ -782,7 +800,7 @@ export default function Investments() {
       const costMyr = rate != null ? costNative * rate : 0;
       return {
         raw: h,
-        color: colorFor(h.symbol),
+        color: h.color ?? colorFor(h.symbol),
         units,
         avgCost,
         price,

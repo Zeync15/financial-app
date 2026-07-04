@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Popconfirm, Empty, Spin, message } from "antd";
+import { Empty, Spin, message, ColorPicker } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   PlusOutlined,
@@ -26,6 +26,7 @@ import {
   SelectInput,
   FormFooter,
   useFormState,
+  useConfirmDelete,
 } from "@/components/forms/FormKit";
 
 interface Loan {
@@ -42,6 +43,7 @@ interface Loan {
   remainingBalance: number;
   monthsPaid: number;
   payoffMonths: number;
+  color: string | null;
 }
 
 interface AmortRow {
@@ -86,19 +88,85 @@ function fmt0(n: number) {
   return Math.round(n).toLocaleString();
 }
 
+// Stable slice colors for the loan-allocation donut (mirrors the palette the
+// dashboard used before this chart moved here).
+const LOAN_PALETTE = [
+  "#fa541c", "#1677ff", "#722ed1", "#13c2c2", "#eb2f96",
+  "#52c41a", "#faad14", "#ff6b6b", "#9aa3ad", "#2f54eb",
+];
+
+function Donut({
+  size = 150,
+  thick = 18,
+  data,
+  children,
+}: {
+  size?: number;
+  thick?: number;
+  data: { color: string; weight: number }[];
+  children?: React.ReactNode;
+}) {
+  const r = (size - thick) / 2;
+  const c = 2 * Math.PI * r;
+  let off = 0;
+  return (
+    <div style={{ position: "relative", width: size, height: size }}>
+      <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke="rgba(255,255,255,0.06)"
+          strokeWidth={thick}
+        />
+        {data.map((d, i) => {
+          const len = (d.weight / 100) * c;
+          const seg = (
+            <circle
+              key={i}
+              cx={size / 2}
+              cy={size / 2}
+              r={r}
+              fill="none"
+              stroke={d.color}
+              strokeWidth={thick}
+              strokeDasharray={`${len} ${c - len}`}
+              strokeDashoffset={-off}
+            />
+          );
+          off += len;
+          return seg;
+        })}
+      </svg>
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "grid",
+          placeItems: "center",
+          textAlign: "center",
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function LoanCard({
   loan,
+  color,
   isMobile,
   onEdit,
   onManageEvents,
-  onDelete,
   scheduleNonce,
 }: {
   loan: Loan;
+  color: string;
   isMobile: boolean;
   onEdit: (loan: Loan) => void;
   onManageEvents: (loan: Loan) => void;
-  onDelete: (id: string) => void;
   scheduleNonce: number;
 }) {
   const [showSchedule, setShowSchedule] = useState(false);
@@ -146,7 +214,7 @@ function LoanCard({
       >
         <IconCircle
           icon={<FileTextOutlined />}
-          color="#ff6b6b"
+          color={color}
           size={isMobile ? 36 : 40}
         />
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -184,11 +252,6 @@ function LoanCard({
             <button className="icon-btn sm" title="Edit" onClick={() => onEdit(loan)}>
               <EditOutlined />
             </button>
-            <Popconfirm title="Delete?" onConfirm={() => onDelete(loan.id)}>
-              <button className="icon-btn sm danger" title="Delete">
-                <DeleteOutlined />
-              </button>
-            </Popconfirm>
           </div>
         )}
       </div>
@@ -269,7 +332,7 @@ function LoanCard({
         <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
           <button
             className="btn-ghost"
-            style={{ flex: 1, justifyContent: "center" }}
+            style={{ flex: 1, justifyContent: "center", height: 40 }}
             onClick={handleToggleSchedule}
           >
             <CalendarOutlined />
@@ -283,11 +346,6 @@ function LoanCard({
           <button className="icon-btn" title="Edit" onClick={() => onEdit(loan)}>
             <EditOutlined />
           </button>
-          <Popconfirm title="Delete?" onConfirm={() => onDelete(loan.id)}>
-            <button className="icon-btn danger" title="Delete">
-              <DeleteOutlined />
-            </button>
-          </Popconfirm>
         </div>
       )}
 
@@ -366,18 +424,23 @@ interface LoanFormState {
   loanTermMonths: string;
   startDate: string;
   paymentType: string;
+  color: string;
 }
 
 function AddLoanModal({
   open,
   onClose,
   onSubmit,
+  onDelete,
   editing,
+  initialColor,
 }: {
   open: boolean;
   onClose: () => void;
   onSubmit: (v: LoanFormState) => Promise<void>;
+  onDelete?: () => void;
   editing?: Loan | null;
+  initialColor: string;
 }) {
   const { state, set } = useFormState<LoanFormState>(open, {
     name: editing?.name ?? "",
@@ -386,6 +449,7 @@ function AddLoanModal({
     loanTermMonths: editing ? String(editing.loanTermMonths) : "",
     startDate: editing?.startDate ?? "",
     paymentType: editing?.paymentType ?? "fixed",
+    color: initialColor,
   });
   const [saving, setSaving] = useState(false);
 
@@ -463,12 +527,23 @@ function AddLoanModal({
             options={PAYMENT_OPTS}
           />
         </Field>
+        <Field label="Color">
+          <ColorPicker
+            value={state.color}
+            onChange={(c) => set("color", c.toHexString())}
+            showText
+            disabledAlpha
+            presets={[{ label: "Loan palette", colors: LOAN_PALETTE }]}
+          />
+        </Field>
       </FormBody>
       <FormFooter
         primary={editing ? "Save Changes" : "Add Loan"}
         onPrimary={submit}
         onCancel={onClose}
         loading={saving}
+        danger={editing ? "Delete" : undefined}
+        onDanger={editing ? onDelete : undefined}
       />
     </Modal>
   );
@@ -491,6 +566,7 @@ function LoanEventsModal({
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+  const confirmDelete = useConfirmDelete();
 
   const loadEvents = () => {
     if (!loan) return;
@@ -616,11 +692,18 @@ function LoanEventsModal({
                     {ev.note ? ` · ${ev.note}` : ""}
                   </div>
                 </div>
-                <Popconfirm title="Remove?" onConfirm={() => del(ev.id)}>
-                  <button className="icon-btn sm danger" title="Remove">
-                    <DeleteOutlined />
-                  </button>
-                </Popconfirm>
+                <button
+                  className="icon-btn sm danger"
+                  title="Remove"
+                  onClick={() =>
+                    confirmDelete(() => del(ev.id), {
+                      title: "Remove this adjustment?",
+                      okText: "Remove",
+                    })
+                  }
+                >
+                  <DeleteOutlined />
+                </button>
               </div>
             ))}
           </div>
@@ -693,6 +776,7 @@ export default function Loans() {
       loanTermMonths: Number(v.loanTermMonths),
       startDate: v.startDate,
       paymentType: v.paymentType,
+      color: v.color,
     };
     try {
       if (editingLoan) {
@@ -718,6 +802,7 @@ export default function Loans() {
     try {
       await api.delete(`/loans/${id}`);
       message.success("Loan deleted");
+      closeForm();
       load();
     } catch (e: any) {
       message.error(e.message);
@@ -744,6 +829,29 @@ export default function Loans() {
       paidOff,
     };
   }, [loans]);
+
+  // Each loan's display color: the one it has stored, else a stable palette
+  // color by position (so un-colored loans still render distinctly). Keyed by
+  // id so the card icon, donut slice, and form picker all agree.
+  const loanColors = useMemo(() => {
+    const m = new Map<string, string>();
+    loans.forEach((l, i) =>
+      m.set(l.id, l.color ?? LOAN_PALETTE[i % LOAN_PALETTE.length]!),
+    );
+    return m;
+  }, [loans]);
+
+  // One donut slice per active loan, weighted by remaining balance.
+  const loanAllocation = useMemo(() => {
+    const active = loans.filter((l) => l.remainingBalance > 0);
+    const total = active.reduce((s, l) => s + l.remainingBalance, 0) || 1;
+    return active.map((l) => ({
+      label: l.name,
+      val: l.remainingBalance,
+      weight: (l.remainingBalance / total) * 100,
+      color: loanColors.get(l.id)!,
+    }));
+  }, [loans, loanColors]);
 
   if (loading) {
     return <Spin size="large" className="flex justify-center mt-20" />;
@@ -781,6 +889,75 @@ export default function Loans() {
           <div className="bar-fill" style={{ width: `${totals.paidOff}%` }} />
         </div>
       </div>
+      {loanAllocation.length > 0 && (
+        <div className="panel" style={{ padding: "18px 20px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 14,
+            }}
+          >
+            <span style={{ fontSize: 13.5, fontWeight: 600, color: "var(--t2)" }}>
+              Allocation
+            </span>
+            <span style={{ fontSize: 12, color: "var(--t3)" }}>
+              {loanAllocation.length} loans
+            </span>
+          </div>
+          <div style={{ display: "grid", placeItems: "center", marginBottom: 16 }}>
+            <Donut size={146} thick={18} data={loanAllocation}>
+              <div>
+                <div style={{ color: "var(--t3)", fontSize: 10.5 }}>Total loans</div>
+                <div
+                  style={{ fontWeight: 700, fontSize: 15, fontVariantNumeric: "tabular-nums" }}
+                >
+                  RM {fmt0(totals.totalDebt)}
+                </div>
+              </div>
+            </Donut>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+            {loanAllocation.map((d) => (
+              <div
+                key={d.label}
+                style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 12.5 }}
+              >
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: 2,
+                    background: d.color,
+                    flexShrink: 0,
+                  }}
+                />
+                <span
+                  style={{
+                    color: "var(--t2)",
+                    flex: 1,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {d.label}
+                </span>
+                <span
+                  style={{
+                    color: "var(--t1)",
+                    fontWeight: 600,
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {d.weight.toFixed(1)}%
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="panel" style={{ padding: "18px 20px" }}>
         {[
           {
@@ -879,10 +1056,10 @@ export default function Loans() {
               <LoanCard
                 key={l.id}
                 loan={l}
+                color={loanColors.get(l.id)!}
                 isMobile={isMobile}
                 onEdit={openEdit}
                 onManageEvents={setEventsLoan}
-                onDelete={handleDelete}
                 scheduleNonce={scheduleNonce}
               />
             ))}
@@ -894,7 +1071,13 @@ export default function Loans() {
         open={modalOpen}
         onClose={closeForm}
         onSubmit={handleSubmitLoan}
+        onDelete={
+          editingLoan ? () => handleDelete(editingLoan.id) : undefined
+        }
         editing={editingLoan}
+        initialColor={
+          (editingLoan && loanColors.get(editingLoan.id)) ?? LOAN_PALETTE[0]!
+        }
       />
       <LoanEventsModal
         open={!!eventsLoan}
