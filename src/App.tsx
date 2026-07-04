@@ -1,9 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { ConfigProvider, theme, Spin } from "antd";
+import { ConfigProvider, theme, Spin, App as AntdApp } from "antd";
 import { useSession } from "@/lib/auth-client";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import Login from "@/pages/Login";
-import Register from "@/pages/Register";
 import Dashboard from "@/pages/Dashboard";
 import Transactions from "@/pages/Transactions";
 import Budgets from "@/pages/Budgets";
@@ -41,6 +40,10 @@ export default function App() {
           colorPrimary: ACCENT,
           colorBorder: BORDER,
           borderRadius: 8,
+          // Every elevated Ant surface inside forms (modals, drawers, select
+          // dropdowns, date/color pickers, confirm dialogs) uses the same
+          // panel color as the rest of the app.
+          colorBgElevated: "#161c23",
         },
         components: {
           Input: {
@@ -50,6 +53,7 @@ export default function App() {
         },
       }}
     >
+      <AntdApp component={false}>
       <BrowserRouter>
         <Routes>
           <Route
@@ -57,14 +61,6 @@ export default function App() {
             element={
               <PublicRoute>
                 <Login />
-              </PublicRoute>
-            }
-          />
-          <Route
-            path="/register"
-            element={
-              <PublicRoute>
-                <Register />
               </PublicRoute>
             }
           />
@@ -98,6 +94,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
+      </AntdApp>
     </ConfigProvider>
   );
 }

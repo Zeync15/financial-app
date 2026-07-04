@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Modal as AntdModal, Drawer as AntdDrawer } from "antd";
+import { Modal as AntdModal, Drawer as AntdDrawer, App as AntdApp } from "antd";
 import { PlusOutlined, EditOutlined, DownOutlined } from "@ant-design/icons";
 import { useIsMobile } from "@/hooks/useIsMobile";
 
@@ -280,6 +280,27 @@ export function Segmented<T extends string>({
   );
 }
 
+/**
+ * Reusable delete confirmation. Opens a themed modal (not a Popconfirm
+ * tooltip). Returns a function you call with the delete action.
+ */
+export function useConfirmDelete() {
+  const { modal } = AntdApp.useApp();
+  return (
+    onConfirm: () => void | Promise<void>,
+    opts?: { title?: string; content?: string; okText?: string },
+  ) =>
+    modal.confirm({
+      title: opts?.title ?? "Delete this item?",
+      content: opts?.content ?? "This action cannot be undone.",
+      okText: opts?.okText ?? "Delete",
+      cancelText: "Cancel",
+      okButtonProps: { danger: true },
+      centered: true,
+      onOk: onConfirm,
+    });
+}
+
 export function FormFooter({
   primary,
   onPrimary,
@@ -295,13 +316,20 @@ export function FormFooter({
   danger?: string;
   onDanger?: () => void;
 }) {
+  const confirmDelete = useConfirmDelete();
   return (
     <div className="fm-foot">
       {danger && onDanger && (
         <button
           type="button"
           className="btn-pill btn-danger"
-          onClick={onDanger}
+          onClick={() =>
+            confirmDelete(onDanger, {
+              title: `${danger}?`,
+              content: "This action cannot be undone.",
+              okText: danger,
+            })
+          }
           disabled={loading}
         >
           {danger}

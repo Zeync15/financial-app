@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Popconfirm, Empty, Spin, message } from "antd";
+import { Empty, Spin, message } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   PlusOutlined,
@@ -24,6 +24,7 @@ import {
   SelectInput,
   FormFooter,
   useFormState,
+  useConfirmDelete,
 } from "@/components/forms/FormKit";
 
 interface Instalment {
@@ -72,6 +73,7 @@ function InstalmentCard({
 }) {
   const [showSchedule, setShowSchedule] = useState(false);
   const [schedule, setSchedule] = useState<AmortRow[] | null>(null);
+  const confirmDelete = useConfirmDelete();
   const pct = Math.round((item.monthsPaid / item.loanTermMonths) * 100);
   const rate = Number(item.interestRate);
   const principal = Number(item.principal);
@@ -127,11 +129,17 @@ function InstalmentCard({
               <CalendarOutlined />
               {showSchedule ? "Hide" : "Schedule"}
             </button>
-            <Popconfirm title="Delete?" onConfirm={() => onDelete(item.id)}>
-              <button className="icon-btn sm danger" title="Delete">
-                <DeleteOutlined />
-              </button>
-            </Popconfirm>
+            <button
+              className="icon-btn sm danger"
+              title="Delete"
+              onClick={() =>
+                confirmDelete(() => onDelete(item.id), {
+                  title: "Delete this instalment?",
+                })
+              }
+            >
+              <DeleteOutlined />
+            </button>
           </div>
         )}
       </div>
@@ -200,15 +208,25 @@ function InstalmentCard({
 
       {isMobile && (
         <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-          <button className="btn-ghost" style={{ flex: 1, justifyContent: "center" }} onClick={handleToggleSchedule}>
+          <button
+            className="btn-ghost"
+            style={{ flex: 1, justifyContent: "center", height: 40 }}
+            onClick={handleToggleSchedule}
+          >
             <CalendarOutlined />
             {showSchedule ? "Hide schedule" : "View schedule"}
           </button>
-          <Popconfirm title="Delete?" onConfirm={() => onDelete(item.id)}>
-            <button className="icon-btn danger" title="Delete">
-              <DeleteOutlined />
-            </button>
-          </Popconfirm>
+          <button
+            className="icon-btn danger"
+            title="Delete"
+            onClick={() =>
+              confirmDelete(() => onDelete(item.id), {
+                title: "Delete this instalment?",
+              })
+            }
+          >
+            <DeleteOutlined />
+          </button>
         </div>
       )}
 

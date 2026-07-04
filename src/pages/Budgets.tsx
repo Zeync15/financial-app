@@ -7,7 +7,6 @@ import {
   Progress,
   Button,
   message,
-  Popconfirm,
   Empty,
 } from "antd";
 import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
@@ -22,6 +21,7 @@ import {
   SelectInput,
   FormFooter,
   useFormState,
+  useConfirmDelete,
 } from "@/components/forms/FormKit";
 
 const { Text } = Typography;
@@ -67,6 +67,7 @@ export default function Budgets() {
     period: "monthly",
   });
   const isMobile = useIsMobile();
+  const confirmDelete = useConfirmDelete();
 
   const load = () => {
     setLoading(true);
@@ -155,12 +156,16 @@ export default function Budgets() {
                   title={b.categoryName || b.name || "Budget"}
                   styles={{ body: { padding: isMobile ? 12 : 24 } }}
                   extra={
-                    <Popconfirm
-                      title="Delete?"
-                      onConfirm={() => handleDelete(b.id)}
-                    >
-                      <Button size="small" danger icon={<DeleteOutlined />} />
-                    </Popconfirm>
+                    <Button
+                      size="small"
+                      danger
+                      icon={<DeleteOutlined />}
+                      onClick={() =>
+                        confirmDelete(() => handleDelete(b.id), {
+                          title: "Delete this budget?",
+                        })
+                      }
+                    />
                   }
                 >
                   <div className="mb-2">
