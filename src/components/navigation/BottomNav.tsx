@@ -7,11 +7,11 @@ import {
   DashboardOutlined,
   AppstoreOutlined,
   FundOutlined,
-  DollarOutlined,
   TagOutlined,
   CreditCardOutlined,
   RetweetOutlined,
   LogoutOutlined,
+  AccountBookOutlined,
 } from "@ant-design/icons";
 import { signOut } from "@/lib/auth-client";
 
@@ -46,7 +46,7 @@ const tabs: NavTab[] = [
   {
     key: "loans",
     label: "Loans",
-    icon: <DollarOutlined />,
+    icon: <AccountBookOutlined />,
     route: "/loans",
   },
   { key: "more", label: "More", icon: <AppstoreOutlined /> },
@@ -156,11 +156,7 @@ export default function BottomNav() {
         <div className="sheet-grip" />
         <div className="more-head">
           <span>More</span>
-          <button
-            className="more-x"
-            onClick={() => setDrawerOpen(false)}
-            aria-label="Close"
-          >
+          <button className="more-x" onClick={() => setDrawerOpen(false)} aria-label="Close">
             ×
           </button>
         </div>
@@ -170,10 +166,7 @@ export default function BottomNav() {
             return (
               <Fragment key={item.label}>
                 {isLast && <div className="more-sep" />}
-                <button
-                  onClick={item.onClick}
-                  className={"more-item" + (item.danger ? " more-danger" : "")}
-                >
+                <button onClick={item.onClick} className={"more-item" + (item.danger ? " more-danger" : "")}>
                   <span className="more-ic">{item.icon}</span>
                   <span className="more-lbl">{item.label}</span>
                   {!item.danger && <span className="more-chev">›</span>}
