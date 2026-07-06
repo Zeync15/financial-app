@@ -143,13 +143,59 @@ export function calculateAmortization(
   return schedule;
 }
 
+// Parse a YYYY-MM-DD string into a LOCAL date. `new Date("2026-07-01")` parses
+// as UTC midnight, which shifts the day (and possibly month) in non-UTC
+// timezones (e.g. UTC+8 sees the previous day). Splitting the components keeps
+// the calendar date the user actually entered.
+function parseLocalDate(ymd: string): Date {
+  const [y, m, d] = ymd.split("-").map(Number);
+  return new Date(y!, (m ?? 1) - 1, d ?? 1);
+}
+
+// Days in the given year/month (monthIdx is 0-based).
+function daysInMonth(year: number, monthIdx: number): number {
+  return new Date(year, monthIdx + 1, 0).getDate();
+}
+
 export function getMonthsPaid(startDate: string): number {
-  const start = new Date(startDate);
+  const start = parseLocalDate(startDate);
   const now = new Date();
   return (
     (now.getFullYear() - start.getFullYear()) * 12 +
     (now.getMonth() - start.getMonth())
   );
+}
+
+// Months paid for an instalment. Unlike a loan (whose first payment lands one
+// month after start), an instalment is paid on `paymentDay` every month, with
+// the first payment on the first occurrence of that day on or after the start
+// date. Each occurrence that has passed counts. Clamped to [0, termMonths].
+export function getInstalmentMonthsPaid(
+  startDate: string,
+  paymentDay: number | null,
+  termMonths: number,
+): number {
+  const start = parseLocalDate(startDate);
+  const now = new Date();
+  const day = paymentDay ?? start.getDate();
+
+  // First payment: `day` (clamped to month length) in the start month, or the
+  // next month if that day had already passed by the start date.
+  let fy = start.getFullYear();
+  let fm = start.getMonth();
+  if (start.getDate() > Math.min(day, daysInMonth(fy, fm))) {
+    fm += 1;
+    if (fm > 11) {
+      fm = 0;
+      fy += 1;
+    }
+  }
+
+  const monthDiff = (now.getFullYear() - fy) * 12 + (now.getMonth() - fm);
+  // This month's payment counts once its (clamped) day-of-month has arrived.
+  const dueDay = Math.min(day, daysInMonth(now.getFullYear(), now.getMonth()));
+  const paidThisMonth = now.getDate() >= dueDay ? 1 : 0;
+  return Math.max(0, Math.min(monthDiff + paidThisMonth, termMonths));
 }
 
 // ── Reducing-balance simulation with an effective-dated event timeline ────────
@@ -176,8 +222,8 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 
 // Whole months from `start` to `date` (same convention as getMonthsPaid).
 function monthDiff(start: string, date: string): number {
-  const s = new Date(start);
-  const d = new Date(date);
+  const s = parseLocalDate(start);
+  const d = parseLocalDate(date);
   return (d.getFullYear() - s.getFullYear()) * 12 + (d.getMonth() - s.getMonth());
 }
 

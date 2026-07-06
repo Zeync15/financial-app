@@ -9,6 +9,7 @@ import {
   calculateSummary,
   calculateAmortization,
   getMonthsPaid,
+  getInstalmentMonthsPaid,
   simulateReducingBalance,
   type LoanEvent,
 } from "./loanCalculations";
@@ -29,7 +30,12 @@ function clean<T extends Record<string, unknown>>(obj: T): Partial<T> {
 }
 
 const nowIso = () => new Date().toISOString();
-const today = () => new Date().toISOString().split("T")[0]!;
+// Local calendar date as YYYY-MM-DD. Building this via toISOString() formats in
+// UTC, which shifts the day for non-UTC timezones (e.g. in UTC+8 local midnight
+// falls on the previous UTC day), so assemble it from local components instead.
+const ymdLocal = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const today = () => ymdLocal(new Date());
 
 type Body = Record<string, any>;
 
@@ -212,8 +218,8 @@ function getPeriodRange(period: string, now: Date) {
   const day = now.getDay();
   if (period === "monthly") {
     return {
-      periodStart: new Date(year, month, 1).toISOString().split("T")[0]!,
-      periodEnd: new Date(year, month + 1, 0).toISOString().split("T")[0]!,
+      periodStart: ymdLocal(new Date(year, month, 1)),
+      periodEnd: ymdLocal(new Date(year, month + 1, 0)),
     };
   }
   if (period === "weekly") {
@@ -222,8 +228,8 @@ function getPeriodRange(period: string, now: Date) {
     const end = new Date(start);
     end.setDate(start.getDate() + 6);
     return {
-      periodStart: start.toISOString().split("T")[0]!,
-      periodEnd: end.toISOString().split("T")[0]!,
+      periodStart: ymdLocal(start),
+      periodEnd: ymdLocal(end),
     };
   }
   return { periodStart: `${year}-01-01`, periodEnd: `${year}-12-31` };
@@ -523,7 +529,11 @@ async function listInstalments() {
     await supabase.from("instalment").select(INSTALMENT_COLS).order("created_at"),
   ) as any[];
   return rows.map((l) => {
-    const monthsPaid = getMonthsPaid(l.startDate);
+    const monthsPaid = getInstalmentMonthsPaid(
+      l.startDate,
+      l.paymentDay,
+      l.loanTermMonths,
+    );
     const s = calculateSummary(
       Number(l.principal),
       Number(l.interestRate),
@@ -733,13 +743,13 @@ async function getDashboard() {
   const netWorth = totalAssets - totalLiabilities;
 
   const now = new Date();
-  const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0]!;
+  const monthStart = ymdLocal(new Date(now.getFullYear(), now.getMonth(), 1));
+  const monthEnd = ymdLocal(new Date(now.getFullYear(), now.getMonth() + 1, 0));
   // Trailing 12 months: from the same day one year ago through today.
-  const ttmStart = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate() + 1)
-    .toISOString()
-    .split("T")[0]!;
-  const todayStr = now.toISOString().split("T")[0]!;
+  const ttmStart = ymdLocal(
+    new Date(now.getFullYear() - 1, now.getMonth(), now.getDate() + 1),
+  );
+  const todayStr = ymdLocal(now);
 
   const sumByType = async (type: "income" | "expense", start: string, end: string) => {
     const rows = unwrap(

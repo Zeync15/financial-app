@@ -443,11 +443,19 @@ function AllocSection({
   data,
   centerLabel,
   centerValue,
+  centerText,
+  money = fmt0,
   isMobile,
 }: {
   data: { label: string; val: number; pct: number; color: string }[];
   centerLabel: string;
-  centerValue: number;
+  centerValue?: number;
+  // When set, shown verbatim in the donut center instead of "RM {value}"
+  // (e.g. the DSR percentage).
+  centerText?: string;
+  // How amounts are formatted. Defaults to whole ringgit; pass `fmt` to keep
+  // the two decimals (used by the DSR breakdown).
+  money?: (n: number) => string;
   isMobile: boolean;
 }) {
   return (
@@ -488,7 +496,7 @@ function AllocSection({
                 fontVariantNumeric: "tabular-nums",
               }}
             >
-              RM {fmt0(centerValue)}
+              {centerText ?? `RM ${money(centerValue ?? 0)}`}
             </div>
           </div>
         </div>
@@ -514,7 +522,7 @@ function AllocSection({
                   fontVariantNumeric: "tabular-nums",
                 }}
               >
-                RM {fmt0(d.val)} · {d.pct}%
+                RM {money(d.val)} · {d.pct}%
               </span>
             </div>
             <div className="bar-track" style={{ height: 9 }}>
@@ -770,6 +778,27 @@ export default function Dashboard() {
   const dsrIncome = incomeOverride ?? monthlyIncome;
   const dsr = dsrIncome > 0 ? (monthlyDebt / dsrIncome) * 100 : null;
 
+  // DSR pie: how much of monthly income goes to loan obligations vs. what's
+  // free. Only meaningful once income is known. Weights are clamped to 100%
+  // so an over-leveraged (>100% DSR) case still renders a full ring.
+  const dsrData =
+    dsrIncome > 0
+      ? [
+          {
+            label: "Debt obligations",
+            val: monthlyDebt,
+            pct: Math.min(100, Math.round((monthlyDebt / dsrIncome) * 100)),
+            color: "var(--neg)",
+          },
+          {
+            label: "Free income",
+            val: Math.max(0, dsrIncome - monthlyDebt),
+            pct: Math.max(0, 100 - Math.round((monthlyDebt / dsrIncome) * 100)),
+            color: "var(--accent)",
+          },
+        ]
+      : [];
+
   const heroCard = (
     <div
       className="panel"
@@ -976,21 +1005,40 @@ export default function Dashboard() {
               ))}
             </div>
           )
-        ) : allocation.length === 0 ? (
+        ) : allocation.length === 0 && dsrData.length === 0 ? (
           <div style={{ padding: 40 }}>
             <Empty description="No accounts yet" />
           </div>
         ) : (
           <div>
-            <div className="grp-head" style={{ borderTop: "1px solid var(--line-soft)" }}>
-              <span className="d">Assets</span>
-            </div>
-            <AllocSection
-              data={allocation}
-              centerLabel="Total assets"
-              centerValue={totalAssets}
-              isMobile={isMobile}
-            />
+            {allocation.length > 0 && (
+              <>
+                <div className="grp-head" style={{ borderTop: "1px solid var(--line-soft)" }}>
+                  <span className="d">Assets</span>
+                </div>
+                <AllocSection
+                  data={allocation}
+                  centerLabel="Total assets"
+                  centerValue={totalAssets}
+                  money={fmt}
+                  isMobile={isMobile}
+                />
+              </>
+            )}
+            {dsrData.length > 0 && (
+              <>
+                <div className="grp-head" style={{ borderTop: "1px solid var(--line-soft)" }}>
+                  <span className="d">Debt Service Ratio</span>
+                </div>
+                <AllocSection
+                  data={dsrData}
+                  centerLabel="DSR"
+                  centerText={dsr == null ? "—" : `${Math.round(dsr)}%`}
+                  money={fmt}
+                  isMobile={isMobile}
+                />
+              </>
+            )}
           </div>
         )}
       </div>
