@@ -71,9 +71,11 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route path="/" element={<Dashboard />} />
-            {/* Accounts merged into Home; keep old links working */}
-            <Route path="/accounts" element={<Navigate to="/" replace />} />
+            {/* Transactions is the landing page; Dashboard lives at /dashboard */}
+            <Route path="/" element={<Navigate to="/transactions" replace />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            {/* Accounts merged into the Dashboard; keep old links working */}
+            <Route path="/accounts" element={<Navigate to="/dashboard" replace />} />
             {/* /new and /:id/edit render the same Transactions page —
                 the drawer auto-opens based on the URL. Closing it navigates
                 back to /transactions. */}

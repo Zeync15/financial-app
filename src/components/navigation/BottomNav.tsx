@@ -29,7 +29,7 @@ const tabs: NavTab[] = [
     key: "dashboard",
     label: "Dashboard",
     icon: <DashboardOutlined />,
-    route: "/",
+    route: "/dashboard",
   },
   {
     key: "transaction",

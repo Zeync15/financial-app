@@ -74,7 +74,6 @@ const CUR_OPTS = ["MYR", "USD", "SGD", "EUR", "GBP"];
 
 const fmt = (n: number) =>
   n.toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const fmt0 = (n: number) => Math.round(n).toLocaleString();
 // Per-unit prices keep up to 4 decimals (matches the DECIMAL(19,4) columns),
 // unlike totals/values which round to 2.
 const fmtPrice = (n: number) =>
@@ -384,7 +383,7 @@ function HoldingCardMobile({
         </div>
         <div style={{ textAlign: "right" }}>
           <div className="stat-val" style={{ fontSize: 15 }}>
-            {h.raw.currency} {fmt0(h.marketValueNative)}
+            {h.raw.currency} {fmt(h.marketValueNative)}
           </div>
           {h.hasMarketPrice && (
             <div style={{ marginTop: 4, display: "flex", justifyContent: "flex-end" }}>
@@ -438,7 +437,7 @@ function HoldingCardMobile({
               }}
             >
               {down ? "−" : "+"}
-              {fmt0(Math.abs(h.gainNative))}
+              {fmt(Math.abs(h.gainNative))}
             </div>
           ) : (
             <div className="stat-val" style={{ fontSize: 14, color: "var(--t3)" }}>
@@ -904,7 +903,7 @@ export default function Investments() {
                 <div
                   style={{ fontWeight: 700, fontSize: 15, fontVariantNumeric: "tabular-nums" }}
                 >
-                  RM {fmt0(totals.cost)}
+                  RM {fmt(totals.cost)}
                 </div>
               </div>
             </Donut>
@@ -945,7 +944,7 @@ export default function Investments() {
           {[
             {
               label: "Invested cost",
-              val: `RM ${fmt0(totals.cost)}`,
+              val: `RM ${fmt(totals.cost)}`,
               icon: <AppstoreOutlined />,
               color: "var(--t2)",
             },

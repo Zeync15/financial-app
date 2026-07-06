@@ -32,7 +32,7 @@ const SIDER_WIDTH = 200;
 const SIDER_COLLAPSED_WIDTH = 80;
 
 const topMenuItems: MenuProps["items"] = [
-  { key: "/", icon: <DashboardOutlined />, label: "Dashboard" },
+  { key: "/dashboard", icon: <DashboardOutlined />, label: "Dashboard" },
   {
     key: "/transactions",
     icon: <TransactionOutlined />,
