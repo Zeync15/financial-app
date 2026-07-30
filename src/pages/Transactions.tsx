@@ -6,6 +6,7 @@ import {
   WalletOutlined,
   RiseOutlined,
   FallOutlined,
+  FilterOutlined,
 } from "@ant-design/icons";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
@@ -369,7 +370,13 @@ export default function Transactions() {
           if (tx.type === "expense") return sum - a;
           return sum;
         }, 0);
-        return { date, label: dayLabel(date), total, items };
+        return {
+          date,
+          label: dayLabel(date),
+          weekday: dayjs(date).format("ddd"),
+          total,
+          items,
+        };
       })
       .sort((a, b) => (a.date > b.date ? -1 : 1));
   }, [filteredTxns]);
@@ -392,8 +399,24 @@ export default function Transactions() {
     return { income, expense, net: income - expense };
   }, [insightTxns]);
 
-  // Monthly net for the mobile List hero (uses the shared selected month).
-  const monthNet = summary.net;
+  // Mobile List hero — the month's net, or the selected category's net when
+  // the category filter is narrowed. Ignores direction/search so the hero
+  // always reads as "the balance of what this filter covers".
+  const hero = useMemo(() => {
+    if (categoryFilter === "all") {
+      return { label: "Net flow", value: summary.net };
+    }
+    const name =
+      categories.find((c) => c.id === categoryFilter)?.name ?? "Category";
+    let value = 0;
+    for (const tx of insightTxns) {
+      if (tx.categoryId !== categoryFilter) continue;
+      const a = Number(tx.amount);
+      if (tx.type === "income") value += a;
+      else if (tx.type === "expense") value -= a;
+    }
+    return { label: `${name} balance`, value };
+  }, [categoryFilter, categories, insightTxns, summary.net]);
 
   const spendByCategory = useMemo(() => {
     const map = new Map<string, { val: number; color: string }>();
@@ -407,20 +430,22 @@ export default function Transactions() {
       map.set(name, cur);
     }
     const total = [...map.values()].reduce((s, v) => s + v.val, 0) || 1;
+    // Every category that had spending gets its own slice — no "Other" roll-up.
     const ranked = [...map.entries()]
       .map(([label, { val, color }]) => ({ label, val, color }))
       .sort((a, b) => b.val - a.val);
-    // Keep the top 5 slices; roll the rest into a single "Other" slice so the
-    // donut always sums to the month's total.
-    let slices = ranked;
-    if (ranked.length > 6) {
-      const top = ranked.slice(0, 5);
-      const restVal = ranked.slice(5).reduce((s, d) => s + d.val, 0);
-      slices = [...top, { label: "Other", val: restVal, color: DEFAULT_CATEGORY_COLOR }];
-    }
     return {
       total,
-      slices: slices.map((d) => ({ ...d, pct: Math.round((d.val / total) * 100) })),
+      // `pct` stays unrounded so the arcs still sum to the full circle even
+      // with many small slices; `pctLabel` is the display form.
+      slices: ranked.map((d) => {
+        const pct = (d.val / total) * 100;
+        return {
+          ...d,
+          pct,
+          pctLabel: pct >= 1 || pct === 0 ? `${Math.round(pct)}` : pct.toFixed(1),
+        };
+      }),
     };
   }, [insightTxns]);
 
@@ -585,7 +610,7 @@ export default function Transactions() {
                     fontVariantNumeric: "tabular-nums",
                   }}
                 >
-                  {d.pct}%
+                  {d.pctLabel}%
                 </span>
               </span>
               <span
@@ -616,7 +641,10 @@ export default function Transactions() {
         dayGroups.map((day) => (
           <div key={day.date}>
             <div className="day-head">
-              <span className="d">{day.label}</span>
+              <span className="lbl">
+                <span className="d">{day.label}</span>
+                <span className="wd">{day.weekday}</span>
+              </span>
               <span
                 className="t"
                 style={{
@@ -722,33 +750,48 @@ export default function Transactions() {
             marginBottom: 12,
           }}
         >
-          <div
-            style={{
-              color: monthNet >= 0 ? "var(--pos)" : "var(--neg)",
-              fontSize: 26,
-              fontWeight: 700,
-              letterSpacing: "-0.01em",
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            {monthNet >= 0 ? "+" : "−"}RM {fmt(Math.abs(monthNet))}
+          <div style={{ minWidth: 0 }}>
+            <div
+              style={{
+                color: "var(--t3)",
+                fontSize: 12.5,
+                marginBottom: 2,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {hero.label}
+            </div>
+            <div
+              style={{
+                color: hero.value >= 0 ? "var(--pos)" : "var(--neg)",
+                fontSize: 26,
+                fontWeight: 700,
+                letterSpacing: "-0.01em",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {hero.value >= 0 ? "+" : "−"}RM {fmt(Math.abs(hero.value))}
+            </div>
           </div>
           <span
             style={{
+              flex: "0 0 auto",
               width: 42,
               height: 42,
               borderRadius: 12,
               display: "grid",
               placeItems: "center",
               background:
-                monthNet >= 0
+                hero.value >= 0
                   ? "color-mix(in oklab, var(--pos) 20%, transparent)"
                   : "color-mix(in oklab, var(--neg) 20%, transparent)",
-              color: monthNet >= 0 ? "var(--pos)" : "var(--neg)",
+              color: hero.value >= 0 ? "var(--pos)" : "var(--neg)",
               fontSize: 20,
             }}
           >
-            {monthNet >= 0 ? <RiseOutlined /> : <FallOutlined />}
+            {hero.value >= 0 ? <RiseOutlined /> : <FallOutlined />}
           </span>
         </div>
       )}
@@ -780,7 +823,12 @@ export default function Transactions() {
               tap, which triggers iOS zoom. The native picker uses the OS
               wheel, no zoom, and matches the chip aesthetic with our own
               skin. */}
-          <span className="chip-select">
+          <span
+            className={`chip-select${categoryFilter !== "all" ? " on" : ""}`}
+          >
+            <span className="chip-select-icon">
+              <FilterOutlined />
+            </span>
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
