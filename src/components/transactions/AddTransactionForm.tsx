@@ -9,6 +9,9 @@ import {
   Field,
   TextInput,
   AmountInput,
+  AmountKeypad,
+  evaluateAmount,
+  formatAmountResult,
   DateInput,
   SelectInput,
   Segmented,
@@ -68,6 +71,7 @@ export default function AddTransactionForm({
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [padOpen, setPadOpen] = useState(false);
 
   const initial: FormState = useMemo(
     () => ({
@@ -87,6 +91,7 @@ export default function AddTransactionForm({
   useEffect(() => {
     if (!open) return;
     setState(initial);
+    setPadOpen(false);
     Promise.all([
       api.get<Account[]>("/accounts"),
       api.get<Category[]>("/categories"),
@@ -110,6 +115,17 @@ export default function AddTransactionForm({
       message.error("Account, amount, and date are required");
       return;
     }
+    // The field may still hold an unresolved sum if the user submitted without
+    // leaving it, so evaluate here rather than trusting the raw text.
+    const amount = evaluateAmount(state.amount);
+    if (amount === null || amount <= 0) {
+      message.error("Enter a valid amount");
+      return;
+    }
+    if (!state.categoryId) {
+      message.error("Category is required");
+      return;
+    }
     if (state.type === "transfer" && !state.transferToId) {
       message.error("Transfer destination is required");
       return;
@@ -120,8 +136,8 @@ export default function AddTransactionForm({
         type: state.type,
         accountId: state.accountId,
         transferToId: state.type === "transfer" ? state.transferToId : null,
-        amount: state.amount,
-        categoryId: state.categoryId || null,
+        amount: formatAmountResult(amount),
+        categoryId: state.categoryId,
         date: state.date,
         description: state.description || null,
       };
@@ -167,6 +183,7 @@ export default function AddTransactionForm({
       onClose={onClose}
       title={isEditing ? "Edit Transaction" : "New Transaction"}
       icon={isEditing ? "pencil" : "plus"}
+      fullscreen
     >
       <FormBody>
         <Field label="Type" required>
@@ -180,22 +197,34 @@ export default function AddTransactionForm({
             ]}
           />
         </Field>
-        <Row>
-          <Field label="Account" required>
-            <SelectInput
-              value={state.accountId}
-              onChange={(v) => set("accountId", v)}
-              options={accounts.map((a) => ({ value: a.id, label: a.name }))}
-              placeholder="Select account"
-            />
-          </Field>
-          <Field label="Amount" required>
-            <AmountInput
-              value={state.amount}
-              onChange={(v) => set("amount", v)}
-            />
-          </Field>
-        </Row>
+        {/* Anchors the pad so it drops below the row like a select menu. */}
+        <div className="amt-anchor">
+          <Row>
+            <Field label="Account" required>
+              <SelectInput
+                value={state.accountId}
+                onChange={(v) => set("accountId", v)}
+                options={accounts.map((a) => ({ value: a.id, label: a.name }))}
+                placeholder="Select account"
+              />
+            </Field>
+            <Field label="Amount" required>
+              <AmountInput
+                value={state.amount}
+                onChange={(v) => set("amount", v)}
+                expression
+                open={padOpen}
+                onOpenChange={setPadOpen}
+              />
+            </Field>
+          </Row>
+          <AmountKeypad
+            open={padOpen}
+            value={state.amount}
+            onChange={(v) => set("amount", v)}
+            onClose={() => setPadOpen(false)}
+          />
+        </div>
         {state.type === "transfer" && (
           <Field label="Transfer To" required>
             <SelectInput
@@ -209,17 +238,15 @@ export default function AddTransactionForm({
           </Field>
         )}
         <Row>
-          <Field label="Category">
+          <Field label="Category" required>
             <SelectInput
               value={state.categoryId}
               onChange={(v) => set("categoryId", v)}
-              options={[
-                { value: "", label: "—" },
-                ...filteredCategories.map((c) => ({
-                  value: c.id,
-                  label: c.name,
-                })),
-              ]}
+              options={filteredCategories.map((c) => ({
+                value: c.id,
+                label: c.name,
+              }))}
+              placeholder="Select category"
             />
           </Field>
           <Field label="Date" required>

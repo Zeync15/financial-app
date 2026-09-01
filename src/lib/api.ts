@@ -4,7 +4,7 @@
 //
 // All shapes returned here match what the old Hono API returned (camelCase keys,
 // money as DECIMAL strings) so the UI needs no changes.
-import { supabase, getUserId } from "./supabase";
+import { supabase, getUserId, isAuthError, refreshAuthSession } from "./supabase";
 import {
   calculateSummary,
   calculateAmortization,
@@ -904,9 +904,29 @@ async function route(method: "GET" | "POST" | "PUT" | "DELETE", path: string, bo
   throw new Error(`Unhandled API route: ${method} ${path}`);
 }
 
+// On a cold start the first fetches can race the token refresh and come back
+// "JWT expired". Refresh once and replay — a request rejected for a bad JWT never
+// reached the database, so the replay is safe for writes too.
+async function routeWithAuthRetry(
+  method: "GET" | "POST" | "PUT" | "DELETE",
+  path: string,
+  body?: Body,
+): Promise<unknown> {
+  try {
+    return await route(method, path, body);
+  } catch (err) {
+    if (!isAuthError(err)) throw err;
+    if (!(await refreshAuthSession())) {
+      // Really signed out; the router is already heading to /login.
+      throw new Error("Your session expired. Please sign in again.");
+    }
+    return await route(method, path, body);
+  }
+}
+
 export const api = {
-  get: <T>(path: string) => route("GET", path) as Promise<T>,
-  post: <T>(path: string, body: unknown) => route("POST", path, body as Body) as Promise<T>,
-  put: <T>(path: string, body: unknown) => route("PUT", path, body as Body) as Promise<T>,
-  delete: <T>(path: string) => route("DELETE", path) as Promise<T>,
+  get: <T>(path: string) => routeWithAuthRetry("GET", path) as Promise<T>,
+  post: <T>(path: string, body: unknown) => routeWithAuthRetry("POST", path, body as Body) as Promise<T>,
+  put: <T>(path: string, body: unknown) => routeWithAuthRetry("PUT", path, body as Body) as Promise<T>,
+  delete: <T>(path: string) => routeWithAuthRetry("DELETE", path) as Promise<T>,
 };
