@@ -16,6 +16,7 @@ export function Modal({
   title,
   icon = "plus",
   width = 560,
+  fullscreen = false,
   children,
 }: {
   open: boolean;
@@ -24,6 +25,9 @@ export function Modal({
   // Either a built-in key or any React node (e.g. an inline SVG icon).
   icon?: IconKey | React.ReactNode;
   width?: number;
+  // Mobile: render as a full-screen page instead of a bottom sheet, so the form
+  // grows downward from the top rather than upward from the bottom edge.
+  fullscreen?: boolean;
   children: React.ReactNode;
 }) {
   const iconNode =
@@ -36,6 +40,19 @@ export function Modal({
       {title}
     </div>
   );
+
+  if (isMobile && fullscreen) {
+    if (!open) return null;
+    return (
+      <div className="fm-full" role="dialog" aria-modal="true">
+        <div className="fm-full-head">
+          <span className="fm-head-ic">{iconNode}</span>
+          {title}
+        </div>
+        {children}
+      </div>
+    );
+  }
 
   if (isMobile) {
     return (
@@ -156,12 +173,92 @@ function clampDecimals(raw: string, max: number): string {
   return `${intPart}.${decPart}`;
 }
 
+// Recursive-descent evaluator for amount fields that accept arithmetic. Handles
+// + - * / and parentheses; returns null when the text isn't a complete, valid
+// expression (mid-typing, stray operator, divide by zero).
+export function evaluateAmount(raw: string): number | null {
+  const s = raw.replace(/[ ,]/g, "").replace(/×/g, "*").replace(/÷/g, "/");
+  if (!s) return null;
+  let i = 0;
+
+  const factor = (): number | null => {
+    if (s[i] === "+" || s[i] === "-") {
+      const sign = s[i++] === "-" ? -1 : 1;
+      const v = factor();
+      return v === null ? null : sign * v;
+    }
+    if (s[i] === "(") {
+      i++;
+      const v = expr();
+      if (v === null || s[i] !== ")") return null;
+      i++;
+      return v;
+    }
+    const start = i;
+    while (i < s.length && /[0-9.]/.test(s[i]!)) i++;
+    if (i === start) return null;
+    const n = Number(s.slice(start, i));
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const term = (): number | null => {
+    let left = factor();
+    while (left !== null && (s[i] === "*" || s[i] === "/")) {
+      const op = s[i++];
+      const right = factor();
+      if (right === null || (op === "/" && right === 0)) return null;
+      left = op === "*" ? left * right : left / right;
+    }
+    return left;
+  };
+
+  const expr = (): number | null => {
+    let left = term();
+    while (left !== null && (s[i] === "+" || s[i] === "-")) {
+      const op = s[i++];
+      const right = term();
+      if (right === null) return null;
+      left = op === "+" ? left + right : left - right;
+    }
+    return left;
+  };
+
+  const result = expr();
+  if (result === null || i !== s.length || !Number.isFinite(result)) return null;
+  return result;
+}
+
+// Money is DECIMAL(19,4) in the DB, so round there, then pad back up to the
+// two decimals amounts are read in ("18.9" reads as unfinished money).
+export function formatAmountResult(n: number): string {
+  const r = Math.round(n * 1e4) / 1e4;
+  const s = String(r);
+  const dot = s.indexOf(".");
+  return dot === -1 || s.length - dot - 1 < 2 ? r.toFixed(2) : s;
+}
+
+const HAS_OPERATOR = /[+*/()-]/;
+
+// Canonical text -> what the field shows. The state stays "12.50+3.20*2"; only
+// the display gets the spacing and the proper math glyphs.
+export function prettyAmount(raw: string): string {
+  return raw
+    .replace(/\*/g, " × ")
+    .replace(/\//g, " ÷ ")
+    .replace(/\+/g, " + ")
+    .replace(/-/g, " − ")
+    .trim();
+}
+
 export function AmountInput({
   value,
   onChange,
   currency = "RM",
   placeholder = "0.00",
   maxDecimals,
+  expression = false,
+  open,
+  onOpenChange,
 }: {
   value?: string | number;
   onChange?: (v: string) => void;
@@ -169,24 +266,196 @@ export function AmountInput({
   placeholder?: string;
   // When set, sanitize input to a number with at most this many decimal places.
   maxDecimals?: number;
+  // Accept simple sums ("12.50+3.20*2"). Pair with <AmountKeypad open={open}>
+  // rendered as a sibling of the enclosing Row, so the pad spans the form.
+  expression?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
+  const isMobile = useIsMobile();
+  const raw = String(value ?? "");
+
+  const resolve = () => {
+    if (!expression || !HAS_OPERATOR.test(raw)) return;
+    const n = evaluateAmount(raw);
+    if (n !== null) onChange?.(formatAmountResult(n));
+  };
+
+  // Phones get a tap target instead of an input: with no real field focused the
+  // OS keypad never opens, which is what lets the pad sit inline in the form.
+  if (expression && isMobile) {
+    return (
+      <span className="fld has-cur">
+        <span className="fld-cur">{currency}</span>
+        <div
+          className={`fld-input fld-amt${open ? " on" : ""}`}
+          role="button"
+          tabIndex={0}
+          onClick={() => onOpenChange?.(!open)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onOpenChange?.(!open);
+            }
+          }}
+        >
+          <span className={raw ? "amt-val" : "amt-val amt-ph"}>
+            {raw ? prettyAmount(raw) : placeholder}
+          </span>
+          {open && <span className="amt-caret" />}
+        </div>
+      </span>
+    );
+  }
+
   return (
     <span className="fld has-cur">
       <span className="fld-cur">{currency}</span>
       <input
         className="fld-input"
         inputMode="decimal"
-        value={value ?? ""}
+        value={raw}
         onChange={(e) =>
           onChange?.(
-            maxDecimals != null
-              ? clampDecimals(e.target.value, maxDecimals)
-              : e.target.value,
+            expression
+              ? e.target.value.replace(/[^0-9.+*/() -]/g, "")
+              : maxDecimals != null
+                ? clampDecimals(e.target.value, maxDecimals)
+                : e.target.value,
           )
         }
+        onFocus={() => onOpenChange?.(true)}
+        onBlur={() => {
+          onOpenChange?.(false);
+          resolve();
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") resolve();
+        }}
         placeholder={placeholder}
       />
     </span>
+  );
+}
+
+const KEY_ROWS: string[][] = [
+  ["C", "(", ")", "/"],
+  ["7", "8", "9", "*"],
+  ["4", "5", "6", "-"],
+  ["1", "2", "3", "+"],
+  ["0", ".", "back", "="],
+];
+const KEY_FACES: Record<string, string> = { "*": "×", "/": "÷", "-": "−" };
+
+function BackspaceIcon() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 6H9.5L4 12l5.5 6H20a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1z" />
+      <path d="M16 10l-4 4M12 10l4 4" />
+    </svg>
+  );
+}
+
+// The calculator that expands under the Amount field. Render it as a sibling of
+// the Row holding the field so it spans the whole form, not one grid column.
+export function AmountKeypad({
+  open,
+  value,
+  onChange,
+  onClose,
+  currency = "RM",
+}: {
+  open?: boolean;
+  value?: string | number;
+  onChange?: (v: string) => void;
+  onClose?: () => void;
+  currency?: string;
+}) {
+  const isMobile = useIsMobile();
+  const raw = String(value ?? "");
+  const result = evaluateAmount(raw);
+  const isSum = HAS_OPERATOR.test(raw.slice(1)) || raw.startsWith("(");
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t?.closest(".amt-pad") || t?.closest(".fld")) return;
+      onClose?.();
+    };
+    document.addEventListener("pointerdown", onDown);
+    return () => document.removeEventListener("pointerdown", onDown);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  const press = (k: string) => {
+    if (k === "C") return onChange?.("");
+    if (k === "back") return onChange?.(raw.slice(0, -1));
+    if (k === "=") {
+      if (result === null) return;
+      onChange?.(formatAmountResult(result));
+      onClose?.();
+      return;
+    }
+    onChange?.(raw + k);
+  };
+
+  const keyClass = (k: string) => {
+    if (k === "C") return "amt-key amt-key-clr";
+    if (k === "back" || k === "(" || k === ")") return "amt-key amt-key-fn";
+    if (k === "=") return `amt-key amt-key-eq${result === null ? " amt-key-off" : ""}`;
+    if (KEY_FACES[k] || k === "+") return "amt-key amt-key-op";
+    return "amt-key";
+  };
+
+  const resultText =
+    raw === "" ? `${currency} 0.00` : result === null ? "—" : `${currency} ${formatAmountResult(result)}`;
+  const resultClass = result === null || raw === "" ? "amt-res amt-res-idle" : "amt-res";
+
+  const keys = (
+    <div className="amt-keys">
+      {KEY_ROWS.flat().map((k) => (
+        <button
+          key={k}
+          type="button"
+          className={keyClass(k)}
+          // Keep focus (and the desktop input's ring) on the field.
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => press(k)}
+        >
+          {k === "back" ? <BackspaceIcon /> : (KEY_FACES[k] ?? k)}
+        </button>
+      ))}
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <div className="amt-pad amt-pad-m">
+        <div className="amt-echo-row">
+          <span className="amt-echo">{isSum && result !== null ? prettyAmount(raw) : ""}</span>
+          <span className={resultClass}>{resultText}</span>
+        </div>
+        {keys}
+      </div>
+    );
+  }
+
+  return (
+    <div className="amt-pad">
+      <div className="amt-disp">
+        <div className="amt-disp-top">
+          <span className="amt-disp-lbl">Working</span>
+          <span className="amt-echo">{raw === "" ? "Nothing entered yet" : prettyAmount(raw)}</span>
+          <span className={`${resultClass} amt-res-lg`}>
+            {result === null && raw !== "" ? "Incomplete" : resultText}
+          </span>
+        </div>
+        <span className="amt-hint">Type + − × ÷ straight into the field, or use the keys. Enter commits.</span>
+      </div>
+      {keys}
+    </div>
   );
 }
 
@@ -250,11 +519,6 @@ export function SelectInput({
   );
 }
 
-/**
- * Reuses the same `.seg` segmented pill the rest of the app uses for tab
- * bars (Categories Expense/Income, Dashboard Accounts/Allocation, the
- * Transactions List/Insights). Full-width with equal columns.
- */
 export function Segmented<T extends string>({
   value,
   onChange,

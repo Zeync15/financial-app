@@ -699,6 +699,248 @@ body {
 .fld.has-cur .fld-input {
   padding-left: 48px;
 }
+/* ---------------- Spending-by-category legend ---------------- */
+/* Each row jumps to the List tab filtered to that category, so it needs a
+   real tap target: 44px min, and it bleeds into the panel padding so the
+   pressed state reads as a full-width row. */
+.cat-row {
+  width: calc(100% + 16px);
+  min-height: 44px;
+  margin: 0 -8px 2px;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.cat-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.cat-row:active {
+  background: rgba(255, 255, 255, 0.08);
+}
+/* Uncategorised spending has no category to filter by. */
+.cat-row:disabled {
+  cursor: default;
+}
+.cat-row:disabled:hover {
+  background: transparent;
+}
+
+/* ---------------- Amount calculator pad ---------------- */
+/* On phones the Amount field is a tap target, not an input, so the OS keypad
+   never opens and the pad can expand inline under the field instead. */
+.fld-amt {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.fld-amt.on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 18%, transparent);
+}
+.amt-val {
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.amt-ph {
+  color: var(--t3);
+}
+.amt-caret {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 1.5px;
+  height: 19px;
+  margin-left: 1px;
+  background: var(--accent);
+  animation: amt-blink 1.05s steps(1, end) infinite;
+}
+@keyframes amt-blink {
+  0%, 55% { opacity: 1; }
+  56%, 100% { opacity: 0; }
+}
+
+.amt-anchor {
+  position: relative;
+}
+.amt-pad {
+  display: flex;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+}
+/* Mobile drops it below the row like a select menu, so the fields above the
+   Amount field stay put. Desktop keeps it in flow — the modal is centred and
+   has no bottom edge to grow away from. */
+.amt-pad-m {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  margin-top: 8px;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-color: var(--line);
+  background: var(--panel);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.55);
+}
+
+/* desktop: the display column beside the keys */
+.amt-disp {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 2px 0 4px;
+}
+.amt-disp-top {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.amt-disp-lbl {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--t4);
+}
+.amt-hint {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--t4);
+}
+
+/* mobile: working and total share one line above the keys */
+.amt-echo-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 24px;
+  padding: 0 2px;
+}
+.amt-echo {
+  font-size: 12.5px;
+  color: var(--t2);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.amt-pad-m .amt-echo {
+  color: var(--t3);
+}
+.amt-res {
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--accent);
+}
+.amt-res-lg {
+  font-size: 26px;
+  letter-spacing: -0.01em;
+  margin-top: 2px;
+}
+.amt-res-idle {
+  color: var(--t4);
+}
+
+.amt-keys {
+  flex: 0 0 auto;
+  width: 251px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.amt-pad-m .amt-keys {
+  width: auto;
+  gap: 7px;
+}
+.amt-key {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--t1);
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s, border-color 0.12s;
+}
+.amt-pad-m .amt-key {
+  height: 46px;
+  border-radius: 12px;
+  font-size: 19px;
+}
+.amt-key:hover {
+  background: rgba(255, 255, 255, 0.09);
+}
+.amt-key:active {
+  background: rgba(255, 255, 255, 0.16);
+}
+.amt-key-op {
+  background: color-mix(in oklab, var(--accent) 10%, transparent);
+  border-color: color-mix(in oklab, var(--accent) 22%, transparent);
+  color: var(--accent);
+  font-size: 18px;
+}
+.amt-pad-m .amt-key-op {
+  font-size: 20px;
+}
+.amt-key-op:hover {
+  background: color-mix(in oklab, var(--accent) 17%, transparent);
+}
+.amt-key-fn {
+  color: var(--t2);
+  font-size: 15px;
+  font-weight: 600;
+}
+.amt-key-clr {
+  color: var(--neg);
+  font-size: 15px;
+  font-weight: 600;
+}
+.amt-key-eq {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  font-size: 18px;
+  font-weight: 700;
+}
+.amt-key-eq:hover {
+  background: color-mix(in oklab, var(--accent) 88%, #fff);
+}
+.amt-key-off {
+  opacity: 0.35;
+  cursor: default;
+}
+.amt-key-off:hover {
+  background: var(--accent);
+}
 .fld-cur {
   position: absolute;
   left: 0;
@@ -903,6 +1145,84 @@ body {
   .ant-picker-dropdown .ant-picker-panels > div:first-child .ant-picker-header {
     border-bottom: 1px solid var(--line-soft);
   }
+}
+
+/* Search that takes over the Transactions title row, so the field appears
+   where the button that opened it was rather than further down the page. */
+.tx-search.ant-input-affix-wrapper {
+  width: 100%;
+  height: 40px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.05);
+}
+.tx-search.ant-input-affix-wrapper:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 18%, transparent);
+}
+.tx-search .ant-input-prefix {
+  margin-inline-end: 8px;
+  color: var(--t3);
+}
+.tx-search-close {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-right: -6px;
+  border-radius: 8px;
+  color: var(--t3);
+  cursor: pointer;
+}
+.tx-search-close:active {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--t1);
+}
+
+/* ---------------- Full-screen mobile form page ---------------- */
+/* Top-anchored so the form grows downward; the bottom sheet grew upward from
+   the screen edge, which pushed everything above the Amount field off-screen. */
+.fm-full {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* 100dvh, not inset:0 — a fixed element sizes to the LAYOUT viewport, so on
+     iOS its bottom edge hides under the dynamic browser toolbar and takes the
+     footer with it. Same reason the app shell uses dvh. */
+  height: 100dvh;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  /* The transactions list stays mounted underneath, so stop the scroll from
+     chaining into it once this page hits its end. */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  background: var(--bg);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.fm-full-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 14px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--t1);
+  letter-spacing: -0.01em;
+}
+.fm-full .fm-body {
+  padding: 18px 16px 4px;
+}
+.fm-full .fm-foot {
+  /* Follows the last field rather than sinking to the bottom of the screen. */
+  padding: 20px 16px calc(env(safe-area-inset-bottom, 0px) + 20px);
 }
 
 /* ---------------- Form drawer (mobile bottom sheet for form modals) ---------------- */

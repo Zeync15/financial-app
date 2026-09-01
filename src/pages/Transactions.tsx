@@ -3,6 +3,8 @@ import { Button, DatePicker, Input, Spin, Empty, message } from "antd";
 import {
   PlusOutlined,
   SearchOutlined,
+  RightOutlined,
+  CloseOutlined,
   WalletOutlined,
   RiseOutlined,
   FallOutlined,
@@ -191,6 +193,11 @@ export default function Transactions() {
     }
   });
 
+  const closeSearch = () => {
+    setSearchOpen(false);
+    setSearchQuery("");
+  };
+
   const load = () => {
     setLoading(true);
     api
@@ -207,6 +214,24 @@ export default function Transactions() {
     window.addEventListener("transaction-added", handleAdded);
     return () => window.removeEventListener("transaction-added", handleAdded);
   }, []);
+
+  // Insights has nothing to search, so do not leave a live filter behind.
+  useEffect(() => {
+    if (mobileTab !== "list") closeSearch();
+  }, [mobileTab]);
+
+  // Tap away to dismiss — but only while the field is empty. Scrolling the
+  // results starts with a pointerdown outside the field, so closing on every
+  // outside tap would wipe the query the moment you went to read the matches.
+  useEffect(() => {
+    if (!searchOpen || searchQuery) return;
+    const onDown = (e: PointerEvent) => {
+      if ((e.target as HTMLElement | null)?.closest(".tx-search")) return;
+      closeSearch();
+    };
+    document.addEventListener("pointerdown", onDown);
+    return () => document.removeEventListener("pointerdown", onDown);
+  }, [searchOpen, searchQuery]);
 
   // React to URL → open the right form. Runs on every navigation; the
   // form's own state machine handles loading data.
@@ -250,6 +275,13 @@ export default function Transactions() {
     setFormOpen(false);
     setEditingTx(null);
     if (wantsNew || wantsEdit) navigate("/transactions", { replace: true });
+  };
+
+  // Insights and List share the selected month, so filtering here and switching
+  // tabs lands on exactly the transactions behind the slice that was tapped.
+  const showCategory = (categoryId: string) => {
+    setCategoryFilter(categoryId);
+    setMobileTab("list");
   };
 
   const handleEdit = (tx: Transaction) => {
@@ -296,12 +328,18 @@ export default function Transactions() {
       out = out.filter((t) => t.categoryId === categoryFilter);
     }
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase().trim();
+      // Amounts are matched against how they read on screen ("18.90"), so a
+      // partial "18" still turns up 18.90 and 180.00. "RM 1,200.5" and
+      // "1200.50" are the same search.
+      const amountQ = q.replace(/^rm/, "").trim().replace(/,/g, "");
+      const isAmount = /^[0-9.]+$/.test(amountQ) && /[0-9]/.test(amountQ);
       out = out.filter(
         (tx) =>
           tx.description?.toLowerCase().includes(q) ||
           tx.categoryName?.toLowerCase().includes(q) ||
-          tx.accountName?.toLowerCase().includes(q),
+          tx.accountName?.toLowerCase().includes(q) ||
+          (isAmount && Number(tx.amount).toFixed(2).includes(amountQ)),
       );
     }
     return out;
@@ -419,12 +457,15 @@ export default function Transactions() {
   }, [categoryFilter, categories, insightTxns, summary.net]);
 
   const spendByCategory = useMemo(() => {
-    const map = new Map<string, { val: number; color: string }>();
+    const map = new Map<
+      string,
+      { val: number; color: string; categoryId: string | null }
+    >();
     for (const tx of insightTxns) {
       if (tx.type !== "expense") continue;
       const name = tx.categoryName ?? "Other";
       const color = tx.categoryColor ?? DEFAULT_CATEGORY_COLOR;
-      const cur = map.get(name) ?? { val: 0, color };
+      const cur = map.get(name) ?? { val: 0, color, categoryId: tx.categoryId };
       cur.val += Number(tx.amount);
       cur.color = color;
       map.set(name, cur);
@@ -432,7 +473,12 @@ export default function Transactions() {
     const total = [...map.values()].reduce((s, v) => s + v.val, 0) || 1;
     // Every category that had spending gets its own slice — no "Other" roll-up.
     const ranked = [...map.entries()]
-      .map(([label, { val, color }]) => ({ label, val, color }))
+      .map(([label, { val, color, categoryId }]) => ({
+        label,
+        val,
+        color,
+        categoryId,
+      }))
       .sort((a, b) => b.val - a.val);
     return {
       total,
@@ -573,16 +619,14 @@ export default function Transactions() {
             </div>
           </div>
           {spendByCategory.slices.map((d) => (
-            <div
+            <button
               key={d.label}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 10,
-              }}
+              type="button"
+              className="cat-row"
+              disabled={!d.categoryId}
+              onClick={() => d.categoryId && showCategory(d.categoryId)}
             >
-              <span style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
                 <span
                   style={{
                     width: 10,
@@ -594,8 +638,8 @@ export default function Transactions() {
                 />
                 <span
                   style={{
-                    color: "var(--t2)",
-                    fontSize: 13,
+                    color: "var(--t1)",
+                    fontSize: 15,
                     whiteSpace: "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -606,25 +650,31 @@ export default function Transactions() {
                 <span
                   style={{
                     color: "var(--t3)",
-                    fontSize: 12,
+                    fontSize: 12.5,
                     fontVariantNumeric: "tabular-nums",
+                    flexShrink: 0,
                   }}
                 >
                   {d.pctLabel}%
                 </span>
               </span>
-              <span
-                style={{
-                  color: "var(--t1)",
-                  fontWeight: 600,
-                  fontSize: 13,
-                  fontVariantNumeric: "tabular-nums",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                RM {fmt(d.val)}
+              <span style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                <span
+                  style={{
+                    color: "var(--t1)",
+                    fontWeight: 600,
+                    fontSize: 14,
+                    fontVariantNumeric: "tabular-nums",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  RM {fmt(d.val)}
+                </span>
+                {d.categoryId && (
+                  <RightOutlined style={{ fontSize: 11, color: "var(--t4)" }} />
+                )}
               </span>
-            </div>
+            </button>
           ))}
         </div>
       )}
@@ -672,28 +722,61 @@ export default function Transactions() {
   return (
     <div>
       <div className="titlebar">
-        <h1 className="h1" style={{ fontSize: isMobile ? 22 : 26 }}>
-          Transactions
-        </h1>
-        {!isMobile && (
-          <button
-            className="btn-primary-emerald"
-            onClick={() => {
-              setEditingTx(null);
-              setFormOpen(true);
+        {isMobile && searchOpen ? (
+          // Takes the title's place rather than appearing further down the
+          // page: the field lands where the button that opened it was.
+          <Input
+            className="tx-search"
+            prefix={<SearchOutlined />}
+            placeholder="Search transactions..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") closeSearch();
             }}
-          >
-            <PlusOutlined />
-            Add Transaction
-          </button>
-        )}
-        {isMobile && (
-          <Button
-            type="text"
-            icon={<SearchOutlined />}
-            size="large"
-            onClick={() => setSearchOpen((v) => !v)}
+            autoFocus
+            suffix={
+              <span
+                className="tx-search-close"
+                role="button"
+                tabIndex={0}
+                aria-label="Close search"
+                onClick={closeSearch}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") closeSearch();
+                }}
+              >
+                <CloseOutlined />
+              </span>
+            }
           />
+        ) : (
+          <>
+            <h1 className="h1" style={{ fontSize: isMobile ? 22 : 26 }}>
+              Transactions
+            </h1>
+            {!isMobile && (
+              <button
+                className="btn-primary-emerald"
+                onClick={() => {
+                  setEditingTx(null);
+                  setFormOpen(true);
+                }}
+              >
+                <PlusOutlined />
+                Add Transaction
+              </button>
+            )}
+            {isMobile && (
+              <Button
+                type="text"
+                icon={<SearchOutlined />}
+                size="large"
+                aria-label="Search transactions"
+                onClick={() => setSearchOpen(true)}
+              />
+            )}
+          </>
         )}
       </div>
 
@@ -852,19 +935,6 @@ export default function Transactions() {
               style={{ marginLeft: "auto", maxWidth: 280 }}
             />
           )}
-        </div>
-      )}
-
-      {isMobile && searchOpen && (
-        <div style={{ marginBottom: 12 }}>
-          <Input
-            prefix={<SearchOutlined />}
-            placeholder="Search transactions..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            allowClear
-            autoFocus
-          />
         </div>
       )}
 
