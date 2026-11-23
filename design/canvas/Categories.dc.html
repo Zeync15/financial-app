@@ -5,6 +5,7 @@
 <title>Categories</title>
 <script src="./support.js"></script>
 <link rel="stylesheet" href="/_blob/891fbe9142f7298e7fe04f5467c0b7f3">
+<link rel="stylesheet" href="/_blob/5942119103d6ffeff8f8a6c0d63f8db0">
 </head>
 <body>
 <x-dc>
@@ -12,6 +13,8 @@
 <style>
 body{margin:0}
 a{color:#1ec98a}a:hover{color:#5fe0b0}
+.no-sb{scrollbar-width:none;-ms-overflow-style:none}
+.no-sb::-webkit-scrollbar{display:none;width:0;height:0}
 </style>
 </helmet>
 <div class="fa-root" style="width: {{rootW}}; height: {{rootH}}; position: relative; overflow: hidden; display: flex; flex-direction: {{rootDir}}">
@@ -73,31 +76,157 @@ a{color:#1ec98a}a:hover{color:#5fe0b0}
   </sc-if>
 
   <sc-if value="{{formOpen}}" hint-placeholder-val="{{false}}">
-    <div class="scrim" onClick="{{close}}"></div>
-    <div class="{{boxClass}}" role="dialog" aria-label="{{f.title}}" style="padding-bottom: {{sheetPadB}}">
-      <sc-if value="{{isPhone}}" hint-placeholder-val="{{false}}"><div class="sheet-grip"></div></sc-if>
+    <sc-if value="{{showScrim}}" hint-placeholder-val="{{true}}"><div class="scrim" onClick="{{close}}"></div></sc-if>
+    <div class="{{boxClass}}" role="dialog" aria-label="{{f.title}}" style="padding-bottom: {{sheetPadB}}; bottom: {{boxBottom}}; display: {{boxDisplay}}; flex-direction: column; max-height: {{boxMaxH}}; overflow: {{boxOverflow}}">
+      <sc-if value="{{showGrip}}" hint-placeholder-val="{{false}}"><div class="sheet-grip"></div></sc-if>
       <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}"><button class="fm-x" aria-label="Close" onClick="{{close}}">×</button></sc-if>
-      <div class="fm-head"><span class="fm-head-ic"><span class="{{f.icon}}"></span></span>{{f.title}}</div>
-      <div class="fm-body">
-        <div class="field"><div class="field-lbl">Name <em class="req">*</em></div><div class="{{f.nameCls}}">{{f.name}}</div></div>
-        <div class="field"><div class="field-lbl">Type <em class="req">*</em></div><div class="fld sel">{{f.type}}<span class="chev"><span class="ic i-down"></span></span></div></div>
-        <div class="field"><div class="field-lbl">Color</div><div><span class="swatch-fld"><i style="background: {{f.color}}"></i>{{f.hex}}</span></div></div>
-        <div class="field"><div class="field-lbl">Icon (optional)</div><div class="{{f.iconCls}}">{{f.iconKey}}</div></div>
+      <sc-if value="{{headSmall}}" hint-placeholder-val="{{true}}"><div class="fm-head"><span class="fm-head-ic"><span class="{{f.icon}}"></span></span>{{f.title}}</div></sc-if>
+      <sc-if value="{{headFull}}" hint-placeholder-val="{{false}}"><div class="fm-full-head"><span class="fm-head-ic"><span class="{{f.icon}}"></span></span>{{f.title}}</div></sc-if>
+      <div class="fm-body" style="flex: {{bodyFlex}}; min-height: {{bodyMinH}}">
+        <sc-if value="{{pickerOff}}" hint-placeholder-val="{{true}}">
+          <div class="field"><div class="field-lbl">Name <em class="req">*</em></div><div class="{{f.nameCls}}">{{f.name}}</div></div>
+          <div class="field"><div class="field-lbl">Type <em class="req">*</em></div><div class="fld sel">{{f.type}}<span class="chev"><span class="ic i-down"></span></span></div></div>
+          <div class="field"><div class="field-lbl">Color</div><div><span class="swatch-fld"><i style="background: {{f.color}}"></i>{{f.hex}}</span></div></div>
+          <div class="field"><div class="field-lbl">Icon (optional)</div><div class="{{f.iconCls}}">{{f.iconKey}}</div></div>
+        </sc-if>
+        <sc-if value="{{pickerOn}}" hint-placeholder-val="{{false}}">
+          <div class="field">
+            <div class="field-lbl">Name <em class="req">*</em></div>
+            <div class="{{f.nameCls}}" style="gap: 10px; justify-content: flex-start">
+              <span style="flex: 0 0 auto; width: 30px; height: 30px; margin-left: -4px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,0.05); box-shadow: inset 0 0 0 1px var(--line)"><img src="{{pk.preview}}" alt="" width="20" height="20" style="display: block; opacity: {{pk.previewOp}}; filter: {{pk.previewFx}}"></span>
+              <span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{f.name}}</span>
+            </div>
+          </div>
+          <div class="field"><div class="field-lbl">Type <em class="req">*</em></div><div class="fld sel">{{f.type}}<span class="chev"><span class="ic i-down"></span></span></div></div>
+          <div class="field" style="flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column">
+            <div class="field-lbl" style="display: flex; justify-content: space-between; align-items: baseline"><span>Icon</span><span style="font-size: 11.5px; font-weight: 400; color: var(--t3)">{{pk.hint}}</span></div>
+            <button class="{{pk.searchCls}}" onClick="{{pk.toggleSearch}}" style="width: 100%; gap: 10px; justify-content: flex-start; font-family: inherit; cursor: pointer; text-align: left; flex: 0 0 auto">
+              <span class="ic i-search" style="color: var(--t2)"></span>
+              <span style="flex: 1; min-width: 0">{{pk.searchText}}</span>
+              <sc-if value="{{pk.searching}}" hint-placeholder-val="{{false}}"><span style="color: var(--t2); font-size: 18px; line-height: 1">×</span></sc-if>
+            </button>
+            <sc-if value="{{pk.chipsOn}}" hint-placeholder-val="{{true}}">
+              <div class="no-sb" style="display: flex; gap: 6px; overflow-x: auto; padding: 10px 0 2px; flex: 0 0 auto">
+                <sc-for list="{{pk.chips}}" as="ch" hint-placeholder-count="5">
+                  <button onClick="{{ch.pick}}" style="flex: 0 0 auto; height: 30px; padding: 0 12px; border-radius: 15px; border: {{ch.border}}; background: {{ch.bg}}; color: {{ch.color}}; font-family: inherit; font-size: 12.5px; font-weight: 500; white-space: nowrap; cursor: pointer">{{ch.label}}</button>
+                </sc-for>
+              </div>
+            </sc-if>
+            <div class="no-sb" style="flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px 2px 8px">
+              <sc-for list="{{pk.sections}}" as="sec" hint-placeholder-count="3">
+                <div>
+                  <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--t3); padding: 12px 0 8px">{{sec.title}}</div>
+                  <div role="radiogroup" aria-label="{{sec.title}}" style="display: grid; grid-template-columns: repeat({{pk.cols}}, minmax(0, 1fr)); gap: 8px 4px">
+                    <sc-for list="{{sec.items}}" as="e" hint-placeholder-count="7">
+                      <button role="radio" aria-checked="{{e.checked}}" aria-label="{{e.label}}" title="{{e.label}}" onClick="{{e.pick}}" style="justify-self: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; background: {{e.bg}}; box-shadow: {{e.ring}}; cursor: pointer">
+                        <img src="{{e.src}}" alt="" width="28" height="28" style="display: block; filter: {{e.fx}}">
+                      </button>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+              <sc-if value="{{pk.searching}}" hint-placeholder-val="{{false}}">
+                <div style="font-size: 12px; color: var(--t3); padding: 14px 0 0; text-align: center">Search covers all 1,595 Fluent emoji, not just the suggested ones.</div>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
       </div>
       <div class="fm-foot"><div class="fm-foot-right"><button class="btn-pill ghost" onClick="{{close}}">Cancel</button><button class="btn-pill primary">{{f.primary}}</button></div></div>
     </div>
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"tab":{"editor":"enum","options":["expense","income"],"default":"expense"},"form":{"editor":"enum","options":["none","new","edit"],"default":"none"},"proposed":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"tab":{"editor":"enum","options":["expense","income"],"default":"expense"},"form":{"editor":"enum","options":["none","new","edit"],"default":"none"},"proposed":{"editor":"boolean","default":true},"picker":{"editor":"boolean","default":true},"search":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
     const s = this.state || {};
     const phone = (this.props.size ?? 'desktop') === 'phone';
     const tab = s.tab ?? this.props.tab ?? 'expense';
     const form = s.form ?? this.props.form ?? 'none';
-    // proposed: draws the changes proposed on 23 Nov 2026 (see the Proposed changes page); off is the live app.
-    const P = !!(this.props.proposed ?? false);
+    // proposed: the changes proposed on 23 Nov 2026, built and live (commit c4f82ce), so on by default; off draws the old look (the Before boards in rows 1–5).
+    const P = !!(this.props.proposed ?? true);
+    // picker: the emoji picker, approved 23 Nov 2026 and the default here (not built yet). The Icon text box becomes
+    // a grid of suggested Fluent emoji in groups, with group chips and a search over the whole set; on phone
+    // the form becomes a full-screen page; no Color field. Off draws the old form (the Before boards). search: open with a sample search ("pet").
+    const PK = !!(this.props.picker ?? true);
+    const GROUPS = [
+      ['Food & drink', 'fork_and_knife steaming_bowl cooked_rice hamburger pizza sushi hot_beverage bubble_tea shortcake shallow_pan_of_food shopping_cart leafy_green red_apple'],
+      ['Transport', 'automobile fuel_pump p_button train bus taxi motor_scooter airplane motorway wrench'],
+      ['Home & bills', 'house key light_bulb droplet antenna_bars mobile_phone receipt broom couch_and_lamp hammer'],
+      ['Family', 'baby child older_person ring graduation_cap school baby_bottle teddy_bear'],
+      ['Pets', 'black_cat dog fish bird bone'],
+      ['Health & care', 'pill hospital tooth glasses flexed_biceps lotion_bottle scissors nail_polish'],
+      ['Shopping', 'shopping_bags t-shirt running_shoe handbag laptop video_game package'],
+      ['Leisure & hobbies', 'clapper_board musical_note tennis badminton soccer_ball guitar books artist_palette camping admission_tickets'],
+      ['Travel', 'airplane_departure hotel luggage world_map beach_with_umbrella passport_control'],
+      ['Giving & occasions', 'wrapped_gift red_envelope birthday_cake party_popper folded_hands mosque church hindu_temple'],
+      ['Money & work', 'money_bag dollar_banknote purse coin briefcase clipboard bank chart_increasing repeat_button'],
+      ['Finance & admin', 'credit_card chart_decreasing shield bookmark_tabs classical_building'],
+      ['Other', 'label red_question_mark pushpin']
+    ];
+    const B = {
+      admission_tickets: '7a1f047291ffaacd5fc031341fdb77e1', airplane: 'c6588f396333ad9bcdf288497e5b79d4', airplane_departure: '9e5025a7a93f4ce69fd14e06e3f527f8', antenna_bars: '77c4f178ffdeadddd501765c033f59a2',
+      artist_palette: 'a2d2331fc3032a0162f29c33dbcb74f3', baby: 'e2659f2749f5b2f90377acc062720783', baby_bottle: 'e1d36ea170051fa95199012a2f5ec776', badminton: '466eb719047198829966e543285f8377',
+      bank: '8d863f1a55c655701f25321914a9f612', beach_with_umbrella: '109c92294e0217a50adf0559354aa73e', bird: 'ec4299fe10824425d15e100117db49ca', birthday_cake: 'e995874a869dbf7bd4d4cb9b4aa62cfe',
+      bone: 'e3e4f0fc945d938c6cb9da3e0c3e5f95', bookmark_tabs: '2c9310ed07f39c736ab500079b214d8d', books: '37139aa262d08d52ec280e0484eab25a', briefcase: '01fb4a0f093e614bca0fd8f30e847fe1',
+      broom: '0bded59c2997abc679cab9d90af6cc01', bubble_tea: '9b3102d7f80a6bcdb66ad121ba6c3f14', bus: '0ca9bb953cccf743b7d9b9b2af06a036', camping: '320b93c9fcf54ecac81b54f9803ae460',
+      chart_decreasing: 'cdc6fc2e116ce16566846dd0a6bb95e3', chart_increasing: 'e6a08d13d07553a939d90526df382e0d', child: 'e57c5de178bb4a7c17be9d0dab73a88d', church: 'fc516c0381f1021d9e8ef9cccdc25cba',
+      clapper_board: '35bca747c00836379c2378e06471d3e0', classical_building: '6b710b2b54be1a22f076840249a5464d', clipboard: 'f6f7ef8a968d982a76b6b242bef252ae', coin: '1fd6bcb17801ce293c5a5837313b01c2',
+      cooked_rice: 'a11df250719983223f50fe09bfc96990', couch_and_lamp: 'd8b85ed4f78b31d0a12afc4f1ceb5f37', credit_card: '50ab4c4c840bee3ca7df29ee9807401a', dog: '489ad4bb334590f686786ff92a4d28e9',
+      dollar_banknote: '71c5a2ccb4b8ffaf64e57612217d0c9c', droplet: 'a547d7d04910026442e7ae9ac75c5af4', fish: '068e02ff8adc357b129f611b1a12332c', flexed_biceps: '1d85591936b300ce44a0577f33051136',
+      folded_hands: '04c0df130c42a21f89fe14858d117bbc', fork_and_knife: '5ba7082e7895d79c3d3b3568c675e191', fuel_pump: '245cf140e4578be34893684bef19cc8a', glasses: 'c37c7a612fa4d4b3570f9e3564d3fd09',
+      graduation_cap: 'f2dfafda091bf80e6af773844b65332f', guitar: '4d5e9b6bd21c8fedc2f968f0494177dc', hamburger: '121d11bb319242809dcc6665141194ff', hammer: 'badecbff6f4dad74cad744364bfb8096',
+      handbag: '9def5d863387c05bcd1d16ab61a27d2c', hindu_temple: 'ceee096598924514196055503a8b484b', hospital: '206fb5cb87af1fbef4c160b719b18ca5', hot_beverage: 'bc17e207627cffacf5bb5df4beba455c',
+      hotel: '27c4c11c0c8429d4eb3408c68c7e50b9', house: 'dc97630338d7d4acfab91c17f02dfb19', key: '8e1feb3d96166b06f5f7abeec1ac50b5', label: 'f5f1a6f5107787e2696c527ecc3383e1',
+      laptop: '4c71b3e3abe20e8b44e3158b1463a4b3', leafy_green: 'dd49c24bfbf6746fd6461ffada57a88a', light_bulb: 'dd747309b0306d5431dcbbfc428034f0', lotion_bottle: '23a5fd5d30385e73465256105d7d98e0',
+      luggage: '3c28332bf90184f228b182fedc93f82b', mobile_phone: 'ced355d49f33645de6e3902155814e95', money_bag: '21f20d12461336975418c33bc914077a', mosque: '4b60aea1ba4e76776322dfd53ddef212',
+      motor_scooter: 'c8a405e82d230a87711d794007865ac7', motorway: 'cc06d76791752d1fb8a95496a8973ddf', musical_note: '40a03d5409afb3f11be46d3791a70f75', nail_polish: 'fe5788faa8e4b46bdfd851c9eb62d638',
+      older_person: '1a71cd2cd3ca681c1752c5d49abd1f84', p_button: '6f593909c4098a478d20e8433ddb6ca0', package: 'b3825ce66e37396a8cb50904205c3d1e', party_popper: '051b19763e8af936f13092b6bd16e087',
+      passport_control: '22e9b45a98ae0ce6bdf77aa78b821abb', pill: 'fcce47a5f74757a69f5aa0fcae1aa23b', pizza: 'b615557924ecd0073eff88caffd6876b', purse: '8d5ed227e43fc1743f64d12143698d8e',
+      pushpin: 'c770d7e273a2c7566e34aef06d11c578', receipt: '3e4065f40be0b68a7df827b2b39872b9', red_apple: '632e3465aaff42e7d1e4d276a2fa6b6b', red_envelope: 'a36f0f28e6fefb51ec1b99693d6ae714',
+      red_question_mark: '2bfb035ad70692ccb4bdc489626f1c00', repeat_button: 'f8b19a939ffeb8f7726353ea4b2c5c4b', ring: 'eda4f8691916cb1046a3f0665e0a4159', running_shoe: '9dd94c1c2be989cf2aa3d5d2c12fb92c',
+      school: '80342b73efffc6edf613148d1657d55a', scissors: '54ba076f53231897861f3f1c1ce9e5de', shallow_pan_of_food: '7fd3a56c80855a473566072074d5f17f', shield: 'a843b593009d88890e318c9c80bf46f2',
+      shopping_bags: '8f5774c5e5cf8e1385e93f661f95e24f', shopping_cart: '72f3b05e15327b3481fa142cd3e4867b', shortcake: 'a011d96ff656fd262e8ab5d4263bbc59', soccer_ball: '04cf9d92a45af46452c8c9502ac82791',
+      steaming_bowl: '5624c727a36c11add65a784366773837', sushi: '7a87955966385ce14a5eae184386cd81', 't-shirt': '4cf9ef3cdb39f14cde3f643e18c96161', taxi: '995aa4ec631f3da5f5fa66b0a94f3d32',
+      teddy_bear: 'c6e6f12a9a2308b56ace6a1bc67d0734', tennis: 'cf919bd0a710ffc08c50e2ceafdcdae2', tooth: '7bb216eed816799ae87e31519314d1da', train: 'bdada2bb24d7ac482bdc92d0f6aa1d40',
+      video_game: 'bacdf8be7caf04a29bf618833892ac05', world_map: '3fb59e0300181cac0fedb7dd5f76d314', wrapped_gift: '0af7a2ea1a9ae123a2a70511e993f2d3', wrench: '39d3d3d25999587ab44e81c283b456a7',
+      automobile: 'b6f7a15d96dd7e16c1a9e5043a8553bb', black_cat: 'de2f008ded822ea228626a5b176a075e'
+    };
+    const KW = { black_cat: 'cat pet', dog: 'pet', fish: 'pet', bird: 'pet', bone: 'pet food' };
+    const DARK = { automobile: 1, black_cat: 1 };
+    const fxDark = 'drop-shadow(0 0 0.5px rgba(255,255,255,0.9)) drop-shadow(0 0 1px rgba(255,255,255,0.5))';
+    const eLabel = (k) => { const t = k.replace(/_/g, ' '); return t.charAt(0).toUpperCase() + t.slice(1); };
+    const eSrc = (k) => '/_blob/' + B[k];
+    const picked = s.pick ?? (form === 'edit' ? 'shopping_bags' : '');
+    const grp = s.grp ?? 'all';
+    const searching = s.q ?? !!(this.props.search ?? false);
+    const query = 'pet';
+    const eItem = (k) => ({
+      src: eSrc(k), label: eLabel(k), fx: DARK[k] ? fxDark : 'none', checked: k === picked ? 'true' : 'false',
+      bg: k === picked ? 'color-mix(in oklab, var(--accent) 18%, transparent)' : 'rgba(255,255,255,0.04)',
+      ring: k === picked ? 'inset 0 0 0 2px var(--accent)' : 'none',
+      pick: () => this.setState({ pick: k })
+    });
+    const pk = {
+      cols: phone ? 7 : 9,
+      hint: picked ? eLabel(picked) : 'Pick one, or search',
+      preview: eSrc(picked || 'label'), previewOp: picked ? 1 : 0.45, previewFx: DARK[picked] ? fxDark : 'none',
+      searching, chipsOn: !searching,
+      searchCls: 'fld' + (searching ? ' focus' : ' ph'),
+      searchText: searching ? query : 'Search all emoji, e.g. cat, petrol, zakat',
+      toggleSearch: () => this.setState({ q: !searching }),
+      chips: [['all', 'All']].concat(GROUPS.map(([t]) => [t, t])).map(([k, label]) => ({
+        label,
+        border: k === grp ? '1px solid var(--accent)' : '1px solid var(--line)',
+        bg: k === grp ? 'color-mix(in oklab, var(--accent) 14%, transparent)' : 'transparent',
+        color: k === grp ? '#fff' : 'var(--t2)',
+        pick: () => this.setState({ grp: k })
+      })),
+      sections: searching
+        ? [{ title: 'Matches for "' + query + '"', items: GROUPS.flatMap(([, l]) => l.split(' ')).filter((k) => (k + ' ' + (KW[k] || '')).includes(query)).map(eItem) }]
+        : GROUPS.filter(([t]) => grp === 'all' || grp === t).map(([title, l]) => ({ title, items: l.split(' ').map(eItem) }))
+    };
     // The real categories, names, order, colours and icons as on the live site (23 Nov 2026).
     // Car is #9aa3ad live; the proposal makes it #383838.
     const data = {
@@ -158,12 +287,17 @@ class Component extends DCLogic {
       tabs: [['expense', 'Expense'], ['income', 'Income']].map(([k, label]) => ({ label, cls: k === tab ? 'on' : '', pick: () => this.setState({ tab: k }) })),
       cats, f,
       showFab: phone && form === 'none',
-      openNew: () => this.setState({ form: 'new' }),
-      openEdit: () => this.setState({ form: 'edit' }),
+      openNew: () => this.setState({ form: 'new', pick: undefined, grp: undefined, q: undefined }),
+      openEdit: () => this.setState({ form: 'edit', pick: undefined, grp: undefined, q: undefined }),
       close: () => this.setState({ form: 'none' }),
       formOpen: form !== 'none',
-      boxClass: phone ? 'sheet' : 'fm-modal',
-      sheetPadB: phone ? '34px' : '0px'
+      pk, pickerOn: PK, pickerOff: !PK,
+      showScrim: !(PK && phone), showGrip: phone && !PK, headSmall: !(PK && phone), headFull: PK && phone,
+      boxClass: phone ? (PK ? 'fm-full' : 'sheet') : 'fm-modal',
+      boxBottom: phone ? '0px' : 'auto', boxDisplay: PK ? 'flex' : 'block', boxOverflow: PK ? 'hidden' : 'visible',
+      boxMaxH: PK && !phone ? 'calc(100% - 140px)' : 'none',
+      bodyFlex: PK ? '1 1 auto' : '0 1 auto', bodyMinH: PK ? '0' : 'auto',
+      sheetPadB: phone && !PK ? '34px' : '0px'
     };
   }
 }

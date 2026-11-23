@@ -197,12 +197,12 @@ a{color:#1ec98a}a:hover{color:#5fe0b0}
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"kind":{"editor":"enum","options":["loans","instalments"],"default":"loans"},"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"schedule":{"editor":"boolean","default":false},"form":{"editor":"enum","options":["none","new","adjust"],"default":"none"},"proposed":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"kind":{"editor":"enum","options":["loans","instalments"],"default":"loans"},"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"schedule":{"editor":"boolean","default":false},"form":{"editor":"enum","options":["none","new","adjust"],"default":"none"},"proposed":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
     const s = this.state || {};
-    // proposed: draws the changes proposed on 23 Nov 2026 (see the Proposed changes page); off is the live app.
-    const P = !!(this.props.proposed ?? false);
+    // proposed: the changes proposed on 23 Nov 2026, built and live (commit c4f82ce), so on by default; off draws the old look (the Before boards in rows 1–5).
+    const P = !!(this.props.proposed ?? true);
     const inst = (this.props.kind ?? 'loans') === 'instalments';
     const phone = (this.props.size ?? 'desktop') === 'phone';
     const form = s.form ?? this.props.form ?? 'none';

@@ -169,12 +169,14 @@ a{color:#1ec98a}a:hover{color:#5fe0b0}
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"tab":{"editor":"enum","options":["accounts","allocation"],"default":"accounts"},"form":{"editor":"enum","options":["none","account","income"],"default":"none"},"proposed":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"tab":{"editor":"enum","options":["accounts","allocation"],"default":"accounts"},"form":{"editor":"enum","options":["none","account","income"],"default":"none"},"proposed":{"editor":"boolean","default":true},"labels":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
     const s = this.state || {};
-    // proposed: draws the changes proposed on 23 Nov 2026 (see the Proposed changes page); off is the live app.
-    const P = !!(this.props.proposed ?? false);
+    // proposed: the changes proposed on 23 Nov 2026, built and live (commit c4f82ce), so on by default; off draws the old look (the Before boards in rows 1–5).
+    const P = !!(this.props.proposed ?? true);
+    // labels: the row labels approved 23 Nov 2026, built and live (commit c4f82ce), so on by default; off draws the old labels (the Before board).
+    const L = !!(this.props.labels ?? true);
     const sp = P ? ' ' : '';
     const size = this.props.size ?? 'desktop';
     const phone = size === 'phone';
@@ -192,7 +194,7 @@ class Component extends DCLogic {
       instalment: ['Instalment', '#eb2f96', 'i-schedule']
     };
     const debt = { credit_card: 1, loan: 1, instalment: 1 };
-    // nn / ns: the approved row labels (23 Nov 2026), drawn only when proposed is on.
+    // nn / ns: the approved row labels (23 Nov 2026), drawn when labels is on.
     const row = (name, type, inst, bal, nn, ns) => ({ name, type, inst, bal, nn, ns });
     const groups = [
       ['Banking & Cash', false, [row('Maybank Savings', 'savings', 'Maybank', 24850.4), row('Maybank Current', 'checking', 'Maybank', 3210.75), row("Touch 'n Go", 'ewallet', 'TNG Digital', 186.2), row('Cash', 'cash', null, 420)]],
@@ -223,9 +225,9 @@ class Component extends DCLogic {
           const t = T[r.type];
           const isDebt = !!debt[r.type] || r.bal < 0;
           return {
-            name: P && r.nn ? r.nn : r.name,
-            sub: P && r.ns ? r.ns : t[0] + (r.inst ? ' · ' + r.inst : ''),
-            subColor: P && r.ns ? 'var(--t2)' : 'var(--t3)',
+            name: L && r.nn ? r.nn : r.name,
+            sub: L && r.ns ? r.ns : t[0] + (r.inst ? ' · ' + r.inst : ''),
+            subColor: L && r.ns ? 'var(--t2)' : 'var(--t3)',
             color: t[1], tint: 'color-mix(in oklab, ' + t[1] + ' 24%, transparent)', icon: 'ic ' + t[2],
             balance: (isDebt ? '−' + sp : '') + (P ? 'RM ' : 'MYR ') + fmt(r.bal),
             balColor: isDebt ? 'var(--neg)' : 'var(--t1)',

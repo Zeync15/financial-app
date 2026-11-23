@@ -44,6 +44,7 @@ interface Recurring {
   instalmentId: string | null;
   categoryName: string | null;
   categoryColor: string | null;
+  categoryIcon: string | null;
   accountName: string | null;
 }
 
@@ -288,7 +289,7 @@ function RecurringCard({
       style={{ padding: isMobile ? 16 : 20, marginBottom: 14, opacity: item.isActive ? 1 : 0.6 }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
-        <CategoryIcon name={item.categoryName} color={iconColor} size={isMobile ? 36 : 40} />
+        <CategoryIcon name={item.categoryName} iconKey={item.categoryIcon} color={iconColor} size={isMobile ? 36 : 40} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{

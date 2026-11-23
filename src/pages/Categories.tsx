@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button, message, Spin, Empty, ColorPicker } from "antd";
+import { Button, message, Spin, Empty } from "antd";
 import {
   Modal,
   FormBody,
   Field,
-  TextInput,
   SelectInput,
   FormFooter,
   useConfirmDelete,
@@ -38,7 +37,16 @@ import { api } from "@/lib/api";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useFabAction } from "@/hooks/useFabAction";
 import { DEFAULT_CATEGORY_COLOR } from "@/lib/categoryIcons";
+import {
+  EMOJI_PREFIX,
+  emojiIsDark,
+  emojiKeyOf,
+  emojiLabel,
+  emojiSrc,
+  nextCategoryColor,
+} from "@/lib/emojiCatalog";
 import CategoryIcon from "@/components/common/CategoryIcon";
+import EmojiPicker from "@/components/categories/EmojiPicker";
 
 interface Category {
   id: string;
@@ -189,8 +197,9 @@ export default function Categories() {
   const [formState, setFormState] = useState({
     name: "",
     type: "expense" as "expense" | "income",
-    color: "#1677ff",
-    icon: "",
+    // The emoji picked in the form ("fork_and_knife"), or null to keep the
+    // category's current icon.
+    pick: null as string | null,
   });
   const isMobile = useIsMobile();
 
@@ -247,7 +256,7 @@ export default function Categories() {
 
   const openCreate = () => {
     setEditing(null);
-    setFormState({ name: "", type: activeTab, color: "#1677ff", icon: "" });
+    setFormState({ name: "", type: activeTab, pick: null });
     setModalOpen(true);
   };
   useFabAction(openCreate);
@@ -257,8 +266,7 @@ export default function Categories() {
     setFormState({
       name: cat.name,
       type: cat.type as "expense" | "income",
-      color: cat.color || "#1677ff",
-      icon: cat.icon ?? "",
+      pick: emojiKeyOf(cat.icon),
     });
     setModalOpen(true);
   };
@@ -269,11 +277,14 @@ export default function Categories() {
       return;
     }
     try {
+      const icon = formState.pick ? EMOJI_PREFIX + formState.pick : editing?.icon ?? null;
       const payload = {
-        name: formState.name,
+        name: formState.name.trim(),
         type: formState.type,
-        color: formState.color,
-        icon: formState.icon || null,
+        icon,
+        // The form doesn't ask for a colour: a new category gets the next one
+        // from the palette, and an edit keeps the colour it has.
+        color: editing ? undefined : nextCategoryColor(categories.map((c) => c.color)),
       };
       if (editing) {
         await api.put(`/categories/${editing.id}`, payload);
@@ -411,15 +422,41 @@ export default function Categories() {
         onClose={() => setModalOpen(false)}
         title={editing ? "Edit Category" : "New Category"}
         icon={editing ? "pencil" : "plus"}
+        fullscreen
+        fill
       >
-        <FormBody>
+        {/* The form fits the screen: only the emoji grid scrolls. */}
+        <FormBody fill>
           <Field label="Name" required>
-            <TextInput
-              value={formState.name}
-              onChange={(v) => setField("name", v)}
-              placeholder="e.g. Groceries"
-              autoFocus
-            />
+            <span className="fld fld-emoji">
+              <span className="fld-emoji-ic" aria-hidden>
+                {formState.pick ? (
+                  <img
+                    src={emojiSrc(formState.pick)}
+                    alt=""
+                    width={20}
+                    height={20}
+                    className={emojiIsDark(formState.pick) ? "cat-emoji-dark" : undefined}
+                  />
+                ) : editing ? (
+                  <CategoryIcon
+                    name={editing.name}
+                    iconKey={editing.icon}
+                    color={editing.color || DEFAULT_CATEGORY_COLOR}
+                    size={28}
+                  />
+                ) : (
+                  <img src={emojiSrc("label")} alt="" width={20} height={20} style={{ opacity: 0.45 }} />
+                )}
+              </span>
+              <input
+                className="fld-input"
+                value={formState.name}
+                onChange={(e) => setField("name", e.target.value)}
+                placeholder="e.g. Groceries"
+                autoFocus={!isMobile}
+              />
+            </span>
           </Field>
           <Field label="Type" required>
             <SelectInput
@@ -431,30 +468,12 @@ export default function Categories() {
               ]}
             />
           </Field>
-          <Field label="Color">
-            <ColorPicker
-              value={formState.color}
-              onChange={(c) => setField("color", c.toHexString())}
-              showText
-              disabledAlpha
-              presets={[
-                {
-                  label: "Palette",
-                  colors: [
-                    "#1677ff", "#52c41a", "#faad14", "#ff6b6b",
-                    "#722ed1", "#13c2c2", "#eb2f96", "#fa8c16",
-                    "#2f54eb", "#9aa3ad", "#f5222d", "#a0d911",
-                  ],
-                },
-              ]}
-            />
-          </Field>
-          <Field label="Icon (optional)">
-            <TextInput
-              value={formState.icon}
-              onChange={(v) => setField("icon", v)}
-              placeholder="e.g. food, shopping, salary"
-            />
+          <Field
+            label="Icon"
+            className="field-fill"
+            aside={formState.pick ? emojiLabel(formState.pick) : "Pick one, or search"}
+          >
+            <EmojiPicker value={formState.pick} onChange={(k) => setField("pick", k)} />
           </Field>
         </FormBody>
         <FormFooter

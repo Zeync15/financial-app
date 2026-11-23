@@ -72,12 +72,12 @@ body{margin:0}
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"kind":{"editor":"enum","options":["transaction","budget","category","instalment","adjustment"],"default":"transaction"},"proposed":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"kind":{"editor":"enum","options":["transaction","budget","category","instalment","adjustment"],"default":"transaction"},"proposed":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
     const phone = (this.props.size ?? 'desktop') === 'phone';
-    // proposed: the redesign proposed on 23 Nov 2026; off is the live Ant Design confirm.
-    const P = !!(this.props.proposed ?? false);
+    // proposed: the redesign proposed on 23 Nov 2026, built and live (commit c4f82ce), so on by default; off draws the old Ant Design confirm.
+    const P = !!(this.props.proposed ?? true);
     const K = {
       transaction: { liveTitle: 'Delete?', title: 'Delete this transaction?', ok: 'Delete', message: 'Jaya Grocer, − RM 186.40 on 22 Nov 2026, will be removed and the account balance put back. This can’t be undone.' },
       budget: { liveTitle: 'Delete this budget?', title: 'Delete this budget?', ok: 'Delete', message: 'The Groceries monthly budget of RM 800.00 will be removed. Your transactions stay as they are.' },

@@ -153,7 +153,7 @@ async function listTransactions() {
       .select(
         `id, accountId:account_id, categoryId:category_id, type, amount,
          description, notes, date, transferToId:transfer_to_id, createdAt:created_at,
-         category ( name, color ),
+         category ( name, color, icon ),
          account:financial_account!transaction_account_id_fkey ( name )`,
       )
       .order("date", { ascending: false })
@@ -174,6 +174,7 @@ async function listTransactions() {
     createdAt: r.createdAt,
     categoryName: r.category?.name ?? null,
     categoryColor: r.category?.color ?? null,
+    categoryIcon: r.category?.icon ?? null,
     accountName: r.account?.name ?? null,
   }));
 }
@@ -617,7 +618,7 @@ async function listRecurring() {
          description, notes, dayOfMonth:day_of_month, startDate:start_date,
          endDate:end_date, nextRunDate:next_run_date, isActive:is_active,
          source, instalmentId:instalment_id, createdAt:created_at,
-         category ( name, color ),
+         category ( name, color, icon ),
          account:financial_account!recurring_transaction_account_id_fkey ( name )`,
       )
       .order("created_at", { ascending: false }),
@@ -639,6 +640,7 @@ async function listRecurring() {
     instalmentId: r.instalmentId,
     categoryName: r.category?.name ?? null,
     categoryColor: r.category?.color ?? null,
+    categoryIcon: r.category?.icon ?? null,
     accountName: r.account?.name ?? null,
   }));
 }

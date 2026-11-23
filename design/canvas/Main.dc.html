@@ -13,6 +13,8 @@
 <style>
 body{margin:0}
 a{color:#1ec98a}a:hover{color:#5fe0b0}
+.no-sb{scrollbar-width:none;-ms-overflow-style:none}
+.no-sb::-webkit-scrollbar{display:none;width:0;height:0}
 </style>
 </helmet>
 <div class="fa-root" style="width: {{rootW}}; height: {{rootH}}; position: relative; overflow: hidden; display: flex; flex-direction: {{rootDir}}">
@@ -105,7 +107,8 @@ a{color:#1ec98a}a:hover{color:#5fe0b0}
             <sc-for list="{{slices}}" as="s" hint-placeholder-count="9">
               <button class="cat-row" onClick="{{s.pick}}">
                 <span style="display: flex; align-items: center; gap: 9px; min-width: 0">
-                  <span style="width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; background: {{s.color}}; box-shadow: {{s.ring}}"></span>
+                  <sc-if value="{{s.square}}" hint-placeholder-val="{{true}}"><span style="width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; background: {{s.color}}; box-shadow: {{s.ring}}"></span></sc-if>
+                  <sc-if value="{{s.useEmoji}}" hint-placeholder-val="{{false}}"><span style="position: relative; flex-shrink: 0; width: 24px; height: 24px; display: grid; place-items: center"><img src="{{s.emoji}}" alt="" width="22" height="22" style="display: block; filter: {{s.emojiFx}}"><span style="position: absolute; right: -2px; bottom: -1px; width: 8px; height: 8px; border-radius: 50%; background: {{s.color}}; box-shadow: 0 0 0 2px var(--panel)"></span></span></sc-if>
                   <span style="color: var(--t1); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{s.label}}</span>
                   <span class="num" style="color: var(--t3); font-size: 12.5px; flex-shrink: 0">{{s.pct}}%</span>
                 </span>
@@ -153,7 +156,7 @@ a{color:#1ec98a}a:hover{color:#5fe0b0}
 
   <sc-if value="{{formOpen}}" hint-placeholder-val="{{false}}">
     <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}"><div class="scrim" onClick="{{close}}"></div></sc-if>
-    <div class="{{boxClass}}" role="dialog" aria-label="{{formTitle}}" style="bottom: {{fullBottom}}">
+    <div class="{{boxClass}}" role="dialog" aria-label="{{formTitle}}" style="bottom: {{fullBottom}}; overflow-y: {{boxOverflow}}; max-height: {{boxMaxH}}; display: {{boxDisplay}}; flex-direction: column">
       <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}">
         <button class="fm-x" aria-label="Close" onClick="{{close}}">×</button>
         <div class="fm-head"><span class="fm-head-ic"><span class="{{formIcon}}"></span></span>{{formTitle}}</div>
@@ -161,7 +164,7 @@ a{color:#1ec98a}a:hover{color:#5fe0b0}
       <sc-if value="{{isPhone}}" hint-placeholder-val="{{false}}">
         <div class="fm-full-head"><span class="fm-head-ic"><span class="{{formIcon}}"></span></span>{{formTitle}}</div>
       </sc-if>
-      <div class="fm-body">
+      <div class="fm-body" style="flex: {{bodyFlex}}; min-height: {{bodyMinH}}">
         <div class="field">
           <div class="field-lbl">Type <em class="req">*</em></div>
           <div class="seg full">
@@ -215,20 +218,51 @@ a{color:#1ec98a}a:hover{color:#5fe0b0}
             <div class="fld sel ph">Select destination<span class="chev"><span class="ic i-down"></span></span></div>
           </div>
         </sc-if>
-        <div class="fm-row">
-          <div class="field">
-            <div class="field-lbl">Category <em class="req">*</em></div>
-            <div class="{{f.catCls}}">{{f.category}}<span class="chev"><span class="ic i-down"></span></span></div>
+        <sc-if value="{{formLive}}" hint-placeholder-val="{{true}}">
+          <div class="fm-row">
+            <div class="field">
+              <div class="field-lbl">Category <em class="req">*</em></div>
+              <div class="{{f.catCls}}">{{f.category}}<span class="chev"><span class="ic i-down"></span></span></div>
+            </div>
+            <div class="field">
+              <div class="field-lbl">Date <em class="req">*</em></div>
+              <div class="fld" style="justify-content: space-between">{{f.date}}<span class="ic i-calendar" style="color: var(--t2)"></span></div>
+            </div>
           </div>
+          <div class="field">
+            <div class="field-lbl">Note</div>
+            <div class="{{f.noteCls}}">{{f.note}}</div>
+          </div>
+        </sc-if>
+        <sc-if value="{{formQuick}}" hint-placeholder-val="{{false}}">
           <div class="field">
             <div class="field-lbl">Date <em class="req">*</em></div>
-            <div class="fld" style="justify-content: space-between">{{f.date}}<span class="ic i-calendar" style="color: var(--t2)"></span></div>
+            <div class="fld" style="width: 100%; justify-content: space-between; gap: 8px">
+              <button onClick="{{qE.other}}" style="flex: 1 1 auto; min-width: 0; padding: 0; border: 0; background: transparent; color: var(--t1); font-family: inherit; font-size: inherit; text-align: left; cursor: pointer; height: 100%">{{qE.text}}</button>
+              <button onClick="{{qE.swap}}" style="flex: 0 0 auto; height: 28px; padding: 0 12px; border-radius: 14px; border: 1px solid color-mix(in oklab, var(--accent) 50%, transparent); background: color-mix(in oklab, var(--accent) 14%, transparent); color: #fff; font-family: inherit; font-size: 12px; font-weight: 500; cursor: pointer">{{qE.pill}}</button>
+              <span class="ic i-calendar" style="color: var(--t2)"></span>
+            </div>
           </div>
-        </div>
-        <div class="field">
-          <div class="field-lbl">Note</div>
-          <div class="{{f.noteCls}}">{{f.note}}</div>
-        </div>
+          <div class="field">
+            <div class="field-lbl">Note</div>
+            <div class="{{f.noteCls}}">{{f.note}}</div>
+          </div>
+          <sc-if value="{{quickCatsOn}}" hint-placeholder-val="{{true}}">
+            <div class="field" style="flex: 1 1 auto; min-height: 0">
+              <div class="field-lbl">Category <em class="req">*</em></div>
+              <div role="radiogroup" aria-label="Category" class="no-sb" style="display: grid; grid-template-columns: repeat({{catCols}}, minmax(0, 1fr)); gap: 12px 8px; flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; align-content: start; padding: 2px 0">
+                <sc-for list="{{quickCats}}" as="c" hint-placeholder-count="16">
+                  <button role="radio" aria-checked="{{c.checked}}" onClick="{{c.pick}}" style="min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0; border: 0; background: transparent; font-family: inherit; cursor: pointer">
+                    <span style="width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: {{c.circleBg}}; box-shadow: {{c.ring}}">
+                      <img src="{{c.emoji}}" alt="" width="26" height="26" style="display: block; filter: {{c.fx}}">
+                    </span>
+                    <span style="width: 100%; font-size: 11px; line-height: 1.25; min-height: 2.5em; text-align: center; overflow-wrap: break-word; color: {{c.labelColor}}; font-weight: {{c.labelWeight}}">{{c.name}}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+        </sc-if>
       </div>
       <div class="fm-foot">
         <sc-if value="{{isEdit}}" hint-placeholder-val="{{false}}"><button class="btn-pill danger">Delete</button></sc-if>
@@ -257,12 +291,12 @@ a{color:#1ec98a}a:hover{color:#5fe0b0}
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"tab":{"editor":"enum","options":["list","insights"],"default":"list"},"form":{"editor":"enum","options":["none","new","edit"],"default":"none"},"pad":{"editor":"boolean","default":false},"search":{"editor":"boolean","default":false},"more":{"editor":"boolean","default":false},"proposed":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"tab":{"editor":"enum","options":["list","insights"],"default":"list"},"form":{"editor":"enum","options":["none","new","edit"],"default":"none"},"pad":{"editor":"boolean","default":false},"search":{"editor":"boolean","default":false},"more":{"editor":"boolean","default":false},"proposed":{"editor":"boolean","default":true},"quick":{"editor":"boolean","default":true},"chart":{"editor":"enum","options":["own","auto","emoji"],"default":"emoji"},"txType":{"editor":"enum","options":["expense","income","transfer"],"default":"expense"},"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
     const s = this.state || {};
-    // proposed: draws the changes proposed on 23 Nov 2026 (see the Proposed changes page); off is the live app.
-    const P = !!(this.props.proposed ?? false);
+    // proposed: the changes proposed on 23 Nov 2026, built and live (commit c4f82ce), so on by default; off draws the old look (the Before boards in rows 1–5).
+    const P = !!(this.props.proposed ?? true);
     const sp = P ? ' ' : '';
     const size = this.props.size ?? 'desktop';
     const phone = size === 'phone';
@@ -334,27 +368,96 @@ class Component extends DCLogic {
       };
     });
 
+    // chart: the colours of the spending breakdown. own: each category's own colour (live); auto: given by the app
+    // from a fixed set when the category is made (drawn here in size order); emoji: the same colours,
+    // with each category's emoji in the list instead of a plain square (a dot keeps the link to its slice).
+    // emoji (option B) was approved 23 Nov 2026 and is the default here (not built yet).
+    const chart = this.props.chart ?? 'emoji';
+    const AUTO = ['#5b8ff9', '#61ddaa', '#f6bd16', '#7262fd', '#78d3f8', '#f6903d', '#f08bb4', '#e8684a', '#a0d911', '#9661bc', '#008685', '#bfbfbf'];
     const spend = [['home', 1800], ['groc', 715.6], ['food', 596.7], ['shop', 359.9], ['trans', 338], ['bills', 276.65], ['cat', 96.8], ['car', 80], ['ent', 55]];
     const total = spend.reduce((a, x) => a + x[1], 0);
     let acc = 0;
     const stops = [];
-    const slices = spend.map(([k, val]) => {
-      const [label, color] = C[k];
+    const slices = spend.map(([k, val], i) => {
+      const label = C[k][0];
+      const color = chart === 'own' ? C[k][1] : AUTO[i % AUTO.length];
       const pct = (val / total) * 100;
       stops.push(color + ' ' + acc.toFixed(2) + '% ' + (acc + pct).toFixed(2) + '%');
       acc += pct;
       return {
         label, color, ring: ringFor(color), amt: 'RM ' + fmt(val),
+        square: chart !== 'emoji', useEmoji: chart === 'emoji', emoji: E[k] || '',
+        emojiFx: k === 'car' || k === 'cat' ? 'drop-shadow(0 0 0.5px rgba(255,255,255,0.9)) drop-shadow(0 0 1px rgba(255,255,255,0.5))' : 'none',
         pct: pct >= 1 || pct === 0 ? String(Math.round(pct)) : pct.toFixed(1),
         pick: () => this.setState({ tab: 'list' })
       };
     });
 
-    const txType = s.txType ?? 'expense';
+    // quick: the quick-entry form, approved 23 Nov 2026 and the default here (not built yet): Account | Amount,
+    // Date with Today / Yesterday, Note, then every category as a round icon. Off draws the old form (the Before boards).
+    const Q = !!(this.props.quick ?? true);
+    // txType: which type tab the open form starts on (the type boards set it).
+    const txType = s.txType ?? this.props.txType ?? 'expense';
     const types = [['income', 'Income'], ['expense', 'Expense'], ['transfer', 'Transfer']].map(([k, label]) => ({
-      label, cls: k === txType ? 'on' : '', pick: () => this.setState({ txType: k })
+      label, cls: k === txType ? 'on' : '', pick: () => this.setState({ txType: k, qcat: '' })
     }));
     const edit = form === 'edit';
+
+    // The real categories in their real order, each with its emoji (as on the Categories proposal).
+    const EM = {
+      expense: [
+        ['Food & Drinks', '/_blob/9dccdaf885f4739da50e1101e13aaaaa'], ['Shopping', '/_blob/f786e47067513495ea3341d2809a0845'], ['Car', '/_blob/b6f7a15d96dd7e16c1a9e5043a8553bb'],
+        ['Bills & Fees', '/_blob/c6d1ffa554c6c2bb98f6df43ed467b58'], ['Transport', '/_blob/a9418f7b25204163ebe1251a6fcf95c4'], ['Groceries', '/_blob/830c3355d41d2370eab0d71eeb87dafc'],
+        ['Entertainment', '/_blob/76defa03e80f8313926ea9278797f0ab'], ['Sports & Hobbies', '/_blob/c9a291d2d7acf161a9df162d43cd2cfd'], ['Healthcare', '/_blob/c2b1475eb7ea5d7d930895f9b94968a1'],
+        ['Beauty', '/_blob/c3ea381f9238d5bfcdf9d0d83b127b40'], ['Gifts', '/_blob/5a7f5949bc2e8233e4ce4005230bfe42'], ['Cat', '/_blob/de2f008ded822ea228626a5b176a075e'],
+        ['Travel', '/_blob/1e1319d344856696a930d0ffec73d7c8'], ['Home', '/_blob/496edda9ad17ce637f38027e7c7e7cf9'], ['Education', '/_blob/56f9c599bbef834d5f06f029d3f8c822'],
+        ['Other', '/_blob/c91d67f5fa0db76cf1ba850a49526bcd']
+      ],
+      income: [
+        ['Salary', '/_blob/d7565c3a58172a5a11254d85e5a0c13d'], ['Bonus', '/_blob/146371be9939ca49a73d2f31b1f84556'], ['Allowance', '/_blob/ed1bd10020ba9d433cc9b7eb82805e14'],
+        ['Cash Back', '/_blob/f8e969df1c5019a6f78e0812a5b87517'], ['Other', '/_blob/c91d67f5fa0db76cf1ba850a49526bcd'], ['Gifts', '/_blob/5a7f5949bc2e8233e4ce4005230bfe42'],
+        ['Claims', '/_blob/3f88d7a012640bbd39bb42a7b3c5878a'], ['Extra Income', '/_blob/1cc78f16ceb1efb6f4238e761a6528bd'], ['Savings', '/_blob/0b1dc4832e05c412d6a66ec5d1750d80']
+      ]
+    };
+    const onLook = { bg: 'color-mix(in oklab, var(--accent) 18%, transparent)', fg: '#fff' };
+    const offLook = { bg: 'rgba(255, 255, 255, 0.04)', border: 'var(--line)', fg: 'var(--t2)' };
+    const qcat = s.qcat ?? (edit ? 'Groceries' : '');
+    // As live: expense and income show their own categories; a transfer lists every category.
+    const catList = txType === 'transfer' ? EM.expense.concat(EM.income) : EM[txType === 'income' ? 'income' : 'expense'];
+    const quickCats = catList.map(([name, emoji]) => {
+      const on = name === qcat;
+      return {
+        name, emoji, checked: on ? 'true' : 'false',
+        fx: name === 'Car' || name === 'Cat' ? 'drop-shadow(0 0 0.5px rgba(255,255,255,0.9)) drop-shadow(0 0 1px rgba(255,255,255,0.5))' : 'none',
+        // Round icon with the name underneath, outside it; the picked one gets a green ring.
+        circleBg: on ? onLook.bg : 'rgba(255, 255, 255, 0.05)',
+        ring: on ? 'inset 0 0 0 2px var(--accent)' : 'inset 0 0 0 1px var(--line)',
+        labelColor: on ? '#fff' : 'var(--t2)', labelWeight: on ? '600' : '500',
+        pick: () => this.setState({ qcat: name })
+      };
+    });
+    const qday = s.qday ?? (edit ? 'yesterday' : 'today');
+    const quickDays = [['today', 'Today'], ['yesterday', 'Yesterday']].map(([k, label]) => {
+      const on = k === qday;
+      return {
+        // Today, the usual pick, takes the spare width; the picker keeps just enough for the date.
+        label, flex: k === 'today' ? '1 1 0' : '0 0 auto', bg: on ? onLook.bg : offLook.bg, border: on ? 'color-mix(in oklab, var(--accent) 50%, transparent)' : offLook.border, fg: on ? onLook.fg : offLook.fg,
+        pick: () => this.setState({ qday: k })
+      };
+    });
+    const quickDate = qday === 'yesterday' ? '22/11/2026' : '23/11/2026';
+    // Date row lines up with Account | Amount: Today fills the left half; Yesterday and a
+    // compact picker (short date) share the right half.
+    const qToday = quickDays[0], qYest = quickDays[1];
+    const quickDateShort = qday === 'yesterday' ? '22 Nov' : '23 Nov';
+    // Date row (option E, picked 23 Nov 2026): one full-width field that names the day in words;
+    // a pill inside swaps Today and Yesterday; tapping the field opens the calendar (drawn as 19 Nov).
+    const qE = {
+      text: qday === 'yesterday' ? 'Yesterday, 22 Nov' : qday === 'other' ? 'Thu, 19 Nov' : 'Today, 23 Nov',
+      pill: qday === 'today' ? 'Yesterday' : 'Today',
+      swap: () => this.setState({ qday: qday === 'today' ? 'yesterday' : 'today' }),
+      other: () => this.setState({ qday: 'other' })
+    };
     const f = edit
       ? { amount: '186.4', category: 'Groceries', catCls: 'fld sel', date: '22/11/2026', note: 'Jaya Grocer', noteCls: 'fld', primary: 'Save Changes' }
       : { amount: '0.00', category: 'Select category', catCls: 'fld sel ph', date: '23/11/2026', note: 'What was this for?', noteCls: 'fld ph', primary: 'Add Transaction' };
@@ -402,13 +505,21 @@ class Component extends DCLogic {
       donut: 'conic-gradient(' + stops.join(', ') + ')',
       slices, days,
       showFab: phone && form === 'none' && !more,
-      openNew: () => this.setState({ form: 'new', txType: 'expense', pad: false }),
+      openNew: () => this.setState({ form: 'new', txType: 'expense', pad: false, qcat: undefined, qday: undefined }),
       close: () => this.setState({ form: 'none', pad: false }),
       togglePad: () => this.setState({ pad: !padOpen }),
       formOpen: form !== 'none',
       moreOpen: more,
       boxClass: phone ? 'fm-full' : 'fm-modal',
-      fullBottom: phone ? '90px' : 'auto',
+      // The quick form is taller, so on phone it covers the bottom bar (as the build does) to keep its footer on screen.
+      fullBottom: phone ? (Q ? '0px' : '90px') : 'auto',
+      // Quick form never scrolls as a page: the fields and the footer stay put, and only the
+      // category grid scrolls inside the space left between them (on short screens, or with the keypad open).
+      boxOverflow: Q ? 'hidden' : (phone ? 'auto' : 'hidden'),
+      boxMaxH: Q && !phone ? 'calc(100% - 140px)' : 'none',
+      boxDisplay: Q || phone ? 'flex' : 'block',
+      bodyFlex: Q ? '1 1 auto' : '0 1 auto', bodyMinH: Q ? '0' : 'auto',
+      formLive: !Q, formQuick: Q, quickCatsOn: Q && txType !== 'transfer', quickCats, quickDays, quickDate, qToday, qYest, quickDateShort, qE, catCols: phone ? 4 : 6,
       formTitle: edit ? 'Edit Transaction' : 'New Transaction',
       formIcon: 'ic ' + (edit ? 'i-edit' : 'i-plus'),
       isEdit: edit, isTransfer: txType === 'transfer',

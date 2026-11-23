@@ -39,7 +39,7 @@ a{color:#1ec98a}a:hover{color:#5fe0b0}
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"active":{"editor":"enum","options":["dashboard","transactions","budgets","categories","investments","loans","instalments","recurring","more","none"],"default":"transactions"},"proposed":{"editor":"boolean","default":false},"$preview":{"width":200,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"active":{"editor":"enum","options":["dashboard","transactions","budgets","categories","investments","loans","instalments","recurring","more","none"],"default":"transactions"},"proposed":{"editor":"boolean","default":true},"$preview":{"width":200,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
     const size = this.props.size ?? 'desktop';
@@ -52,7 +52,7 @@ class Component extends DCLogic {
       ['budgets', 'Budgets', 'i-pie-chart'],
       ['categories', 'Categories', 'i-tag'],
       ['investments', 'Investments', 'i-fund'],
-      ['loans', 'Loans', this.props.proposed ? 'i-account-book' : 'i-dollar'],
+      ['loans', 'Loans', (this.props.proposed ?? true) ? 'i-account-book' : 'i-dollar'],
       ['instalments', 'Instalments', 'i-credit-card'],
       ['recurring', 'Recurring', 'i-retweet']
     ].map(([k, label, icon]) => ({
