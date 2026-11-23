@@ -13,6 +13,12 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+    // Supabase's redirect list names this exact port; fail instead of moving to 5174.
+    strictPort: true,
+    // Phone testing: Supabase won't send a Google sign-in back to a bare IP
+    // (http://192.168.x.x), so the phone opens the PC by name instead, e.g.
+    // http://192-168-100-6.sslip.io:5173 (sslip.io resolves that name to the IP).
+    allowedHosts: ['.sslip.io'],
   },
   build: {
     outDir: 'dist/client',
