@@ -37,8 +37,8 @@ import { CSS } from "@dnd-kit/utilities";
 import { api } from "@/lib/api";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useFabAction } from "@/hooks/useFabAction";
-import { getCategoryIcon, DEFAULT_CATEGORY_COLOR } from "@/lib/categoryIcons";
-import IconCircle from "@/components/common/IconCircle";
+import { DEFAULT_CATEGORY_COLOR } from "@/lib/categoryIcons";
+import CategoryIcon from "@/components/common/CategoryIcon";
 
 interface Category {
   id: string;
@@ -81,7 +81,6 @@ function SortableTile({
   };
 
   const color = cat.color || DEFAULT_CATEGORY_COLOR;
-  const icon = getCategoryIcon(cat.name, cat.icon);
   const isUserOwned = !!cat.userId;
   const confirmDelete = useConfirmDelete();
 
@@ -117,6 +116,7 @@ function SortableTile({
           onClick={() =>
             confirmDelete(() => onDelete(cat.id), {
               title: "Delete this category?",
+              content: `${cat.name} will be removed. This can’t be undone.`,
             })
           }
         >
@@ -138,7 +138,7 @@ function SortableTile({
     return (
       <div ref={setNodeRef} className="tx-row" style={style}>
         {grip}
-        <IconCircle icon={icon} color={color} size={36} />
+        <CategoryIcon name={cat.name} iconKey={cat.icon} color={color} size={36} />
         <div className="meta">
           <div className="lbl">{cat.name}</div>
         </div>
@@ -160,7 +160,7 @@ function SortableTile({
       }}
     >
       {grip}
-      <IconCircle icon={icon} color={color} size={40} />
+      <CategoryIcon name={cat.name} iconKey={cat.icon} color={color} size={40} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{

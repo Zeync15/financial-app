@@ -9,8 +9,8 @@ import {
 import { api } from "@/lib/api";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useFabAction } from "@/hooks/useFabAction";
-import IconCircle from "@/components/common/IconCircle";
-import { getCategoryIcon, DEFAULT_CATEGORY_COLOR } from "@/lib/categoryIcons";
+import CategoryIcon from "@/components/common/CategoryIcon";
+import { DEFAULT_CATEGORY_COLOR } from "@/lib/categoryIcons";
 import {
   Modal,
   FormBody,
@@ -250,6 +250,14 @@ function RecurringForm({
         loading={saving}
         danger={isEditing ? "Delete" : undefined}
         onDanger={isEditing ? onDelete : undefined}
+        confirm={
+          editing
+            ? {
+                title: "Delete this recurring transaction?",
+                content: `${editing.description || "This recurring transaction"}, RM ${Math.abs(Number(editing.amount)).toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} on day ${editing.dayOfMonth} of each month, will stop. Transactions it already made stay. This can’t be undone.`,
+              }
+            : undefined
+        }
       />
     </Modal>
   );
@@ -272,7 +280,6 @@ function RecurringCard({
   const sign = item.type === "income" ? "+" : "−";
   const color = item.type === "income" ? "var(--pos)" : "var(--neg)";
   const iconColor = item.categoryColor || DEFAULT_CATEGORY_COLOR;
-  const icon = getCategoryIcon(item.categoryName);
   const navigate = useNavigate();
 
   return (
@@ -281,7 +288,7 @@ function RecurringCard({
       style={{ padding: isMobile ? 16 : 20, marginBottom: 14, opacity: item.isActive ? 1 : 0.6 }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
-        <IconCircle icon={icon} color={iconColor} size={isMobile ? 36 : 40} />
+        <CategoryIcon name={item.categoryName} color={iconColor} size={isMobile ? 36 : 40} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{

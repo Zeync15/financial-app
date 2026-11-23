@@ -74,10 +74,6 @@ const CUR_OPTS = ["MYR", "USD", "SGD", "EUR", "GBP"];
 
 const fmt = (n: number) =>
   n.toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-// Per-unit prices keep up to 4 decimals (matches the DECIMAL(19,4) columns),
-// unlike totals/values which round to 2.
-const fmtPrice = (n: number) =>
-  n.toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
 
 interface EnrichedHolding {
   raw: Holding;
@@ -272,7 +268,7 @@ function HoldingCardDesktop({
               }}
             />
           ) : (
-            <div className="stat-val">{fmtPrice(h.price)}</div>
+            <div className="stat-val">{fmt(h.price)}</div>
           )}
         </div>
         <div>
@@ -281,7 +277,7 @@ function HoldingCardDesktop({
         </div>
         <div>
           <div className="stat-label">Avg cost</div>
-          <div className="stat-val">{fmtPrice(h.avgCost)}</div>
+          <div className="stat-val">{fmt(h.avgCost)}</div>
         </div>
         <div>
           <div className="stat-label">Gain / Loss</div>
@@ -294,7 +290,7 @@ function HoldingCardDesktop({
                 whiteSpace: "nowrap",
               }}
             >
-              {down ? "−" : "+"}
+              {down ? "− " : "+ "}
               {h.raw.currency} {fmt(Math.abs(h.gainNative))}
             </div>
           ) : (
@@ -412,7 +408,7 @@ function HoldingCardMobile({
             />
           ) : (
             <div className="stat-val" style={{ fontSize: 14 }}>
-              {fmtPrice(h.price)}
+              {fmt(h.price)}
             </div>
           )}
         </div>
@@ -436,7 +432,7 @@ function HoldingCardMobile({
                 color: down ? "var(--neg)" : "var(--pos)",
               }}
             >
-              {down ? "−" : "+"}
+              {down ? "− " : "+ "}
               {fmt(Math.abs(h.gainNative))}
             </div>
           ) : (
@@ -584,6 +580,11 @@ function HoldingModal({
         loading={saving}
         danger={editing ? "Delete" : undefined}
         onDanger={editing ? onDelete : undefined}
+        confirm={
+          editing
+            ? { title: "Delete this holding?", content: `${editing.symbol} will be removed from the portfolio. This can’t be undone.` }
+            : undefined
+        }
       />
     </Modal>
   );
@@ -871,7 +872,7 @@ export default function Investments() {
               fontVariantNumeric: "tabular-nums",
             }}
           >
-            {totals.gain >= 0 ? "+" : "−"}RM {fmt(Math.abs(totals.gain))}
+            {totals.gain >= 0 ? "+ " : "− "}RM {fmt(Math.abs(totals.gain))}
           </span>
           <span style={{ color: "var(--t3)", fontSize: 12.5 }}>all time</span>
         </div>

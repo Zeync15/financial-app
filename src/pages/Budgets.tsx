@@ -163,6 +163,7 @@ export default function Budgets() {
                       onClick={() =>
                         confirmDelete(() => handleDelete(b.id), {
                           title: "Delete this budget?",
+                          content: `The ${b.categoryName || b.name || "this"} ${b.period} budget of RM ${budget.toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} will be removed. Your transactions stay as they are.`,
                         })
                       }
                     />

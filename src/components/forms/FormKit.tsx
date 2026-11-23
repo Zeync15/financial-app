@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { Modal as AntdModal, Drawer as AntdDrawer, App as AntdApp } from "antd";
+import { Modal as AntdModal, Drawer as AntdDrawer } from "antd";
 import { PlusOutlined, EditOutlined, DownOutlined } from "@ant-design/icons";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { useConfirmDelete } from "@/components/common/ConfirmDelete";
+import type { ConfirmDeleteOptions } from "@/components/common/ConfirmDelete";
 
 type IconKey = "plus" | "pencil";
 
@@ -545,25 +547,10 @@ export function Segmented<T extends string>({
 }
 
 /**
- * Reusable delete confirmation. Opens a themed modal (not a Popconfirm
- * tooltip). Returns a function you call with the delete action.
+ * Reusable delete confirmation (see components/common/ConfirmDelete.tsx).
+ * Returns a function you call with the delete action.
  */
-export function useConfirmDelete() {
-  const { modal } = AntdApp.useApp();
-  return (
-    onConfirm: () => void | Promise<void>,
-    opts?: { title?: string; content?: string; okText?: string },
-  ) =>
-    modal.confirm({
-      title: opts?.title ?? "Delete this item?",
-      content: opts?.content ?? "This action cannot be undone.",
-      okText: opts?.okText ?? "Delete",
-      cancelText: "Cancel",
-      okButtonProps: { danger: true },
-      centered: true,
-      onOk: onConfirm,
-    });
-}
+export { useConfirmDelete };
 
 export function FormFooter({
   primary,
@@ -572,6 +559,7 @@ export function FormFooter({
   loading,
   danger,
   onDanger,
+  confirm,
 }: {
   primary: string;
   onPrimary: () => void;
@@ -579,6 +567,8 @@ export function FormFooter({
   loading?: boolean;
   danger?: string;
   onDanger?: () => void;
+  /** What the delete confirmation says: name the thing and what goes. */
+  confirm?: ConfirmDeleteOptions;
 }) {
   const confirmDelete = useConfirmDelete();
   return (
@@ -589,9 +579,9 @@ export function FormFooter({
           className="btn-pill btn-danger"
           onClick={() =>
             confirmDelete(onDanger, {
-              title: `${danger}?`,
-              content: "This action cannot be undone.",
+              title: `${danger} this item?`,
               okText: danger,
+              ...confirm,
             })
           }
           disabled={loading}

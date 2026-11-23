@@ -15,8 +15,8 @@ import dayjs from "dayjs";
 import { api } from "@/lib/api";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useFabAction } from "@/hooks/useFabAction";
-import IconCircle from "@/components/common/IconCircle";
-import { getCategoryIcon, DEFAULT_CATEGORY_COLOR } from "@/lib/categoryIcons";
+import CategoryIcon from "@/components/common/CategoryIcon";
+import { DEFAULT_CATEGORY_COLOR } from "@/lib/categoryIcons";
 import AddTransactionForm, {
   type EditableTransaction,
 } from "@/components/transactions/AddTransactionForm";
@@ -41,6 +41,14 @@ interface CategoryLite {
 }
 
 type Direction = "all" | "in" | "out";
+
+// True for colours too dark to see on the dark panel (relative luminance, 0–255).
+function isVeryDark(hex: string) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return false;
+  const n = parseInt(m[1], 16);
+  return 0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255) < 60;
+}
 
 function fmt(n: number) {
   return n.toLocaleString(undefined, {
@@ -111,7 +119,6 @@ function TxRow({
   onClick: () => void;
 }) {
   const color = tx.categoryColor || DEFAULT_CATEGORY_COLOR;
-  const icon = getCategoryIcon(tx.categoryName);
   const amount = Number(tx.amount);
   const isIncome = tx.type === "income";
   const isExpense = tx.type === "expense";
@@ -132,7 +139,7 @@ function TxRow({
       onKeyDown={(e) => e.key === "Enter" && onClick()}
       className="tx-row cursor-pointer"
     >
-      <IconCircle icon={icon} color={color} size={38} />
+      <CategoryIcon name={tx.categoryName} color={color} size={38} />
       <div className="meta">
         <div className="lbl">{tx.description || categoryLabel}</div>
         <div className="sub">
@@ -155,7 +162,7 @@ function TxRow({
         </div>
       </div>
       <div className="amt" style={{ color: amtColor }}>
-        {sign}RM {fmt(amount)}
+        {sign ? `${sign} ` : ""}RM {fmt(amount)}
       </div>
     </div>
   );
@@ -547,7 +554,7 @@ export default function Transactions() {
                 fontVariantNumeric: "tabular-nums",
               }}
             >
-              {r.sign}RM {fmt(r.val)}
+              {r.sign} RM {fmt(r.val)}
             </span>
           </div>
         ))}
@@ -569,7 +576,7 @@ export default function Transactions() {
               fontVariantNumeric: "tabular-nums",
             }}
           >
-            {summary.net >= 0 ? "+" : "−"}RM {fmt(Math.abs(summary.net))}
+            {summary.net >= 0 ? "+ " : "− "}RM {fmt(Math.abs(summary.net))}
           </span>
         </div>
       </div>
@@ -633,6 +640,8 @@ export default function Transactions() {
                     height: 10,
                     borderRadius: 3,
                     background: d.color,
+                    // Near-black colours (e.g. Cat) vanish on the dark panel: add a light rim.
+                    boxShadow: isVeryDark(d.color) ? "inset 0 0 0 1px rgba(255,255,255,0.35)" : undefined,
                     flexShrink: 0,
                   }}
                 />
@@ -706,7 +715,7 @@ export default function Transactions() {
                         : "var(--t3)",
                 }}
               >
-                {day.total < 0 ? "−" : day.total > 0 ? "+" : ""}RM{" "}
+                {day.total < 0 ? "− " : day.total > 0 ? "+ " : ""}RM{" "}
                 {fmt(Math.abs(day.total))}
               </span>
             </div>
@@ -795,7 +804,8 @@ export default function Transactions() {
           allowClear={false}
           format="MMMM YYYY"
           inputReadOnly
-          style={{ width: isMobile ? "100%" : 220 }}
+          className="month-fld"
+          style={{ width: isMobile ? "100%" : 220, fontSize: isMobile ? 16 : 14.5 }}
         />
       </div>
 
@@ -855,7 +865,7 @@ export default function Transactions() {
                 fontVariantNumeric: "tabular-nums",
               }}
             >
-              {hero.value >= 0 ? "+" : "−"}RM {fmt(Math.abs(hero.value))}
+              {hero.value >= 0 ? "+ " : "− "}RM {fmt(Math.abs(hero.value))}
             </div>
           </div>
           <span

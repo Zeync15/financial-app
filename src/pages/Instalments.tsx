@@ -58,9 +58,6 @@ function fmt(n: number) {
     maximumFractionDigits: 2,
   });
 }
-function fmt0(n: number) {
-  return Math.round(n).toLocaleString();
-}
 
 function InstalmentCard({
   item,
@@ -135,6 +132,7 @@ function InstalmentCard({
               onClick={() =>
                 confirmDelete(() => onDelete(item.id), {
                   title: "Delete this instalment?",
+                  content: `${item.name}, with RM ${fmt(item.remainingBalance)} still to pay, will be removed. This can’t be undone.`,
                 })
               }
             >
@@ -222,6 +220,7 @@ function InstalmentCard({
             onClick={() =>
               confirmDelete(() => onDelete(item.id), {
                 title: "Delete this instalment?",
+                content: `${item.name}, with RM ${fmt(item.remainingBalance)} still to pay, will be removed. This can’t be undone.`,
               })
             }
           >
@@ -553,7 +552,7 @@ export default function Instalments() {
           }}
         >
           <span>{totals.paidOff}% paid off</span>
-          <span>Borrowed RM {fmt0(totals.totalPrincipal)}</span>
+          <span>Borrowed RM {fmt(totals.totalPrincipal)}</span>
         </div>
         <div className="bar-track">
           <div className="bar-fill" style={{ width: `${totals.paidOff}%` }} />
@@ -575,7 +574,7 @@ export default function Instalments() {
           },
           {
             label: "Total interest (life)",
-            val: `RM ${fmt0(totals.totalInterest)}`,
+            val: `RM ${fmt(totals.totalInterest)}`,
             icon: <PercentageOutlined />,
             color: "var(--neg)",
           },

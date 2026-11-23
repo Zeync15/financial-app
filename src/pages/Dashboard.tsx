@@ -51,6 +51,8 @@ interface Account {
   institution: string | null;
   balance: string;
   isActive: boolean;
+  /** Second line for synthetic rows (investments, loans, instalments). */
+  sub?: string;
 }
 
 const ACCOUNT_TYPES = [
@@ -129,9 +131,6 @@ function fmt(n: number) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-}
-function fmt0(n: number) {
-  return Math.round(n).toLocaleString();
 }
 
 interface AccountFormState {
@@ -217,6 +216,11 @@ function AccountModal({
         loading={saving}
         danger={editing ? "Delete" : undefined}
         onDanger={editing ? onDelete : undefined}
+        confirm={
+          editing
+            ? { title: "Delete this account?", content: `${editing.name} will be removed. This can’t be undone.` }
+            : undefined
+        }
       />
     </Modal>
   );
@@ -335,6 +339,30 @@ function MiniStat({
   );
 }
 
+const HOLDING_TYPE_LABELS: Record<string, string> = {
+  etf: "ETF",
+  stock: "Stock",
+  crypto: "Crypto",
+  bond: "Bond",
+  mutual_fund: "Mutual fund",
+  reit: "REIT",
+};
+
+// "ETF · 10 units · + 23.3%": type, units, and gain against the average cost.
+function holdingSub(h: HoldingLite) {
+  const qty = Number(h.quantity);
+  const parts = [
+    HOLDING_TYPE_LABELS[h.type] ?? h.type,
+    `${qty.toLocaleString("en-MY", { maximumFractionDigits: 4 })} ${qty === 1 ? "unit" : "units"}`,
+  ];
+  const cost = Number(h.avgCostPrice);
+  if (h.currentPrice != null && cost > 0) {
+    const pct = ((Number(h.currentPrice) - cost) / cost) * 100;
+    parts.push(`${pct >= 0 ? "+" : "−"} ${Math.abs(pct).toFixed(1)}%`);
+  }
+  return parts.join(" · ");
+}
+
 const DEBT_TYPES = new Set(["credit_card", "loan", "instalment"]);
 
 function AcctRow({ a, onClick, showBorder }: { a: Account; onClick: () => void; showBorder: boolean }) {
@@ -374,9 +402,17 @@ function AcctRow({ a, onClick, showBorder }: { a: Account; onClick: () => void; 
         >
           {a.name}
         </div>
-        <div style={{ fontSize: 12, color: "var(--t3)", marginTop: 2 }}>
-          {typeLabel}
-          {a.institution ? ` · ${a.institution}` : ""}
+        <div
+          style={{
+            fontSize: 12,
+            color: a.sub ? "var(--t2)" : "var(--t3)",
+            marginTop: 2,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {a.sub ?? `${typeLabel}${a.institution ? ` · ${a.institution}` : ""}`}
         </div>
       </div>
       <div
@@ -389,8 +425,8 @@ function AcctRow({ a, onClick, showBorder }: { a: Account; onClick: () => void; 
           textAlign: "right",
         }}
       >
-        {balance < 0 ? "−" : ""}
-        {a.currency}{" "}
+        {balance < 0 ? "− " : ""}
+        {a.currency === "MYR" ? "RM" : a.currency}{" "}
         {Math.abs(balance).toLocaleString(undefined, {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
@@ -444,7 +480,7 @@ function AllocSection({
   centerLabel,
   centerValue,
   centerText,
-  money = fmt0,
+  money = fmt,
   isMobile,
 }: {
   data: { label: string; val: number; pct: number; color: string }[];
@@ -541,12 +577,17 @@ interface LoanLite {
   currency: string;
   monthlyPayment: number;
   remainingBalance: number;
+  interestRate: string;
+  paymentType?: string;
+  loanTermMonths: number;
+  monthsPaid: number;
 }
 
 interface HoldingLite {
   id: string;
   symbol: string;
   name: string | null;
+  type: string;
   quantity: string;
   avgCostPrice: string;
   currentPrice: string | null;
@@ -675,12 +716,13 @@ export default function Dashboard() {
       .filter(({ value }) => value > 0)
       .map(({ h, value }) => ({
         id: `pf-${h.id}`,
-        name: h.name ? `${h.symbol} · ${h.name}` : h.symbol,
+        name: h.symbol,
         type: "investment",
         currency: "MYR",
         institution: "Investment",
         balance: String(value),
         isActive: true,
+        sub: holdingSub(h),
       }));
 
     const loanRows: Account[] = loans.map((l) => ({
@@ -691,6 +733,7 @@ export default function Dashboard() {
       institution: "Loan",
       balance: String(l.remainingBalance),
       isActive: true,
+      sub: `${l.paymentType === "fixed" ? "Fixed rate" : "Reducing balance"} · ${Number(l.interestRate).toFixed(2)}% p.a. · ${l.monthsPaid}/${l.loanTermMonths} paid`,
     }));
 
     const instalmentRows: Account[] = instalments.map((l) => ({
@@ -701,6 +744,7 @@ export default function Dashboard() {
       institution: "Instalment",
       balance: String(l.remainingBalance),
       isActive: true,
+      sub: `RM ${fmt(l.monthlyPayment)} a month · ${l.monthsPaid}/${l.loanTermMonths} paid`,
     }));
 
     return [...investmentRows, ...loanRows, ...instalmentRows];
@@ -819,7 +863,7 @@ export default function Dashboard() {
           color: netWorth < 0 ? "var(--neg)" : "var(--t1)",
         }}
       >
-        RM {fmt(netWorth)}
+        {netWorth < 0 ? "− " : ""}RM {fmt(Math.abs(netWorth))}
       </div>
       <div
         style={{
@@ -839,7 +883,7 @@ export default function Dashboard() {
               fontVariantNumeric: "tabular-nums",
             }}
           >
-            RM {fmt0(totalAssets)}
+            RM {fmt(totalAssets)}
           </div>
         </div>
         <div style={{ textAlign: "right" }}>
@@ -852,7 +896,7 @@ export default function Dashboard() {
               fontVariantNumeric: "tabular-nums",
             }}
           >
-            RM {fmt0(totalLiabilities)}
+            RM {fmt(totalLiabilities)}
           </div>
         </div>
       </div>
@@ -879,7 +923,7 @@ export default function Dashboard() {
         <MiniStat
           icon={<RiseOutlined />}
           label="Yearly gain"
-          value={`${yearlyGain >= 0 ? "+" : "−"}RM ${fmt0(Math.abs(yearlyGain))}`}
+          value={`${yearlyGain >= 0 ? "+ " : "− "}RM ${fmt(Math.abs(yearlyGain))}`}
           color={yearlyGain >= 0 ? "var(--pos)" : "var(--neg)"}
         />
         <MiniStat
@@ -986,7 +1030,7 @@ export default function Dashboard() {
                               fontVariantNumeric: "tabular-nums",
                             }}
                           >
-                            {neg ? "−" : ""}RM {fmt(Math.abs(g.total))}
+                            {neg ? "− " : ""}RM {fmt(Math.abs(g.total))}
                           </span>
                         </div>
                         {g.accounts.map((a, i) => (
