@@ -90,9 +90,9 @@ class Component extends DCLogic {
       ['Groceries', 'monthly', 612.4, 800],
       ['Food & Drinks', 'monthly', 452.3, 400],
       ['Transport', 'weekly', 85, 150],
-      ['Utilities', 'monthly', 276.65, 350],
+      ['Bills & Fees', 'monthly', 276.65, 350],
       ['Shopping', 'monthly', 159.9, 500],
-      ['Subscription', 'monthly', 55, 80]
+      ['Entertainment', 'monthly', 55, 80]
     ].map(([name, period, spent, amount]) => {
       const pct = Math.min(100, Math.round((spent / amount) * 100));
       const over = spent > amount;

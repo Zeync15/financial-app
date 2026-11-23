@@ -129,7 +129,7 @@ a{color:#1ec98a}a:hover{color:#5fe0b0}
               </div>
               <sc-for list="{{day.items}}" as="tx" hint-placeholder-count="3">
                 <button class="{{tx.cls}}" onClick="{{tx.open}}" style="width: 100%; background: transparent; border-left: 0; border-right: 0; border-bottom: 0; text-align: left; color: inherit; cursor: pointer">
-                  <span class="icc" style="width: 38px; height: 38px; font-size: 19px; color: {{tx.color}}; background: {{tx.tint}}; box-shadow: {{tx.ring}}"><span class="{{tx.icon}}"></span></span>
+                  <span class="icc" style="width: 38px; height: 38px; font-size: 19px; color: {{tx.color}}; background: {{tx.tint}}; box-shadow: {{tx.ring}}"><sc-if value="{{tx.hasEmoji}}" hint-placeholder-val="{{false}}"><img src="{{tx.emoji}}" alt="" width="28" height="28" style="display: block; filter: {{tx.emojiFx}}"></sc-if><sc-if value="{{tx.noEmoji}}" hint-placeholder-val="{{true}}"><span class="{{tx.icon}}"></span></sc-if></span>
                   <span class="meta" style="display: block">
                     <span class="lbl" style="display: block">{{tx.label}}</span>
                     <span class="sub">
@@ -274,21 +274,31 @@ class Component extends DCLogic {
     const fmt = (n) => Math.abs(n).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const tint = (c) => 'color-mix(in oklab, ' + c + ' 24%, transparent)';
 
-    // Sample categories: colour and the icon the app resolves from the name.
+    // The real categories (as on the live site, 23 Nov 2026): colour and the icon the app
+    // resolves from the name. Transactions and amounts are sample data.
+    // Car is #9aa3ad live; the proposal makes it #383838.
     const C = {
-      food: ['Food & Drinks', '#fa8c16', 'i-coffee'],
-      groc: ['Groceries', '#52c41a', 'i-shopping-cart'],
-      trans: ['Transport', '#1677ff', 'i-car'],
-      rent: ['Rent', '#722ed1', 'i-home'],
-      util: ['Utilities', '#faad14', 'i-thunderbolt'],
-      shop: ['Shopping', '#eb2f96', 'i-shopping'],
-      subs: ['Subscription', '#2f54eb', 'i-credit-card'],
-      free: ['Freelance', '#13c2c2', 'i-dollar'],
-      car: ['Car', '#383838', 'i-tag'],
+      food: ['Food & Drinks', '#faad14', 'i-coffee'],
+      groc: ['Groceries', '#13c2c2', 'i-shopping-cart'],
+      trans: ['Transport', '#52c41a', 'i-car'],
+      home: ['Home', '#2f54eb', 'i-tag'],
+      bills: ['Bills & Fees', '#a0d911', 'i-file-text'],
+      shop: ['Shopping', '#ff6b6b', 'i-shopping'],
+      ent: ['Entertainment', '#1677ff', 'i-smile'],
+      extra: ['Extra Income', '#1677ff', 'i-dollar'],
+      car: ['Car', P ? '#383838' : '#9aa3ad', 'i-tag'],
       cat: ['Cat', '#000000', 'i-tag']
     };
-    // Very dark colours vanish as a 24% tint on the dark panel, so they are
-    // drawn as a solid tile in the real colour, with a light rim and a white icon.
+    // Proposed: every category shows an emoji (Fluent Emoji Flat, as the note app uses) instead of a line icon.
+    const E = {
+      food: '/_blob/7411e80ad5d884af24706f7c11d02bdb', groc: '/_blob/830c3355d41d2370eab0d71eeb87dafc', trans: '/_blob/a9418f7b25204163ebe1251a6fcf95c4',
+      home: '/_blob/496edda9ad17ce637f38027e7c7e7cf9', bills: '/_blob/c6d1ffa554c6c2bb98f6df43ed467b58', shop: '/_blob/f786e47067513495ea3341d2809a0845',
+      ent: '/_blob/76defa03e80f8313926ea9278797f0ab', extra: '/_blob/1cc78f16ceb1efb6f4238e761a6528bd',
+      car: '/_blob/b6f7a15d96dd7e16c1a9e5043a8553bb', cat: '/_blob/de2f008ded822ea228626a5b176a075e'
+    };
+    // Proposed: the emoji stands on its own, with no tile background behind it. The
+    // black cat and the #383838 car get a thin light outline so they show on the dark panel.
+    // Chart swatches in a very dark colour get a light rim.
     const isDark = (hex) => { const n = parseInt(hex.slice(1), 16); return 0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255) < 60; };
     const ringFor = (c) => P && isDark(c) ? 'inset 0 0 0 1px rgba(255,255,255,0.2)' : 'none';
     const open = () => this.setState({ form: 'edit', pad: false });
@@ -299,8 +309,9 @@ class Component extends DCLogic {
       return {
         label: desc, account, cat: c ? c[0] : '', hasCat: !!c,
         icon: 'ic ' + (c ? c[2] : 'i-tag'),
-        color: P && isDark(color) ? 'rgba(255,255,255,0.92)' : color,
-        tint: P && isDark(color) ? color : tint(color), ring: ringFor(color),
+        emoji: P && E[cat] ? E[cat] : '', emojiFx: cat === 'car' || cat === 'cat' ? 'drop-shadow(0 0 0.5px rgba(255,255,255,0.9)) drop-shadow(0 0 1px rgba(255,255,255,0.5))' : 'none', hasEmoji: !!(P && E[cat]), noEmoji: !(P && E[cat]),
+        color,
+        tint: P && E[cat] ? 'transparent' : tint(color), ring: 'none',
         amt: (income ? '+' + sp : expense ? '−' + sp : '') + 'RM ' + fmt(amount),
         amtColor: income ? 'var(--pos)' : expense ? 'var(--neg)' : 'var(--t2)',
         signed: income ? amount : expense ? -amount : 0, open
@@ -309,9 +320,9 @@ class Component extends DCLogic {
     const raw = [
       ['Today', 'Mon', [tx('food', 'Nasi lemak & teh tarik', "Touch 'n Go", 'expense', 12.5), tx('trans', 'Grab to office', "Touch 'n Go", 'expense', 18)]],
       ['Yesterday', 'Sun', [tx('groc', 'Jaya Grocer', 'Maybank Savings', 'expense', 186.4), tx('food', "Dinner at Madam Kwan's", 'CIMB Credit Card', 'expense', 64.2)]],
-      ['November 21', 'Sat', [tx('free', 'Logo project', 'Maybank Savings', 'income', 1200), tx('shop', 'Uniqlo', 'CIMB Credit Card', 'expense', 159.9), tx('car', 'Petrol', 'CIMB Credit Card', 'expense', 80)]],
-      ['November 20', 'Fri', [tx('util', 'TNB electricity', 'Maybank Savings', 'expense', 142.35), tx(null, "Top up Touch 'n Go", 'Maybank Savings', 'transfer', 100)]],
-      ['November 19', 'Thu', [tx('subs', 'Netflix', 'CIMB Credit Card', 'expense', 55), tx('cat', 'Cat food & litter', 'Maybank Savings', 'expense', 96.8)]]
+      ['November 21', 'Sat', [tx('extra', 'Logo project', 'Maybank Savings', 'income', 1200), tx('shop', 'Uniqlo', 'CIMB Credit Card', 'expense', 159.9), tx('car', 'Petrol', 'CIMB Credit Card', 'expense', 80)]],
+      ['November 20', 'Fri', [tx('bills', 'TNB electricity', 'Maybank Savings', 'expense', 142.35), tx(null, "Top up Touch 'n Go", 'Maybank Savings', 'transfer', 100)]],
+      ['November 19', 'Thu', [tx('ent', 'Netflix', 'CIMB Credit Card', 'expense', 55), tx('cat', 'Cat food & litter', 'Maybank Savings', 'expense', 96.8)]]
     ];
     const days = raw.map(([label, wd, items]) => {
       const total = items.reduce((a, t) => a + t.signed, 0);
@@ -323,7 +334,7 @@ class Component extends DCLogic {
       };
     });
 
-    const spend = [['rent', 1800], ['groc', 715.6], ['food', 596.7], ['shop', 359.9], ['trans', 338], ['util', 276.65], ['cat', 96.8], ['car', 80], ['subs', 55]];
+    const spend = [['home', 1800], ['groc', 715.6], ['food', 596.7], ['shop', 359.9], ['trans', 338], ['bills', 276.65], ['cat', 96.8], ['car', 80], ['ent', 55]];
     const total = spend.reduce((a, x) => a + x[1], 0);
     let acc = 0;
     const stops = [];

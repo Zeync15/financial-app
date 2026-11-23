@@ -1,16 +1,16 @@
 # Design canvas (copy)
 
-A copy of the "Financial App" design canvas, taken on 23 November 2026 from https://claude.ai/artifact/XpwwrUh4Q2WqcCjoqLmaLp (version 1795418941-007a). The live canvas stays there and is where designing happens; this folder is a snapshot so the design can be read and compared from the repo.
+A copy of the "Financial App" design canvas, taken on 23 November 2026 from https://claude.ai/artifact/XpwwrUh4Q2WqcCjoqLmaLp (version 1795421638-f8d9). The live canvas stays there and is where designing happens; this folder is a snapshot so the design can be read and compared from the repo.
 
-The canvas follows the live site (https://financial-app-sooty.vercel.app, release `b57ac88`) as it looked on 23 November 2026. The layouts are the live site's; every account, amount, transaction and name on the boards is sample data, and the sidebar shows `you@example.com`. Keep it that way: this repo is public, so real figures never go on the canvas.
+The canvas follows the live site (https://financial-app-sooty.vercel.app, release `b57ac88`) as it looked on 23 November 2026. The layouts are the live site's. The categories (names, order, colours and icons) are the real ones from the live site; every account, amount, transaction and other name on the boards is sample data, and the sidebar shows `you@example.com`. Keep it that way: this repo is public, so real figures never go on the canvas.
 
 **Two pages.** "Design (live app)" shows the app as it is today. "Proposed changes" shows the changes proposed on 23 November 2026, not built yet, each as a Before board (live) beside an After board (proposed), with an orange note per row:
 
 1. Delete dialog redesign (`P-delete-*`): the app's own form style instead of Ant Design's stock confirm; on phone a bottom sheet.
-2. Transactions (`P-transactions-*`): money as "+ RM" / "− RM" with 2 decimals, the month picker drawn like the form fields, very dark category colours as a solid tile with a light rim.
+2. Transactions (`P-transactions-*`): money as "+ RM" / "− RM" with 2 decimals, the month picker drawn like the form fields, and an emoji for each category (as on Categories).
 3. Dashboard (`P-dashboard-*`, `Dashboard-labels`): the money format, RM instead of MYR on account rows, and new second lines for the account rows, approved 23 November 2026. Investments show the symbol with "type · units · gain" underneath; loans "rate type · rate p.a. · months paid"; instalments "RM a month · months paid"; bank accounts and cards keep "type · bank".
 4. Loans and Investments (`P-loans-*`, `P-investments-*`): 2 decimals everywhere, and the desktop sidebar's Loans icon becomes the account book from the phone bar.
-5. Categories (`P-categories-*`): Car `#383838` and Cat `#000000` as solid tiles.
+5. Categories (`P-categories-*`, expense and income tabs): every category shows an emoji that looks like the thing instead of a line icon (🍽️ Food & Drinks, 🛍️ Shopping, 🚗 Car, 🧾 Bills & Fees, 🚆 Transport, 🛒 Groceries, 🎬 Entertainment, 🎾 Sports & Hobbies, 💊 Healthcare, ✂️ Beauty, 🎁 Gifts, 🐈‍⬛ Cat, ✈️ Travel, 🏠 Home, 📚 Education, 🏷️ Other; income 💰 Salary, 🎉 Bonus, 👛 Allowance, 🪙 Cash Back, 🏷️ Other, 🎁 Gifts, 📋 Claims, 💵 Extra Income, 🏦 Savings). The car emoji is recoloured to `#383838` and the cat to black, and Car's category colour becomes `#383838` (live `#9aa3ad`). The emoji has no tile background behind it; the car and the cat get a thin light outline so they show on the dark panel.
 
 Not proposed: one form pattern on phone (later), Budgets (left as it is), where Delete buttons sit (fine for now).
 
@@ -83,6 +83,7 @@ Every image a board shows is uploaded to the canvas's image store and referenced
 - the app icon (`public/favicon.svg`),
 - the Google logo from `src/components/auth/GoogleButton.tsx`,
 - each Ant Design icon the app uses, taken from `@ant-design/icons-svg`,
-- the confirm dialog's filled warning icon, already in its colour (`#d89614`).
+- the confirm dialog's filled warning icon, already in its colour (`#d89614`),
+- the category emoji on the Proposed changes page, from Microsoft's Fluent Emoji Flat set (https://github.com/microsoft/fluentui-emoji, MIT licence), the same set the note app uses. The black cat is recoloured from the set's purple-grey to black, with a yellow eye and pink nose, and the car from red to `#383838`.
 
 Two uploaded stylesheets are linked from every board's `<head>`. The first carries the app's tokens and classes from `src/index.css`, plus one `.i-<name>` class per icon, which draws the icon image as a mask so it takes the text colour. The second adds the classes from release `b57ac88`: search in the title row, tappable spending rows, the full-screen phone form and the amount keypad.

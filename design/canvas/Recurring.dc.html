@@ -111,10 +111,10 @@ class Component extends DCLogic {
     const form = s.form ?? this.props.form ?? 'none';
     const n2 = (n) => n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const rules = [
-      { title: 'Salary', type: 'income', amount: 7500, acc: 'Maybank Savings', cat: 'Salary', color: '#1ec98a', icon: 'i-dollar', day: '25th', next: 'Next 2026-11-25 · no end date', active: true, source: 'manual' },
-      { title: 'Rent', type: 'expense', amount: 1800, acc: 'Maybank Savings', cat: 'Rent', color: '#722ed1', icon: 'i-home', day: '1st', next: 'Next 2026-12-01 · no end date', active: true, source: 'manual' },
-      { title: 'iPhone 17 Pro', type: 'expense', amount: 458.25, acc: 'Maybank Savings', cat: 'Shopping', color: '#eb2f96', icon: 'i-shopping', day: '5th', next: 'Next 2026-12-05 · ends 2027-08-05', active: true, source: 'instalment' },
-      { title: 'Netflix', type: 'expense', amount: 55, acc: 'CIMB Credit Card', cat: 'Subscription', color: '#2f54eb', icon: 'i-credit-card', day: '15th', next: 'Next 2026-12-15 · no end date', active: true, source: 'manual' },
+      { title: 'Salary', type: 'income', amount: 7500, acc: 'Maybank Savings', cat: 'Salary', color: '#1677ff', icon: 'i-dollar', day: '25th', next: 'Next 2026-11-25 · no end date', active: true, source: 'manual' },
+      { title: 'Rent', type: 'expense', amount: 1800, acc: 'Maybank Savings', cat: 'Home', color: '#2f54eb', icon: 'i-tag', day: '1st', next: 'Next 2026-12-01 · no end date', active: true, source: 'manual' },
+      { title: 'iPhone 17 Pro', type: 'expense', amount: 458.25, acc: 'Maybank Savings', cat: 'Shopping', color: '#ff6b6b', icon: 'i-shopping', day: '5th', next: 'Next 2026-12-05 · ends 2027-08-05', active: true, source: 'instalment' },
+      { title: 'Netflix', type: 'expense', amount: 55, acc: 'CIMB Credit Card', cat: 'Entertainment', color: '#1677ff', icon: 'i-smile', day: '15th', next: 'Next 2026-12-15 · no end date', active: true, source: 'manual' },
       { title: 'Gym', type: 'expense', amount: 150, acc: 'CIMB Credit Card', cat: 'Healthcare', color: '#f5222d', icon: 'i-heart', day: '5th', next: 'Paused · ends 2027-06-01', active: false, source: 'manual' }
     ].map((r) => {
       const income = r.type === 'income';
@@ -133,7 +133,7 @@ class Component extends DCLogic {
     });
     const edit = form === 'edit';
     const f = edit
-      ? { title: 'Edit Recurring', icon: 'ic i-edit', acc: 'Maybank Savings', accCls: 'fld sel', amt: '1,800.00', amtCls: 'fld cur', desc: 'Rent', descCls: 'fld', cat: 'Rent', day: '1', dayCls: 'fld', start: '01/01/2026', startCls: 'fld', primary: 'Save Changes' }
+      ? { title: 'Edit Recurring', icon: 'ic i-edit', acc: 'Maybank Savings', accCls: 'fld sel', amt: '1,800.00', amtCls: 'fld cur', desc: 'Rent', descCls: 'fld', cat: 'Home', day: '1', dayCls: 'fld', start: '01/01/2026', startCls: 'fld', primary: 'Save Changes' }
       : { title: 'New Recurring', icon: 'ic i-plus', acc: 'Select account', accCls: 'fld sel ph', amt: '0.00', amtCls: 'fld cur ph', desc: 'e.g. Rent, Netflix, Salary', descCls: 'fld ph', cat: '—', day: 'e.g. 1', dayCls: 'fld ph', start: 'dd/mm/yyyy', startCls: 'fld ph', primary: 'Add Recurring' };
     return {
       size: phone ? 'phone' : 'desktop', isPhone: phone, isDesktop: !phone,
