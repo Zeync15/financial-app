@@ -1456,6 +1456,13 @@ body {
   gap: 10px;
   padding: 22px 24px 24px;
 }
+/* Cancel also carries .btn-ghost (the chip button), which makes it flex
+   without centring; centre both labels so the full-width phone buttons match. */
+.cd-foot .btn-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 .btn-pill.cd-ok {
   background: var(--neg);
   color: #2b0b0b;
@@ -1510,6 +1517,8 @@ body {
 .ant-picker.month-fld {
   height: 44px;
   border: 1.5px solid rgba(255, 255, 255, 0.34);
+  /* The global .ant-picker rule sets border-color with !important. */
+  border-color: rgba(255, 255, 255, 0.34) !important;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.05);
   padding: 0 14px;
@@ -1517,7 +1526,7 @@ body {
 }
 .ant-picker.month-fld:hover,
 .ant-picker.month-fld.ant-picker-focused {
-  border-color: var(--accent);
+  border-color: var(--accent) !important;
 }
 .ant-picker.month-fld.ant-picker-focused {
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 18%, transparent);
