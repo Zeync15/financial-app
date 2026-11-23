@@ -11,6 +11,7 @@ import Loans from "@/pages/Loans";
 import Instalments from "@/pages/Instalments";
 import RecurringTransactions from "@/pages/RecurringTransactions";
 import Categories from "@/pages/Categories";
+import { ConfirmDeleteProvider } from "@/components/common/ConfirmDelete";
 
 const ACCENT = "#1ec98a";
 const BORDER = "rgba(255,255,255,0.34)";
@@ -54,6 +55,7 @@ export default function App() {
       }}
     >
       <AntdApp component={false}>
+      <ConfirmDeleteProvider>
       <BrowserRouter>
         <Routes>
           <Route
@@ -96,6 +98,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
+      </ConfirmDeleteProvider>
       </AntdApp>
     </ConfigProvider>
   );

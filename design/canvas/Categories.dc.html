@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Categories</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/891fbe9142f7298e7fe04f5467c0b7f3">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1ec98a}a:hover{color:#5fe0b0}
+</style>
+</helmet>
+<div class="fa-root" style="width: {{rootW}}; height: {{rootH}}; position: relative; overflow: hidden; display: flex; flex-direction: {{rootDir}}">
+  <dc-import name="Nav" size="{{size}}" active="categories" proposed="{{proposed}}" hint-size="{{navHint}}"></dc-import>
+  <main style="flex: 1; min-width: 0; min-height: 0; overflow: auto; padding: {{pad}}">
+    <div class="titlebar">
+      <h1 class="h1" style="font-size: {{h1Size}}">Categories</h1>
+      <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}">
+        <button class="btn-primary-emerald" onClick="{{openNew}}"><span class="ic i-plus"></span>Add Category</button>
+      </sc-if>
+    </div>
+
+    <div style="margin-bottom: 16px">
+      <div class="{{segClass}}">
+        <sc-for list="{{tabs}}" as="t" hint-placeholder-count="2">
+          <button class="{{t.cls}}" onClick="{{t.pick}}">{{t.label}}</button>
+        </sc-for>
+      </div>
+    </div>
+
+    <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}">
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+        <sc-for list="{{cats}}" as="c" hint-placeholder-count="9">
+          <div class="panel" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px">
+            <span class="cat-grip" title="Drag to reorder"><span class="ic i-holder"></span></span>
+            <span class="icc" style="width: 40px; height: 40px; font-size: 20px; color: {{c.fg}}; background: {{c.tint}}; box-shadow: {{c.ring}}"><sc-if value="{{c.hasEmoji}}" hint-placeholder-val="{{false}}"><img src="{{c.emoji}}" alt="" width="30" height="30" style="display: block; filter: {{c.emojiFx}}"></sc-if><sc-if value="{{c.noEmoji}}" hint-placeholder-val="{{true}}"><span class="{{c.icon}}"></span></sc-if></span>
+            <span style="flex: 1; min-width: 0; font-size: 14px; font-weight: 600; color: var(--t1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{c.name}}</span>
+            <span style="display: flex; gap: 6px">
+              <button class="cat-icon-btn" aria-label="Edit {{c.name}}" disabled="{{c.locked}}" title="{{c.editTip}}" onClick="{{openEdit}}"><span class="ic i-edit"></span></button>
+              <button class="cat-icon-btn" aria-label="Delete {{c.name}}" disabled="{{c.locked}}" title="{{c.delTip}}"><span class="ic i-delete"></span></button>
+            </span>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isPhone}}" hint-placeholder-val="{{false}}">
+      <div class="panel" style="overflow: hidden">
+        <sc-for list="{{cats}}" as="c" hint-placeholder-count="9">
+          <div class="{{c.rowCls}}">
+            <span class="cat-grip"><span class="ic i-holder"></span></span>
+            <span class="icc" style="width: 36px; height: 36px; font-size: 18px; color: {{c.fg}}; background: {{c.tint}}; box-shadow: {{c.ring}}"><sc-if value="{{c.hasEmoji}}" hint-placeholder-val="{{false}}"><img src="{{c.emoji}}" alt="" width="28" height="28" style="display: block; filter: {{c.emojiFx}}"></sc-if><sc-if value="{{c.noEmoji}}" hint-placeholder-val="{{true}}"><span class="{{c.icon}}"></span></sc-if></span>
+            <span class="meta"><span class="lbl" style="display: block">{{c.name}}</span></span>
+            <span style="display: flex; gap: 6px">
+              <button class="cat-icon-btn" aria-label="Edit {{c.name}}" disabled="{{c.locked}}"><span class="ic i-edit"></span></button>
+              <button class="cat-icon-btn" aria-label="Delete {{c.name}}" disabled="{{c.locked}}"><span class="ic i-delete"></span></button>
+            </span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding-top: 16px">
+        <button class="btn-dashed" onClick="{{openNew}}"><span class="ic i-plus"></span>Add Category</button>
+      </div>
+    </sc-if>
+  </main>
+
+  <sc-if value="{{showFab}}" hint-placeholder-val="{{false}}">
+    <button class="fab" aria-label="Add category" style="bottom: 106px" onClick="{{openNew}}"><span class="ic i-plus"></span></button>
+  </sc-if>
+
+  <sc-if value="{{formOpen}}" hint-placeholder-val="{{false}}">
+    <div class="scrim" onClick="{{close}}"></div>
+    <div class="{{boxClass}}" role="dialog" aria-label="{{f.title}}" style="padding-bottom: {{sheetPadB}}">
+      <sc-if value="{{isPhone}}" hint-placeholder-val="{{false}}"><div class="sheet-grip"></div></sc-if>
+      <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}"><button class="fm-x" aria-label="Close" onClick="{{close}}">×</button></sc-if>
+      <div class="fm-head"><span class="fm-head-ic"><span class="{{f.icon}}"></span></span>{{f.title}}</div>
+      <div class="fm-body">
+        <div class="field"><div class="field-lbl">Name <em class="req">*</em></div><div class="{{f.nameCls}}">{{f.name}}</div></div>
+        <div class="field"><div class="field-lbl">Type <em class="req">*</em></div><div class="fld sel">{{f.type}}<span class="chev"><span class="ic i-down"></span></span></div></div>
+        <div class="field"><div class="field-lbl">Color</div><div><span class="swatch-fld"><i style="background: {{f.color}}"></i>{{f.hex}}</span></div></div>
+        <div class="field"><div class="field-lbl">Icon (optional)</div><div class="{{f.iconCls}}">{{f.iconKey}}</div></div>
+      </div>
+      <div class="fm-foot"><div class="fm-foot-right"><button class="btn-pill ghost" onClick="{{close}}">Cancel</button><button class="btn-pill primary">{{f.primary}}</button></div></div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"tab":{"editor":"enum","options":["expense","income"],"default":"expense"},"form":{"editor":"enum","options":["none","new","edit"],"default":"none"},"proposed":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const phone = (this.props.size ?? 'desktop') === 'phone';
+    const tab = s.tab ?? this.props.tab ?? 'expense';
+    const form = s.form ?? this.props.form ?? 'none';
+    // proposed: draws the changes proposed on 23 Nov 2026 (see the Proposed changes page); off is the live app.
+    const P = !!(this.props.proposed ?? false);
+    // The real categories, names, order, colours and icons as on the live site (23 Nov 2026).
+    // Car is #9aa3ad live; the proposal makes it #383838.
+    const data = {
+      expense: [
+        ['Food & Drinks', '#faad14', 'i-coffee', false], ['Shopping', '#ff6b6b', 'i-shopping', false], ['Car', P ? '#383838' : '#9aa3ad', 'i-tag', false],
+        ['Bills & Fees', '#a0d911', 'i-file-text', false], ['Transport', '#52c41a', 'i-car', false], ['Groceries', '#13c2c2', 'i-shopping-cart', false],
+        ['Entertainment', '#1677ff', 'i-smile', false], ['Sports & Hobbies', '#fa8c16', 'i-trophy', false], ['Healthcare', '#f5222d', 'i-heart', false],
+        ['Beauty', '#f5222d', 'i-scissor', false], ['Gifts', '#ee8585', 'i-gift', false], ['Cat', '#000000', 'i-tag', false],
+        ['Travel', '#722ed1', 'i-global', false], ['Home', '#2f54eb', 'i-tag', false], ['Education', '#1677ff', 'i-book', false],
+        ['Other', '#b62aac', 'i-tag', false]
+      ],
+      income: [
+        ['Salary', '#1677ff', 'i-dollar', false], ['Bonus', '#faad14', 'i-tag', false], ['Allowance', '#1677ff', 'i-tag', false],
+        ['Cash Back', '#1677ff', 'i-tag', false], ['Other', '#1677ff', 'i-tag', false], ['Gifts', '#1677ff', 'i-gift', false],
+        ['Claims', '#1677ff', 'i-tag', false], ['Extra Income', '#1677ff', 'i-dollar', false], ['Savings', '#1677ff', 'i-tag', false]
+      ]
+    };
+    // Proposed: the emoji stands on its own, with no tile background behind it. The
+    // black cat and the #383838 car get a thin light outline so they show on the dark panel.
+    // Proposed: every category shows an emoji (Fluent Emoji Flat, as the note app uses) instead of a line icon.
+    const E = {
+      expense: {
+        'Food & Drinks': '/_blob/9dccdaf885f4739da50e1101e13aaaaa', Shopping: '/_blob/f786e47067513495ea3341d2809a0845', Car: '/_blob/b6f7a15d96dd7e16c1a9e5043a8553bb',
+        'Bills & Fees': '/_blob/c6d1ffa554c6c2bb98f6df43ed467b58', Transport: '/_blob/a9418f7b25204163ebe1251a6fcf95c4', Groceries: '/_blob/830c3355d41d2370eab0d71eeb87dafc',
+        Entertainment: '/_blob/76defa03e80f8313926ea9278797f0ab', 'Sports & Hobbies': '/_blob/c9a291d2d7acf161a9df162d43cd2cfd', Healthcare: '/_blob/c2b1475eb7ea5d7d930895f9b94968a1',
+        Beauty: '/_blob/c3ea381f9238d5bfcdf9d0d83b127b40', Gifts: '/_blob/5a7f5949bc2e8233e4ce4005230bfe42', Cat: '/_blob/de2f008ded822ea228626a5b176a075e',
+        Travel: '/_blob/1e1319d344856696a930d0ffec73d7c8', Home: '/_blob/496edda9ad17ce637f38027e7c7e7cf9', Education: '/_blob/56f9c599bbef834d5f06f029d3f8c822',
+        Other: '/_blob/c91d67f5fa0db76cf1ba850a49526bcd'
+      },
+      income: {
+        Salary: '/_blob/d7565c3a58172a5a11254d85e5a0c13d', Bonus: '/_blob/146371be9939ca49a73d2f31b1f84556', Allowance: '/_blob/ed1bd10020ba9d433cc9b7eb82805e14',
+        'Cash Back': '/_blob/f8e969df1c5019a6f78e0812a5b87517', Other: '/_blob/c91d67f5fa0db76cf1ba850a49526bcd', Gifts: '/_blob/5a7f5949bc2e8233e4ce4005230bfe42',
+        Claims: '/_blob/3f88d7a012640bbd39bb42a7b3c5878a', 'Extra Income': '/_blob/1cc78f16ceb1efb6f4238e761a6528bd', Savings: '/_blob/0b1dc4832e05c412d6a66ec5d1750d80'
+      }
+    }[tab];
+    const cats = data[tab].map(([name, color, icon, locked], i) => ({
+      name, color, icon: 'ic ' + icon, locked,
+      emoji: P && E[name] ? E[name] : '', emojiFx: name === 'Car' || name === 'Cat' ? 'drop-shadow(0 0 0.5px rgba(255,255,255,0.9)) drop-shadow(0 0 1px rgba(255,255,255,0.5))' : 'none', hasEmoji: !!(P && E[name]), noEmoji: !(P && E[name]),
+      fg: color,
+      ring: 'none',
+      tint: P && E[name] ? 'transparent' : 'color-mix(in oklab, ' + color + ' 24%, transparent)',
+      editTip: locked ? 'Default category — cannot edit' : 'Edit',
+      delTip: locked ? 'Default category — cannot delete' : 'Delete',
+      rowCls: 'tx-row' + (i === 0 ? ' first' : '')
+    }));
+    const edit = form === 'edit';
+    const f = edit
+      ? { title: 'Edit Category', icon: 'ic i-edit', name: 'Shopping', nameCls: 'fld', type: 'Expense', color: '#ff6b6b', hex: '#FF6B6B', iconKey: 'shopping', iconCls: 'fld', primary: 'Save Changes' }
+      : { title: 'New Category', icon: 'ic i-plus', name: 'e.g. Groceries', nameCls: 'fld ph focus', type: tab === 'income' ? 'Income' : 'Expense', color: '#1677ff', hex: '#1677FF', iconKey: 'e.g. food, shopping, salary', iconCls: 'fld ph', primary: 'Add Category' };
+    return {
+      size: phone ? 'phone' : 'desktop', isPhone: phone, isDesktop: !phone, proposed: P,
+      navHint: phone ? '402px,90px' : '200px,900px',
+      rootW: phone ? '402px' : '1440px', rootH: phone ? '874px' : '900px',
+      rootDir: phone ? 'column-reverse' : 'row',
+      pad: phone ? '12px 12px 84px' : '24px',
+      h1Size: phone ? '22px' : '26px',
+      segClass: phone ? 'seg full' : 'seg',
+      tabs: [['expense', 'Expense'], ['income', 'Income']].map(([k, label]) => ({ label, cls: k === tab ? 'on' : '', pick: () => this.setState({ tab: k }) })),
+      cats, f,
+      showFab: phone && form === 'none',
+      openNew: () => this.setState({ form: 'new' }),
+      openEdit: () => this.setState({ form: 'edit' }),
+      close: () => this.setState({ form: 'none' }),
+      formOpen: form !== 'none',
+      boxClass: phone ? 'sheet' : 'fm-modal',
+      sheetPadB: phone ? '34px' : '0px'
+    };
+  }
+}
+</script>
+</body>
+</html>

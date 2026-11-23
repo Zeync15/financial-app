@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Navigation</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/891fbe9142f7298e7fe04f5467c0b7f3">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1ec98a}a:hover{color:#5fe0b0}
+</style>
+</helmet>
+<div class="fa-root" style="width: {{rootW}}; height: {{rootH}}; background: #11161c">
+  <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}">
+    <nav class="sider" aria-label="Main menu">
+      <div class="sider-brand">Financial App</div>
+      <div class="menu" style="flex: 1">
+        <sc-for list="{{items}}" as="it" hint-placeholder-count="8">
+          <a class="{{it.cls}}" href="{{it.href}}"><span class="{{it.icon}}"></span>{{it.label}}</a>
+        </sc-for>
+      </div>
+      <div class="menu" style="border-top: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px">
+        <span class="menu-item off"><span class="ic i-user"></span><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; padding-right: 12px">you@example.com</span></span>
+        <a class="menu-item" href="SignIn.dc.html"><span class="ic i-logout"></span>Sign Out</a>
+        <span class="menu-item"><span class="ic i-menu-fold"></span>Collapse</span>
+      </div>
+    </nav>
+  </sc-if>
+  <sc-if value="{{isPhone}}" hint-placeholder-val="{{false}}">
+    <nav class="bnav" aria-label="Main menu" style="height: 56px; padding-bottom: 34px; box-sizing: content-box">
+      <sc-for list="{{tabs}}" as="t" hint-placeholder-count="5">
+        <a class="{{t.cls}}" href="{{t.href}}"><span class="{{t.icon}}"></span><span class="l">{{t.label}}</span></a>
+      </sc-for>
+    </nav>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"active":{"editor":"enum","options":["dashboard","transactions","budgets","categories","investments","loans","instalments","recurring","more","none"],"default":"transactions"},"proposed":{"editor":"boolean","default":false},"$preview":{"width":200,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const size = this.props.size ?? 'desktop';
+    const active = this.props.active ?? 'transactions';
+    const phone = size === 'phone';
+    const board = { dashboard: 'Dashboard', transactions: 'Main', budgets: 'Budgets', categories: 'Categories', investments: 'Investments', loans: 'Loans', instalments: 'Instalments', recurring: 'Recurring' };
+    const items = [
+      ['dashboard', 'Dashboard', 'i-dashboard'],
+      ['transactions', 'Transactions', 'i-transaction'],
+      ['budgets', 'Budgets', 'i-pie-chart'],
+      ['categories', 'Categories', 'i-tag'],
+      ['investments', 'Investments', 'i-fund'],
+      ['loans', 'Loans', this.props.proposed ? 'i-account-book' : 'i-dollar'],
+      ['instalments', 'Instalments', 'i-credit-card'],
+      ['recurring', 'Recurring', 'i-retweet']
+    ].map(([k, label, icon]) => ({
+      label, icon: 'ic ' + icon,
+      cls: 'menu-item' + (k === active ? ' on' : ''),
+      href: board[k] + '.dc.html'
+    }));
+    const tabs = [
+      ['dashboard', 'Dashboard', 'i-dashboard', 'Dashboard-phone.dc.html'],
+      ['transactions', 'Transactions', 'i-unordered-list', 'Main-phone.dc.html'],
+      ['investments', 'Investments', 'i-fund', 'Investments-phone.dc.html'],
+      ['loans', 'Loans', 'i-account-book', 'Loans-phone.dc.html'],
+      ['more', 'More', 'i-appstore', 'Main-more-phone.dc.html']
+    ].map(([k, label, icon, href]) => ({
+      label, href, icon: 'ic ' + icon,
+      cls: 'bnav-tab' + (k === active ? ' on' : '')
+    }));
+    return {
+      isDesktop: !phone, isPhone: phone, items, tabs,
+      rootW: phone ? '402px' : '200px',
+      rootH: phone ? '90px' : '900px'
+    };
+  }
+}
+</script>
+</body>
+</html>

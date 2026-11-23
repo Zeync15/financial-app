@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dashboard</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/891fbe9142f7298e7fe04f5467c0b7f3">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1ec98a}a:hover{color:#5fe0b0}
+</style>
+</helmet>
+<div class="fa-root" style="width: {{rootW}}; height: {{rootH}}; position: relative; overflow: hidden; display: flex; flex-direction: {{rootDir}}">
+  <dc-import name="Nav" size="{{size}}" active="dashboard" proposed="{{proposed}}" hint-size="{{navHint}}"></dc-import>
+  <main style="flex: 1; min-width: 0; min-height: 0; overflow: auto; padding: {{pad}}">
+
+    <div class="titlebar">
+      <h1 class="h1" style="font-size: {{h1Size}}">Dashboard</h1>
+      <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}">
+        <button class="btn-primary-emerald" onClick="{{openAccount}}"><span class="ic i-plus"></span>Add Account</button>
+      </sc-if>
+    </div>
+
+    <div style="display: flex; flex-direction: {{bandDir}}; gap: 14px; margin-bottom: 16px">
+      <div class="panel" style="padding: {{heroPad}}; width: {{heroW}}; flex: 0 0 auto">
+        <div style="color: var(--t2); font-size: 13px">Net worth</div>
+        <div class="num" style="font-size: {{heroSize}}; font-weight: 700; letter-spacing: -0.02em; margin: 6px 0 14px; color: var(--neg); line-height: 1.25">{{d.net}}</div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+          <div>
+            <div style="color: var(--t3); font-size: 11.5px">Assets</div>
+            <div class="num" style="color: var(--pos); font-weight: 600; margin-top: 3px">{{d.assets}}</div>
+          </div>
+          <div style="text-align: right">
+            <div style="color: var(--t3); font-size: 11.5px">Liabilities</div>
+            <div class="num" style="color: var(--neg); font-weight: 600; margin-top: 3px">{{d.liab}}</div>
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 14px; flex: 1">
+        <div style="display: flex; gap: 14px">
+          <div class="panel" style="padding: 16px 18px; flex: 1">
+            <div class="kpi-lbl"><span class="ic i-arrow-up" style="color: var(--pos)"></span>Income</div>
+            <div class="kpi-val" style="color: var(--pos)">RM 8,700.00</div>
+          </div>
+          <div class="panel" style="padding: 16px 18px; flex: 1">
+            <div class="kpi-lbl"><span class="ic i-arrow-down" style="color: var(--neg)"></span>Expenses</div>
+            <div class="kpi-val" style="color: var(--neg)">RM 4,318.65</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 14px">
+          <div class="panel" style="padding: 16px 18px; flex: 1">
+            <div class="kpi-lbl"><span class="ic i-rise" style="color: var(--pos)"></span>Yearly gain</div>
+            <div class="kpi-val" style="color: var(--pos)">{{d.gain}}</div>
+          </div>
+          <button class="panel" onClick="{{openIncome}}" style="padding: 16px 18px; flex: 1; text-align: left; cursor: pointer; font-family: inherit">
+            <div class="kpi-lbl"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v17M5 21h14M6 8h12M6 8l-3 7a3 3 0 0 0 6 0L6 8zM18 8l-3 7a3 3 0 0 0 6 0L18 8z"></path></svg>Debt service ratio</div>
+            <div class="kpi-val">37%</div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 16px">
+      <div class="{{segClass}}">
+        <sc-for list="{{tabs}}" as="t" hint-placeholder-count="2">
+          <button class="{{t.cls}}" onClick="{{t.pick}}">{{t.label}}</button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div class="panel" style="overflow: hidden">
+      <sc-if value="{{isAccounts}}" hint-placeholder-val="{{true}}">
+        <div style="display: grid; grid-template-columns: {{colsTpl}}">
+          <sc-for list="{{cols}}" as="col" hint-placeholder-count="2">
+            <div style="border-left: {{col.border}}">
+              <sc-for list="{{col.groups}}" as="g" hint-placeholder-count="2">
+                <div>
+                  <div class="grp-head"><span class="d">{{g.title}}</span><span class="t" style="color: {{g.color}}">{{g.total}}</span></div>
+                  <sc-for list="{{g.rows}}" as="a" hint-placeholder-count="3">
+                    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: {{a.border}}">
+                      <span class="icc" style="width: 36px; height: 36px; font-size: 18px; color: {{a.color}}; background: {{a.tint}}"><span class="{{a.icon}}"></span></span>
+                      <div style="flex: 1; min-width: 0">
+                        <div style="font-size: 14px; font-weight: 600; color: var(--t1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{a.name}}</div>
+                        <div style="font-size: 12px; color: {{a.subColor}}; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{a.sub}}</div>
+                      </div>
+                      <div class="num" style="flex: 0 0 auto; color: {{a.balColor}}; font-weight: 600; font-size: 14px; text-align: right">{{a.balance}}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isAllocation}}" hint-placeholder-val="{{false}}">
+        <sc-for list="{{alloc}}" as="sec" hint-placeholder-count="2">
+          <div>
+            <div class="grp-head"><span class="d">{{sec.title}}</span></div>
+            <div style="display: flex; flex-direction: {{allocDir}}; align-items: {{allocAlign}}; gap: {{allocGap}}; padding: {{allocPad}}">
+              <div role="img" aria-label="{{sec.title}} donut chart" style="flex-shrink: 0; align-self: center; width: {{donutSize}}; height: {{donutSize}}; border-radius: 50%; background: {{sec.donut}}; display: grid; place-items: center">
+                <div style="width: {{donutHole}}; height: {{donutHole}}; border-radius: 50%; background: var(--panel); display: grid; place-items: center; text-align: center">
+                  <div>
+                    <div style="color: var(--t3); font-size: 11px">{{sec.centerLabel}}</div>
+                    <div class="num" style="font-weight: 700; font-size: {{centerSize}}">{{sec.centerText}}</div>
+                  </div>
+                </div>
+              </div>
+              <div style="flex: 1; width: 100%">
+                <sc-for list="{{sec.rows}}" as="r" hint-placeholder-count="3">
+                  <div style="margin-bottom: 18px">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; font-size: 14px">
+                      <span style="display: flex; align-items: center; gap: 9px"><span style="width: 9px; height: 9px; border-radius: 2px; background: {{r.color}}"></span><span style="color: var(--t1); font-weight: 600">{{r.label}}</span></span>
+                      <span class="num" style="color: var(--t2)">{{r.text}}</span>
+                    </div>
+                    <div class="bar-track" style="height: 9px"><div class="bar-fill" style="width: {{r.w}}; background: {{r.color}}"></div></div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </sc-if>
+    </div>
+  </main>
+
+  <sc-if value="{{showFab}}" hint-placeholder-val="{{false}}">
+    <button class="fab" aria-label="Add account" style="bottom: 106px" onClick="{{openAccount}}"><span class="ic i-plus"></span></button>
+  </sc-if>
+
+  <sc-if value="{{accountOpen}}" hint-placeholder-val="{{false}}">
+    <div class="scrim" onClick="{{close}}"></div>
+    <div class="{{boxClass}}" role="dialog" aria-label="New Account" style="padding-bottom: {{sheetPadB}}">
+      <sc-if value="{{isPhone}}" hint-placeholder-val="{{false}}"><div class="sheet-grip"></div></sc-if>
+      <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}"><button class="fm-x" aria-label="Close" onClick="{{close}}">×</button></sc-if>
+      <div class="fm-head"><span class="fm-head-ic"><span class="ic i-plus"></span></span>New Account</div>
+      <div class="fm-body">
+        <div class="field"><div class="field-lbl">Name <em class="req">*</em></div><div class="fld ph focus">e.g. Maybank Savings</div></div>
+        <div class="field"><div class="field-lbl">Type <em class="req">*</em></div><div class="fld sel">Savings<span class="chev"><span class="ic i-down"></span></span></div></div>
+        <div class="field"><div class="field-lbl">Institution</div><div class="fld ph">e.g. Maybank</div></div>
+        <div class="fm-row">
+          <div class="field"><div class="field-lbl">Currency <em class="req">*</em></div><div class="fld sel">MYR<span class="chev"><span class="ic i-down"></span></span></div></div>
+          <div class="field"><div class="field-lbl">Balance <em class="req">*</em></div><div class="fld cur ph"><span class="cur-tag">RM</span>0.00</div></div>
+        </div>
+      </div>
+      <div class="fm-foot"><div class="fm-foot-right"><button class="btn-pill ghost" onClick="{{close}}">Cancel</button><button class="btn-pill primary">Add Account</button></div></div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{incomeOpen}}" hint-placeholder-val="{{false}}">
+    <div class="scrim" onClick="{{close}}"></div>
+    <div class="{{boxClass}}" role="dialog" aria-label="Net monthly income" style="padding-bottom: {{sheetPadB}}; width: {{incomeW}}; margin-left: {{incomeML}}">
+      <sc-if value="{{isPhone}}" hint-placeholder-val="{{false}}"><div class="sheet-grip"></div></sc-if>
+      <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}"><button class="fm-x" aria-label="Close" onClick="{{close}}">×</button></sc-if>
+      <div class="fm-head"><span class="fm-head-ic"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v17M5 21h14M6 8h12M6 8l-3 7a3 3 0 0 0 6 0L6 8zM18 8l-3 7a3 3 0 0 0 6 0L18 8z"></path></svg></span>Net monthly income</div>
+      <div class="fm-body">
+        <div class="field">
+          <div class="field-lbl">Net monthly income <em class="req">*</em></div>
+          <div class="fld cur focus"><span class="cur-tag">RM</span>7500</div>
+          <div class="field-hint">Take-home pay after tax and deductions. Used to calculate your debt service ratio.</div>
+        </div>
+      </div>
+      <div class="fm-foot"><div class="fm-foot-right"><button class="btn-pill ghost" onClick="{{close}}">Cancel</button><button class="btn-pill primary">Save</button></div></div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"tab":{"editor":"enum","options":["accounts","allocation"],"default":"accounts"},"form":{"editor":"enum","options":["none","account","income"],"default":"none"},"proposed":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    // proposed: draws the changes proposed on 23 Nov 2026 (see the Proposed changes page); off is the live app.
+    const P = !!(this.props.proposed ?? false);
+    const sp = P ? ' ' : '';
+    const size = this.props.size ?? 'desktop';
+    const phone = size === 'phone';
+    const tab = s.tab ?? this.props.tab ?? 'accounts';
+    const form = s.form ?? this.props.form ?? 'none';
+    const fmt = (n) => Math.abs(n).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const T = {
+      checking: ['Checking', '#1677ff', 'i-bank'],
+      savings: ['Savings', '#52c41a', 'i-save'],
+      credit_card: ['Credit Card', '#ff4d4f', 'i-credit-card'],
+      cash: ['Cash', '#fa8c16', 'i-dollar'],
+      ewallet: ['E-Wallet', '#722ed1', 'i-mobile'],
+      investment: ['Investment', '#13c2c2', 'i-fund'],
+      loan: ['Loan', '#fa541c', 'i-file-text'],
+      instalment: ['Instalment', '#eb2f96', 'i-schedule']
+    };
+    const debt = { credit_card: 1, loan: 1, instalment: 1 };
+    // nn / ns: the approved row labels (23 Nov 2026), drawn only when proposed is on.
+    const row = (name, type, inst, bal, nn, ns) => ({ name, type, inst, bal, nn, ns });
+    const groups = [
+      ['Banking & Cash', false, [row('Maybank Savings', 'savings', 'Maybank', 24850.4), row('Maybank Current', 'checking', 'Maybank', 3210.75), row("Touch 'n Go", 'ewallet', 'TNG Digital', 186.2), row('Cash', 'cash', null, 420)]],
+      ['Investments', false, [
+        row('VGT · Vanguard Information Technology ETF', 'investment', 'Investment', 28535.63, 'VGT', 'ETF · 10 units · + 23.3%'),
+        row('BTC · Bitcoin', 'investment', 'Investment', 20247.5, 'BTC', 'Crypto · 0.05 units · + 116.7%'),
+        row('MAYBANK · Malayan Banking Bhd', 'investment', 'Investment', 19080, 'MAYBANK', 'Stock · 2,000 units · − 3.1%'),
+        row('NVDA · NVIDIA Corp', 'investment', 'Investment', 9359.69, 'NVDA', 'Stock · 15 units · + 64.2%')
+      ]],
+      ['Loans', true, [
+        row('CIMB Credit Card', 'credit_card', 'CIMB', 1284.6, null, 'Credit card · CIMB'),
+        row('Home Loan', 'loan', 'Loan', 412330.18, null, 'Reducing balance · 4.15% p.a. · 56/420 paid'),
+        row('Car Loan (Myvi)', 'loan', 'Loan', 32343.54, null, 'Fixed rate · 2.80% p.a. · 46/108 paid'),
+        row('PTPTN', 'loan', 'Loan', 2933.44, null, 'Fixed rate · 1.00% p.a. · 88/120 paid')
+      ]],
+      ['Instalments', true, [
+        row('iPhone 17 Pro', 'instalment', 'Instalment', 4124.25, null, 'RM 458.25 a month · 3/12 paid'),
+        row('Sofa (IKEA)', 'instalment', 'Instalment', 2568, null, 'RM 160.50 a month · 8/24 paid'),
+        row('Dyson V15', 'instalment', 'Instalment', 1999.34, null, 'RM 499.83 a month · 2/6 paid')
+      ]]
+    ].map(([title, neg, rows]) => {
+      const sum = rows.reduce((a, r) => a + r.bal, 0);
+      return {
+        title,
+        total: (neg ? '−' + sp : '') + 'RM ' + fmt(sum),
+        color: neg ? 'var(--neg)' : 'var(--t1)',
+        rows: rows.map((r, i) => {
+          const t = T[r.type];
+          const isDebt = !!debt[r.type] || r.bal < 0;
+          return {
+            name: P && r.nn ? r.nn : r.name,
+            sub: P && r.ns ? r.ns : t[0] + (r.inst ? ' · ' + r.inst : ''),
+            subColor: P && r.ns ? 'var(--t2)' : 'var(--t3)',
+            color: t[1], tint: 'color-mix(in oklab, ' + t[1] + ' 24%, transparent)', icon: 'ic ' + t[2],
+            balance: (isDebt ? '−' + sp : '') + (P ? 'RM ' : 'MYR ') + fmt(r.bal),
+            balColor: isDebt ? 'var(--neg)' : 'var(--t1)',
+            border: i < rows.length - 1 ? '1px solid var(--line-soft)' : 'none'
+          };
+        })
+      };
+    });
+    const cols = phone
+      ? [{ border: 'none', groups }]
+      : [{ border: 'none', groups: groups.slice(0, 2) }, { border: '1px solid var(--line-soft)', groups: groups.slice(2) }];
+
+    const section = (title, centerLabel, centerText, data) => {
+      let acc = 0;
+      const total = data.reduce((a, d) => a + d.pct, 0) || 1;
+      const stops = data.map((d) => {
+        const from = (acc / total) * 100; acc += d.pct; const to = (acc / total) * 100;
+        return d.color + ' ' + from.toFixed(2) + '% ' + to.toFixed(2) + '%';
+      });
+      return {
+        title, centerLabel, centerText,
+        donut: 'conic-gradient(' + stops.join(', ') + ')',
+        rows: data.map((d) => ({ label: d.label, color: d.color, w: d.pct + '%', text: 'RM ' + fmt(d.val) + ' · ' + d.pct + '%' }))
+      };
+    };
+    const alloc = [
+      section('Assets', 'Total assets', 'RM 105,890.17', [
+        { label: 'Checking', val: 3210.75, pct: 3, color: '#1677ff' },
+        { label: 'Savings', val: 24850.4, pct: 23, color: '#52c41a' },
+        { label: 'Cash', val: 420, pct: 0, color: '#fa8c16' },
+        { label: 'E-Wallet', val: 186.2, pct: 0, color: '#722ed1' },
+        { label: 'Investment', val: 77222.82, pct: 73, color: '#13c2c2' }
+      ]),
+      section('Debt Service Ratio', 'DSR', '37%', [
+        { label: 'Debt obligations', val: 2800.74, pct: 37, color: '#ff6b6b' },
+        { label: 'Free income', val: 4699.26, pct: 63, color: '#1ec98a' }
+      ])
+    ];
+
+    return {
+      size, isPhone: phone, isDesktop: !phone, proposed: P,
+      d: P
+        ? { net: '− RM 351,693.18', assets: 'RM 105,890.17', liab: 'RM 457,583.35', gain: '+ RM 41,280.00' }
+        : { net: 'RM -351,693.18', assets: 'RM 105,890', liab: 'RM 457,583', gain: '+RM 41,280' },
+      navHint: phone ? '402px,90px' : '200px,900px',
+      rootW: phone ? '402px' : '1440px', rootH: phone ? '874px' : '900px',
+      rootDir: phone ? 'column-reverse' : 'row',
+      pad: phone ? '12px 12px 84px' : '24px',
+      h1Size: phone ? '22px' : '26px',
+      bandDir: phone ? 'column' : 'row',
+      heroPad: phone ? '18px 20px' : '20px 24px', heroW: phone ? '100%' : '320px', heroSize: phone ? '28px' : '34px',
+      segClass: phone ? 'seg full' : 'seg',
+      tabs: [['accounts', 'Accounts'], ['allocation', 'Allocation']].map(([k, label]) => ({ label, cls: k === tab ? 'on' : '', pick: () => this.setState({ tab: k }) })),
+      isAccounts: tab === 'accounts', isAllocation: tab === 'allocation',
+      colsTpl: phone ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) minmax(0, 1fr)', cols,
+      alloc,
+      allocDir: phone ? 'column' : 'row', allocAlign: phone ? 'stretch' : 'center', allocGap: phone ? '24px' : '56px', allocPad: phone ? '20px 18px' : '32px',
+      donutSize: phone ? '160px' : '190px', donutHole: phone ? '120px' : '142px', centerSize: phone ? '16px' : '18px',
+      showFab: phone && form === 'none',
+      openAccount: () => this.setState({ form: 'account' }),
+      openIncome: () => this.setState({ form: 'income' }),
+      close: () => this.setState({ form: 'none' }),
+      accountOpen: form === 'account', incomeOpen: form === 'income',
+      boxClass: phone ? 'sheet' : 'fm-modal',
+      sheetPadB: phone ? '34px' : '0px',
+      incomeW: phone ? 'auto' : '460px', incomeML: phone ? '0px' : '-230px'
+    };
+  }
+}
+</script>
+</body>
+</html>

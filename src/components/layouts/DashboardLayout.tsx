@@ -8,7 +8,7 @@ import {
   FundOutlined,
   PieChartOutlined,
   TagOutlined,
-  DollarOutlined,
+  AccountBookOutlined,
   CreditCardOutlined,
   RetweetOutlined,
   MenuFoldOutlined,
@@ -41,7 +41,7 @@ const topMenuItems: MenuProps["items"] = [
   { key: "/budgets", icon: <PieChartOutlined />, label: "Budgets" },
   { key: "/categories", icon: <TagOutlined />, label: "Categories" },
   { key: "/investments", icon: <FundOutlined />, label: "Investments" },
-  { key: "/loans", icon: <DollarOutlined />, label: "Loans" },
+  { key: "/loans", icon: <AccountBookOutlined />, label: "Loans" },
   { key: "/instalments", icon: <CreditCardOutlined />, label: "Instalments" },
   { key: "/recurring", icon: <RetweetOutlined />, label: "Recurring" },
 ];

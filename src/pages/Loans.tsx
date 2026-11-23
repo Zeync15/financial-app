@@ -84,9 +84,6 @@ function fmt(n: number) {
     maximumFractionDigits: 2,
   });
 }
-function fmt0(n: number) {
-  return Math.round(n).toLocaleString();
-}
 
 // Stable slice colors for the loan-allocation donut (mirrors the palette the
 // dashboard used before this chart moved here).
@@ -544,6 +541,11 @@ function AddLoanModal({
         loading={saving}
         danger={editing ? "Delete" : undefined}
         onDanger={editing ? onDelete : undefined}
+        confirm={
+          editing
+            ? { title: "Delete this loan?", content: `${editing.name}, with RM ${Math.abs(Number(editing.remainingBalance)).toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} still to pay, will be removed with its schedule. This can’t be undone.` }
+            : undefined
+        }
       />
     </Modal>
   );
@@ -698,6 +700,11 @@ function LoanEventsModal({
                   onClick={() =>
                     confirmDelete(() => del(ev.id), {
                       title: "Remove this adjustment?",
+                      content: `The ${EVENT_LABEL[ev.type].toLowerCase()} of ${
+                        ev.type === "rate_change"
+                          ? `${Number(ev.amount).toFixed(2)}% p.a.`
+                          : `RM ${fmt(Number(ev.amount))}`
+                      } on ${ev.effectiveDate} will be taken out of the ${loan?.name ?? "loan"} schedule.`,
                       okText: "Remove",
                     })
                   }
@@ -883,7 +890,7 @@ export default function Loans() {
           }}
         >
           <span>{totals.paidOff}% paid off</span>
-          <span>Borrowed RM {fmt0(totals.totalPrincipal)}</span>
+          <span>Borrowed RM {fmt(totals.totalPrincipal)}</span>
         </div>
         <div className="bar-track">
           <div className="bar-fill" style={{ width: `${totals.paidOff}%` }} />
@@ -913,7 +920,7 @@ export default function Loans() {
                 <div
                   style={{ fontWeight: 700, fontSize: 15, fontVariantNumeric: "tabular-nums" }}
                 >
-                  RM {fmt0(totals.totalDebt)}
+                  RM {fmt(totals.totalDebt)}
                 </div>
               </div>
             </Donut>
@@ -974,7 +981,7 @@ export default function Loans() {
           },
           {
             label: "Total interest (life)",
-            val: `RM ${fmt0(totals.totalInterest)}`,
+            val: `RM ${fmt(totals.totalInterest)}`,
             icon: <PercentageOutlined />,
             color: "var(--neg)",
           },

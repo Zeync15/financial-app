@@ -268,6 +268,16 @@ export default function AddTransactionForm({
         loading={submitting}
         danger={isEditing ? "Delete" : undefined}
         onDanger={isEditing ? handleDelete : undefined}
+        confirm={
+          transaction
+            ? {
+                title: "Delete this transaction?",
+                content: `${transaction.description || "This transaction"}, ${
+                  transaction.type === "expense" ? "− " : transaction.type === "income" ? "+ " : ""
+                }RM ${Math.abs(Number(transaction.amount)).toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} on ${transaction.date}, will be removed and the account balance put back. This can’t be undone.`,
+              }
+            : undefined
+        }
       />
     </Modal>
   );

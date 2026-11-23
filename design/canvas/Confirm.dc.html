@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Delete confirmation</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/891fbe9142f7298e7fe04f5467c0b7f3">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="fa-root" style="width: {{rootW}}; height: {{rootH}}; position: relative; background: transparent">
+
+  <sc-if value="{{live}}" hint-placeholder-val="{{true}}">
+    <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.45)"></div>
+    <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 0 16px">
+      <div role="alertdialog" aria-label="{{c.liveTitle}}" style="position: relative; width: 416px; max-width: 100%; background: #161c23; border-radius: 10px; padding: 20px 24px; box-shadow: 0 6px 16px rgba(0,0,0,0.32), 0 3px 6px -4px rgba(0,0,0,0.48), 0 9px 28px 8px rgba(0,0,0,0.2)">
+        <div style="display: flex; gap: 12px; align-items: flex-start">
+          <img src="/_blob/956a46b527572e63b70619cae4ea6502" alt="" width="22" height="22" style="display: block; flex: 0 0 auto; margin-top: 1px">
+          <div style="flex: 1; min-width: 0">
+            <div style="font-size: 16px; font-weight: 600; line-height: 1.5; color: rgba(255,255,255,0.85)">{{c.liveTitle}}</div>
+            <div style="margin-top: 8px; font-size: 14px; color: rgba(255,255,255,0.85)">This action cannot be undone.</div>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px">
+          <button style="height: 32px; padding: 4px 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.34); background: #141414; color: rgba(255,255,255,0.85); font-size: 14px; font-family: inherit">Cancel</button>
+          <button style="height: 32px; padding: 4px 15px; border-radius: 8px; border: 1px solid transparent; background: #dc4446; color: #ffffff; font-size: 14px; font-family: inherit">{{c.ok}}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{newDesktop}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.55)"></div>
+    <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center">
+      <div role="alertdialog" aria-label="{{c.title}}" style="width: 440px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 30px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.02); overflow: hidden">
+        <div style="padding: 24px 24px 6px; display: flex; flex-direction: column; gap: 14px">
+          <span style="width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: color-mix(in oklab, var(--neg) 16%, transparent); color: var(--neg); font-size: 20px"><span class="ic i-delete"></span></span>
+          <div>
+            <div style="font-size: 17px; font-weight: 600; letter-spacing: -0.01em; color: var(--t1)">{{c.title}}</div>
+            <div style="margin-top: 6px; font-size: 14px; line-height: 1.55; color: var(--t2)">{{c.message}}</div>
+          </div>
+        </div>
+        <div class="fm-foot" style="margin-top: 0; padding: 22px 24px 24px">
+          <div class="fm-foot-right">
+            <button class="btn-pill ghost">Cancel</button>
+            <button class="btn-pill" style="background: var(--neg); color: #2b0b0b">{{c.ok}}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{newPhone}}" hint-placeholder-val="{{false}}">
+    <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.55)"></div>
+    <div class="sheet" role="alertdialog" aria-label="{{c.title}}" style="padding: 10px 18px 42px">
+      <div class="sheet-grip"></div>
+      <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; padding: 4px 4px 22px">
+        <span style="width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; background: color-mix(in oklab, var(--neg) 16%, transparent); color: var(--neg); font-size: 24px"><span class="ic i-delete"></span></span>
+        <div style="font-size: 18px; font-weight: 600; letter-spacing: -0.01em; color: var(--t1)">{{c.title}}</div>
+        <div style="font-size: 14.5px; line-height: 1.55; color: var(--t2)">{{c.message}}</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <button class="btn-pill" style="width: 100%; height: 48px; background: var(--neg); color: #2b0b0b; font-size: 15px">{{c.ok}}</button>
+        <button class="btn-pill ghost" style="width: 100%; height: 48px; font-size: 15px">Cancel</button>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"kind":{"editor":"enum","options":["transaction","budget","category","instalment","adjustment"],"default":"transaction"},"proposed":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const phone = (this.props.size ?? 'desktop') === 'phone';
+    // proposed: the redesign proposed on 23 Nov 2026; off is the live Ant Design confirm.
+    const P = !!(this.props.proposed ?? false);
+    const K = {
+      transaction: { liveTitle: 'Delete?', title: 'Delete this transaction?', ok: 'Delete', message: 'Jaya Grocer, − RM 186.40 on 22 Nov 2026, will be removed and the account balance put back. This can’t be undone.' },
+      budget: { liveTitle: 'Delete this budget?', title: 'Delete this budget?', ok: 'Delete', message: 'The Groceries monthly budget of RM 800.00 will be removed. Your transactions stay as they are.' },
+      category: { liveTitle: 'Delete this category?', title: 'Delete this category?', ok: 'Delete', message: 'Shopping will be removed. This can’t be undone.' },
+      instalment: { liveTitle: 'Delete this instalment?', title: 'Delete this instalment?', ok: 'Delete', message: 'iPhone 17 Pro, with RM 4,124.25 still to pay, will be removed. This can’t be undone.' },
+      adjustment: { liveTitle: 'Remove this adjustment?', title: 'Remove this adjustment?', ok: 'Remove', message: 'The extra payment of RM 10,000.00 on 2024-06-01 will be taken out of the Home Loan schedule.' }
+    };
+    return {
+      live: !P, newDesktop: P && !phone, newPhone: P && phone,
+      rootW: phone ? '402px' : '1440px',
+      rootH: phone ? '874px' : '900px',
+      c: K[this.props.kind ?? 'transaction'] || K.transaction
+    };
+  }
+}
+</script>
+</body>
+</html>

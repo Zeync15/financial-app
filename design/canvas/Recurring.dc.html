@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Recurring</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/891fbe9142f7298e7fe04f5467c0b7f3">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1ec98a}a:hover{color:#5fe0b0}
+</style>
+</helmet>
+<div class="fa-root" style="width: {{rootW}}; height: {{rootH}}; position: relative; overflow: hidden; display: flex; flex-direction: {{rootDir}}">
+  <dc-import name="Nav" size="{{size}}" active="recurring" hint-size="{{navHint}}"></dc-import>
+  <main style="flex: 1; min-width: 0; min-height: 0; overflow: auto; padding: {{pad}}">
+    <div class="titlebar">
+      <h1 class="h1" style="font-size: {{h1Size}}">Recurring</h1>
+      <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}">
+        <button class="btn-primary-emerald" onClick="{{openNew}}"><span class="ic i-plus"></span>Add Recurring</button>
+      </sc-if>
+    </div>
+
+    <div style="display: grid; grid-template-columns: {{gridCols}}; gap: {{gridGap}}; align-items: start">
+      <div class="panel" style="padding: 18px 20px">
+        <div class="stat-label">Monthly net</div>
+        <div class="num" style="font-size: {{bigSize}}; font-weight: 700; letter-spacing: -0.01em; margin: 3px 0 13px; color: var(--pos); line-height: 1.25">+ RM 5,186.75</div>
+        <div class="srow"><span class="k">Monthly income</span><span class="v" style="color: var(--pos)">RM 7,500.00</span></div>
+        <div class="srow"><span class="k">Monthly expense</span><span class="v" style="color: var(--neg)">RM 2,313.25</span></div>
+        <div class="srow last"><span class="k">Active rules</span><span class="v" style="color: var(--t2)">4</span></div>
+      </div>
+
+      <div>
+        <sc-for list="{{rules}}" as="r" hint-placeholder-count="5">
+          <div class="panel" style="padding: {{cardPad}}; margin-bottom: 14px; opacity: {{r.opacity}}">
+            <div style="display: flex; align-items: center; gap: 12px">
+              <span class="icc" style="width: {{iconBox}}; height: {{iconBox}}; font-size: {{iconFont}}; color: {{r.color}}; background: {{r.tint}}"><span class="{{r.icon}}"></span></span>
+              <div style="flex: 1; min-width: 0">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+                  <span style="font-size: {{titleSize}}; font-weight: 600">{{r.title}}</span>
+                  <sc-if value="{{r.isInst}}" hint-placeholder-val="{{false}}"><span class="tag orange">Instalment</span></sc-if>
+                  <sc-if value="{{r.paused}}" hint-placeholder-val="{{false}}"><span class="tag">Paused</span></sc-if>
+                </div>
+                <div style="font-size: {{subSize}}; color: var(--t3)">{{r.sub}}</div>
+              </div>
+              <div class="num" style="flex: 0 0 auto; font-size: {{amtSize}}; font-weight: 700; color: {{r.amtColor}}">{{r.amt}}</div>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; font-size: 12.5px; color: var(--t2)">
+              <span style="display: flex; align-items: center; gap: 7px"><span class="ic i-sync" style="color: var(--t3)"></span>{{r.next}}</span>
+              <sc-if value="{{r.manual}}" hint-placeholder-val="{{true}}">
+                <span style="display: flex; align-items: center; gap: 10px">
+                  <span class="{{r.switchCls}}" role="switch" aria-checked="{{r.on}}" aria-label="{{r.switchLabel}}" title="{{r.switchLabel}}"></span>
+                  <button class="icon-btn sm" aria-label="Edit" onClick="{{openEdit}}"><span class="ic i-edit"></span></button>
+                </span>
+              </sc-if>
+              <sc-if value="{{r.isInst}}" hint-placeholder-val="{{false}}">
+                <a class="btn-ghost" href="{{instHref}}" style="text-decoration: none">Manage in Instalments</a>
+              </sc-if>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </main>
+
+  <sc-if value="{{showFab}}" hint-placeholder-val="{{false}}">
+    <button class="fab" aria-label="Add recurring" style="bottom: 106px" onClick="{{openNew}}"><span class="ic i-plus"></span></button>
+  </sc-if>
+
+  <sc-if value="{{formOpen}}" hint-placeholder-val="{{false}}">
+    <div class="scrim" onClick="{{close}}"></div>
+    <div class="{{boxClass}}" role="dialog" aria-label="{{f.title}}" style="padding-bottom: {{sheetPadB}}; top: {{modalTop}}">
+      <sc-if value="{{isPhone}}" hint-placeholder-val="{{false}}"><div class="sheet-grip"></div></sc-if>
+      <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}"><button class="fm-x" aria-label="Close" onClick="{{close}}">×</button></sc-if>
+      <div class="fm-head"><span class="fm-head-ic"><span class="{{f.icon}}"></span></span>{{f.title}}</div>
+      <div class="fm-body">
+        <div class="field">
+          <div class="field-lbl">Type <em class="req">*</em></div>
+          <div class="seg full"><button>Income</button><button class="on">Expense</button></div>
+        </div>
+        <div class="fm-row">
+          <div class="field"><div class="field-lbl">Account <em class="req">*</em></div><div class="{{f.accCls}}">{{f.acc}}<span class="chev"><span class="ic i-down"></span></span></div></div>
+          <div class="field"><div class="field-lbl">Amount <em class="req">*</em></div><div class="{{f.amtCls}}"><span class="cur-tag">RM</span>{{f.amt}}</div></div>
+        </div>
+        <div class="field"><div class="field-lbl">Description</div><div class="{{f.descCls}}">{{f.desc}}</div></div>
+        <div class="fm-row">
+          <div class="field"><div class="field-lbl">Category</div><div class="fld sel">{{f.cat}}<span class="chev"><span class="ic i-down"></span></span></div></div>
+          <div class="field"><div class="field-lbl">Payment Day <em class="req">*</em></div><div class="{{f.dayCls}}">{{f.day}}</div><div class="field-hint">Day of month (1–31)</div></div>
+        </div>
+        <div class="fm-row">
+          <div class="field"><div class="field-lbl">Start Date <em class="req">*</em></div><div class="{{f.startCls}}" style="justify-content: space-between">{{f.start}}<span class="ic i-calendar" style="color: var(--t2)"></span></div></div>
+          <div class="field"><div class="field-lbl">End Date</div><div class="fld ph" style="justify-content: space-between">dd/mm/yyyy<span class="ic i-calendar" style="color: var(--t3)"></span></div><div class="field-hint">Leave blank = forever</div></div>
+        </div>
+      </div>
+      <div class="fm-foot">
+        <sc-if value="{{isEdit}}" hint-placeholder-val="{{false}}"><button class="btn-pill danger">Delete</button></sc-if>
+        <div class="fm-foot-right"><button class="btn-pill ghost" onClick="{{close}}">Cancel</button><button class="btn-pill primary">{{f.primary}}</button></div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"form":{"editor":"enum","options":["none","new","edit"],"default":"none"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const phone = (this.props.size ?? 'desktop') === 'phone';
+    const form = s.form ?? this.props.form ?? 'none';
+    const n2 = (n) => n.toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const rules = [
+      { title: 'Salary', type: 'income', amount: 7500, acc: 'Maybank Savings', cat: 'Salary', color: '#1677ff', icon: 'i-dollar', day: '25th', next: 'Next 2026-11-25 · no end date', active: true, source: 'manual' },
+      { title: 'Rent', type: 'expense', amount: 1800, acc: 'Maybank Savings', cat: 'Home', color: '#2f54eb', icon: 'i-tag', day: '1st', next: 'Next 2026-12-01 · no end date', active: true, source: 'manual' },
+      { title: 'iPhone 17 Pro', type: 'expense', amount: 458.25, acc: 'Maybank Savings', cat: 'Shopping', color: '#ff6b6b', icon: 'i-shopping', day: '5th', next: 'Next 2026-12-05 · ends 2027-08-05', active: true, source: 'instalment' },
+      { title: 'Netflix', type: 'expense', amount: 55, acc: 'CIMB Credit Card', cat: 'Entertainment', color: '#1677ff', icon: 'i-smile', day: '15th', next: 'Next 2026-12-15 · no end date', active: true, source: 'manual' },
+      { title: 'Gym', type: 'expense', amount: 150, acc: 'CIMB Credit Card', cat: 'Healthcare', color: '#f5222d', icon: 'i-heart', day: '5th', next: 'Paused · ends 2027-06-01', active: false, source: 'manual' }
+    ].map((r) => {
+      const income = r.type === 'income';
+      return {
+        title: r.title, color: r.color, icon: 'ic ' + r.icon,
+        tint: 'color-mix(in oklab, ' + r.color + ' 24%, transparent)',
+        sub: r.acc + ' · ' + r.cat + ' · ' + r.day + ' monthly',
+        amt: (income ? '+ ' : '− ') + 'RM ' + n2(r.amount),
+        amtColor: income ? 'var(--pos)' : 'var(--neg)',
+        next: r.next, paused: !r.active, opacity: r.active ? '1' : '0.6',
+        isInst: r.source === 'instalment', manual: r.source === 'manual',
+        on: r.active ? 'true' : 'false',
+        switchCls: r.active ? 'switch' : 'switch off',
+        switchLabel: r.active ? 'Pause' : 'Resume'
+      };
+    });
+    const edit = form === 'edit';
+    const f = edit
+      ? { title: 'Edit Recurring', icon: 'ic i-edit', acc: 'Maybank Savings', accCls: 'fld sel', amt: '1,800.00', amtCls: 'fld cur', desc: 'Rent', descCls: 'fld', cat: 'Home', day: '1', dayCls: 'fld', start: '01/01/2026', startCls: 'fld', primary: 'Save Changes' }
+      : { title: 'New Recurring', icon: 'ic i-plus', acc: 'Select account', accCls: 'fld sel ph', amt: '0.00', amtCls: 'fld cur ph', desc: 'e.g. Rent, Netflix, Salary', descCls: 'fld ph', cat: '—', day: 'e.g. 1', dayCls: 'fld ph', start: 'dd/mm/yyyy', startCls: 'fld ph', primary: 'Add Recurring' };
+    return {
+      size: phone ? 'phone' : 'desktop', isPhone: phone, isDesktop: !phone,
+      navHint: phone ? '402px,90px' : '200px,900px',
+      rootW: phone ? '402px' : '1440px', rootH: phone ? '874px' : '900px',
+      rootDir: phone ? 'column-reverse' : 'row',
+      pad: phone ? '12px 12px 84px' : '24px',
+      h1Size: phone ? '22px' : '26px',
+      gridCols: phone ? 'minmax(0, 1fr)' : '320px minmax(0, 1fr)', gridGap: phone ? '14px' : '16px',
+      bigSize: phone ? '27px' : '30px',
+      cardPad: phone ? '16px' : '20px', iconBox: phone ? '36px' : '40px', iconFont: phone ? '18px' : '20px',
+      titleSize: phone ? '14.5px' : '16px', subSize: phone ? '11.5px' : '12.5px', amtSize: phone ? '15px' : '17px',
+      instHref: phone ? 'Instalments-phone.dc.html' : 'Instalments.dc.html',
+      rules, f, isEdit: edit,
+      showFab: phone && form === 'none',
+      openNew: () => this.setState({ form: 'new' }),
+      openEdit: () => this.setState({ form: 'edit' }),
+      close: () => this.setState({ form: 'none' }),
+      formOpen: form !== 'none',
+      boxClass: phone ? 'sheet' : 'fm-modal',
+      sheetPadB: phone ? '34px' : '0px',
+      modalTop: phone ? 'auto' : '70px'
+    };
+  }
+}
+</script>
+</body>
+</html>
