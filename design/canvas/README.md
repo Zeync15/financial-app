@@ -1,8 +1,8 @@
 # Design canvas (copy)
 
-A copy of the "Financial App" design canvas, taken on 23 November 2026 from https://claude.ai/artifact/XpwwrUh4Q2WqcCjoqLmaLp (version 1795423306-8644). The live canvas stays there and is where designing happens; this folder is a snapshot so the design can be read and compared from the repo.
+A copy of the "Financial App" design canvas, taken on 23 November 2026 from https://claude.ai/artifact/XpwwrUh4Q2WqcCjoqLmaLp (version 1795427561-72a3). The live canvas stays there and is where designing happens; this folder is a snapshot so the design can be read and compared from the repo.
 
-The canvas follows the live site (https://financial-app-sooty.vercel.app, release `b57ac88`) as it looked on 23 November 2026. The layouts are the live site's. The categories (names, order, colours and icons) are the real ones from the live site; every account, amount, transaction and other name on the boards is sample data, and the sidebar shows `you@example.com`. Keep it that way: this repo is public, so real figures never go on the canvas.
+The canvas follows the live site (now https://financial-app-zy.vercel.app; it was financial-app-sooty.vercel.app on that day, release `b57ac88`) as it looked on 23 November 2026. The layouts are the live site's. The categories (names, order, colours and icons) are the real ones from the live site; every account, amount, transaction and other name on the boards is sample data, and the sidebar shows `you@example.com`. Keep it that way: this repo is public, so real figures never go on the canvas.
 
 **Two pages.** "Design (live app)" shows the app as it is today. "Proposed changes" shows the changes proposed on 23 November 2026, not built yet, each as a Before board (live) beside an After board (proposed), with an orange note per row:
 
