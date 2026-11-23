@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Categories</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/891fbe9142f7298e7fe04f5467c0b7f3">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1ec98a}a:hover{color:#5fe0b0}
+</style>
+</helmet>
+<div class="fa-root" style="width: {{rootW}}; height: {{rootH}}; position: relative; overflow: hidden; display: flex; flex-direction: {{rootDir}}">
+  <dc-import name="Nav" size="{{size}}" active="categories" proposed="{{proposed}}" hint-size="{{navHint}}"></dc-import>
+  <main style="flex: 1; min-width: 0; min-height: 0; overflow: auto; padding: {{pad}}">
+    <div class="titlebar">
+      <h1 class="h1" style="font-size: {{h1Size}}">Categories</h1>
+      <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}">
+        <button class="btn-primary-emerald" onClick="{{openNew}}"><span class="ic i-plus"></span>Add Category</button>
+      </sc-if>
+    </div>
+
+    <div style="margin-bottom: 16px">
+      <div class="{{segClass}}">
+        <sc-for list="{{tabs}}" as="t" hint-placeholder-count="2">
+          <button class="{{t.cls}}" onClick="{{t.pick}}">{{t.label}}</button>
+        </sc-for>
+      </div>
+    </div>
+
+    <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}">
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+        <sc-for list="{{cats}}" as="c" hint-placeholder-count="9">
+          <div class="panel" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px">
+            <span class="cat-grip" title="Drag to reorder"><span class="ic i-holder"></span></span>
+            <span class="icc" style="width: 40px; height: 40px; font-size: 20px; color: {{c.fg}}; background: {{c.tint}}; box-shadow: {{c.ring}}"><span class="{{c.icon}}"></span></span>
+            <span style="flex: 1; min-width: 0; font-size: 14px; font-weight: 600; color: var(--t1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{c.name}}</span>
+            <span style="display: flex; gap: 6px">
+              <button class="cat-icon-btn" aria-label="Edit {{c.name}}" disabled="{{c.locked}}" title="{{c.editTip}}" onClick="{{openEdit}}"><span class="ic i-edit"></span></button>
+              <button class="cat-icon-btn" aria-label="Delete {{c.name}}" disabled="{{c.locked}}" title="{{c.delTip}}"><span class="ic i-delete"></span></button>
+            </span>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isPhone}}" hint-placeholder-val="{{false}}">
+      <div class="panel" style="overflow: hidden">
+        <sc-for list="{{cats}}" as="c" hint-placeholder-count="9">
+          <div class="{{c.rowCls}}">
+            <span class="cat-grip"><span class="ic i-holder"></span></span>
+            <span class="icc" style="width: 36px; height: 36px; font-size: 18px; color: {{c.fg}}; background: {{c.tint}}; box-shadow: {{c.ring}}"><span class="{{c.icon}}"></span></span>
+            <span class="meta"><span class="lbl" style="display: block">{{c.name}}</span></span>
+            <span style="display: flex; gap: 6px">
+              <button class="cat-icon-btn" aria-label="Edit {{c.name}}" disabled="{{c.locked}}"><span class="ic i-edit"></span></button>
+              <button class="cat-icon-btn" aria-label="Delete {{c.name}}" disabled="{{c.locked}}"><span class="ic i-delete"></span></button>
+            </span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding-top: 16px">
+        <button class="btn-dashed" onClick="{{openNew}}"><span class="ic i-plus"></span>Add Category</button>
+      </div>
+    </sc-if>
+  </main>
+
+  <sc-if value="{{showFab}}" hint-placeholder-val="{{false}}">
+    <button class="fab" aria-label="Add category" style="bottom: 106px" onClick="{{openNew}}"><span class="ic i-plus"></span></button>
+  </sc-if>
+
+  <sc-if value="{{formOpen}}" hint-placeholder-val="{{false}}">
+    <div class="scrim" onClick="{{close}}"></div>
+    <div class="{{boxClass}}" role="dialog" aria-label="{{f.title}}" style="padding-bottom: {{sheetPadB}}">
+      <sc-if value="{{isPhone}}" hint-placeholder-val="{{false}}"><div class="sheet-grip"></div></sc-if>
+      <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}"><button class="fm-x" aria-label="Close" onClick="{{close}}">×</button></sc-if>
+      <div class="fm-head"><span class="fm-head-ic"><span class="{{f.icon}}"></span></span>{{f.title}}</div>
+      <div class="fm-body">
+        <div class="field"><div class="field-lbl">Name <em class="req">*</em></div><div class="{{f.nameCls}}">{{f.name}}</div></div>
+        <div class="field"><div class="field-lbl">Type <em class="req">*</em></div><div class="fld sel">{{f.type}}<span class="chev"><span class="ic i-down"></span></span></div></div>
+        <div class="field"><div class="field-lbl">Color</div><div><span class="swatch-fld"><i style="background: {{f.color}}"></i>{{f.hex}}</span></div></div>
+        <div class="field"><div class="field-lbl">Icon (optional)</div><div class="{{f.iconCls}}">{{f.iconKey}}</div></div>
+      </div>
+      <div class="fm-foot"><div class="fm-foot-right"><button class="btn-pill ghost" onClick="{{close}}">Cancel</button><button class="btn-pill primary">{{f.primary}}</button></div></div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"tab":{"editor":"enum","options":["expense","income"],"default":"expense"},"form":{"editor":"enum","options":["none","new","edit"],"default":"none"},"proposed":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const phone = (this.props.size ?? 'desktop') === 'phone';
+    const tab = s.tab ?? this.props.tab ?? 'expense';
+    const form = s.form ?? this.props.form ?? 'none';
+    const data = {
+      expense: [
+        ['Food & Drinks', '#fa8c16', 'i-coffee', false], ['Groceries', '#52c41a', 'i-shopping-cart', false], ['Transport', '#1677ff', 'i-car', false],
+        ['Rent', '#722ed1', 'i-home', false], ['Utilities', '#faad14', 'i-thunderbolt', false], ['Shopping', '#eb2f96', 'i-shopping', false],
+        ['Healthcare', '#f5222d', 'i-heart', false], ['Subscription', '#2f54eb', 'i-credit-card', false], ['Entertainment', '#13c2c2', 'i-smile', false],
+        ['Travel', '#722ed1', 'i-global', false], ['Education', '#1677ff', 'i-book', false], ['Car', '#383838', 'i-tag', false],
+        ['Cat', '#000000', 'i-tag', false], ['Other', '#9aa3ad', 'i-tag', false]
+      ],
+      income: [
+        ['Salary', '#1ec98a', 'i-dollar', false], ['Freelance', '#13c2c2', 'i-dollar', false], ['Bonus', '#faad14', 'i-tag', false],
+        ['Gifts', '#eb2f96', 'i-gift', false], ['Other', '#9aa3ad', 'i-tag', false]
+      ]
+    };
+    // Very dark colours vanish as a 24% tint on the dark panel, so they are
+    // drawn as a solid tile in the real colour, with a light rim and a white icon.
+    // proposed: draws the changes proposed on 23 Nov 2026 (see the Proposed changes page); off is the live app.
+    const P = !!(this.props.proposed ?? false);
+    const isDark = (hex) => { if (!P) return false; const n = parseInt(hex.slice(1), 16); return 0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255) < 60; };
+    const cats = data[tab].map(([name, color, icon, locked], i) => ({
+      name, color, icon: 'ic ' + icon, locked,
+      fg: isDark(color) ? 'rgba(255,255,255,0.92)' : color,
+      ring: isDark(color) ? 'inset 0 0 0 1px rgba(255,255,255,0.2)' : 'none',
+      tint: isDark(color) ? color : 'color-mix(in oklab, ' + color + ' 24%, transparent)',
+      editTip: locked ? 'Default category — cannot edit' : 'Edit',
+      delTip: locked ? 'Default category — cannot delete' : 'Delete',
+      rowCls: 'tx-row' + (i === 0 ? ' first' : '')
+    }));
+    const edit = form === 'edit';
+    const f = edit
+      ? { title: 'Edit Category', icon: 'ic i-edit', name: 'Shopping', nameCls: 'fld', type: 'Expense', color: '#eb2f96', hex: '#EB2F96', iconKey: 'shopping', iconCls: 'fld', primary: 'Save Changes' }
+      : { title: 'New Category', icon: 'ic i-plus', name: 'e.g. Groceries', nameCls: 'fld ph focus', type: tab === 'income' ? 'Income' : 'Expense', color: '#1677ff', hex: '#1677FF', iconKey: 'e.g. food, shopping, salary', iconCls: 'fld ph', primary: 'Add Category' };
+    return {
+      size: phone ? 'phone' : 'desktop', isPhone: phone, isDesktop: !phone, proposed: P,
+      navHint: phone ? '402px,90px' : '200px,900px',
+      rootW: phone ? '402px' : '1440px', rootH: phone ? '874px' : '900px',
+      rootDir: phone ? 'column-reverse' : 'row',
+      pad: phone ? '12px 12px 84px' : '24px',
+      h1Size: phone ? '22px' : '26px',
+      segClass: phone ? 'seg full' : 'seg',
+      tabs: [['expense', 'Expense'], ['income', 'Income']].map(([k, label]) => ({ label, cls: k === tab ? 'on' : '', pick: () => this.setState({ tab: k }) })),
+      cats, f,
+      showFab: phone && form === 'none',
+      openNew: () => this.setState({ form: 'new' }),
+      openEdit: () => this.setState({ form: 'edit' }),
+      close: () => this.setState({ form: 'none' }),
+      formOpen: form !== 'none',
+      boxClass: phone ? 'sheet' : 'fm-modal',
+      sheetPadB: phone ? '34px' : '0px'
+    };
+  }
+}
+</script>
+</body>
+</html>

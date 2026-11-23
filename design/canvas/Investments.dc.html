@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Investments</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/891fbe9142f7298e7fe04f5467c0b7f3">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1ec98a}a:hover{color:#5fe0b0}
+</style>
+</helmet>
+<div class="fa-root" style="width: {{rootW}}; height: {{rootH}}; position: relative; overflow: hidden; display: flex; flex-direction: {{rootDir}}">
+  <dc-import name="Nav" size="{{size}}" active="investments" proposed="{{proposed}}" hint-size="{{navHint}}"></dc-import>
+  <main style="flex: 1; min-width: 0; min-height: 0; overflow: auto; padding: {{pad}}">
+    <div class="titlebar">
+      <h1 class="h1" style="font-size: {{h1Size}}">Investments</h1>
+      <div style="display: flex; align-items: center; gap: 10px">
+        <button class="icon-btn" aria-label="Refresh prices" title="Refresh prices"><span class="ic i-reload"></span></button>
+        <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}">
+          <button class="btn-primary-emerald" onClick="{{openNew}}"><span class="ic i-plus"></span>Add Holding</button>
+        </sc-if>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: {{gridCols}}; gap: {{gridGap}}; align-items: start">
+      <div>
+        <div class="panel" style="padding: 20px 22px; margin-bottom: 14px">
+          <div class="stat-label">Total portfolio value</div>
+          <div class="num" style="font-size: {{heroSize}}; font-weight: 700; letter-spacing: -0.01em; margin: 3px 0 13px; line-height: 1.25">RM 77,222.82</div>
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+            <span class="pill up"><span class="ic i-rise"></span>+33.4%</span>
+            <span class="num" style="color: var(--pos); font-size: 14px; font-weight: 600">{{heroGain}}</span>
+            <span style="color: var(--t3); font-size: 12.5px">all time</span>
+          </div>
+        </div>
+
+        <div class="panel" style="padding: 18px 20px; margin-bottom: 14px">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px">
+            <span style="font-size: 13.5px; font-weight: 600; color: var(--t2)">Allocation</span>
+            <span style="font-size: 12px; color: var(--t3)">4 holdings</span>
+          </div>
+          <div style="display: flex; justify-content: center; margin-bottom: 16px">
+            <div role="img" aria-label="Allocation donut chart" style="width: 146px; height: 146px; border-radius: 50%; background: {{donut}}; display: grid; place-items: center">
+              <div style="width: 110px; height: 110px; border-radius: 50%; background: var(--panel); display: flex; flex-direction: column; align-items: center; justify-content: center">
+                <span style="color: var(--t3); font-size: 10.5px">Invested</span>
+                <span class="num" style="font-weight: 700; font-size: 15px">RM 57,885.45</span>
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 9px">
+            <sc-for list="{{holdings}}" as="h" hint-placeholder-count="4">
+              <div style="display: flex; align-items: center; justify-content: space-between; font-size: 12.5px">
+                <span style="display: flex; align-items: center; gap: 8px"><span style="width: 8px; height: 8px; border-radius: 2px; background: {{h.color}}"></span><span style="color: var(--t2)">{{h.symbol}}</span></span>
+                <span class="num" style="font-weight: 600; color: var(--t1)">{{h.weight}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div class="panel" style="padding: 18px 20px">
+          <div class="srow"><span class="k"><span class="ic i-appstore" style="color: var(--t2)"></span>Invested cost</span><span class="v" style="font-size: 14px">RM 57,885.45</span></div>
+          <div class="srow"><span class="k"><span class="ic i-rise" style="color: var(--pos)"></span>Best performer</span><span class="v" style="font-size: 14px">BTC · +116.7%</span></div>
+          <div class="srow last"><span class="k"><span class="ic i-fall" style="color: var(--neg)"></span>Worst performer</span><span class="v" style="font-size: 14px">MAYBANK · −3.1%</span></div>
+        </div>
+      </div>
+
+      <div>
+        <sc-if value="{{isPhone}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; padding: 0 2px">
+            <span style="font-size: 13px; font-weight: 600; color: var(--t2)">Holdings</span>
+            <span style="font-size: 11.5px; color: var(--t3)">4 positions</span>
+          </div>
+        </sc-if>
+        <sc-for list="{{holdings}}" as="h" hint-placeholder-count="4">
+          <button class="glass" onClick="{{openEdit}}" style="display: block; width: 100%; text-align: left; color: inherit; font-family: inherit; cursor: pointer; padding: {{cardPad}}; margin-bottom: {{cardGap}}">
+            <div style="display: flex; align-items: center; gap: 12px">
+              <span class="ticker" style="width: {{badge}}; height: {{badge}}; font-size: {{badgeFont}}; color: {{h.color}}; background: {{h.tint}}">{{h.short}}</span>
+              <div style="flex: 1; min-width: 0">
+                <div style="display: flex; align-items: center; gap: 7px">
+                  <span style="font-size: {{symSize}}; font-weight: 600">{{h.symbol}}</span>
+                  <span style="font-size: 11px; color: var(--t3); border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; line-height: 1.4">{{h.type}}</span>
+                  <span style="font-size: 11px; color: var(--t3)">{{h.cur}}</span>
+                </div>
+                <sc-if value="{{h.hasName}}" hint-placeholder-val="{{false}}"><div style="font-size: {{nameSize}}; color: var(--t3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{h.name}}</div></sc-if>
+              </div>
+              <div style="text-align: right; flex: 0 0 auto">
+                <div class="stat-val" style="font-size: {{valSize}}">{{h.value}}</div>
+                <span class="{{h.pillCls}}" style="margin-top: 4px"><span class="{{h.pillIcon}}"></span>{{h.gainPct}}</span>
+              </div>
+            </div>
+
+            <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}">
+              <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 18px 0 16px">
+                <div>
+                  <div class="stat-label">Price</div>
+                  <sc-if value="{{h.manual}}" hint-placeholder-val="{{false}}"><div class="fld" style="height: 32px; width: 110px; font-size: 14px; padding: 0 10px">{{h.price}}</div></sc-if>
+                  <sc-if value="{{h.auto}}" hint-placeholder-val="{{true}}"><div class="stat-val">{{h.price}}</div></sc-if>
+                </div>
+                <div><div class="stat-label">Units</div><div class="stat-val">{{h.units}}</div></div>
+                <div><div class="stat-label">Avg cost</div><div class="stat-val">{{h.avg}}</div></div>
+                <div><div class="stat-label">Gain / Loss</div><div class="stat-val" style="color: {{h.gainColor}}">{{h.gain}}</div></div>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 8px">
+                <span style="color: var(--t3)">Portfolio weight <span style="color: var(--t4)">· {{h.weight}}</span></span>
+                <span style="color: var(--t3)">Cost basis <b class="num" style="color: var(--t1); font-weight: 600">{{h.cost}}</b></span>
+              </div>
+              <div class="bar-track"><div class="bar-fill" style="width: {{h.weight}}; background: {{h.color}}"></div></div>
+            </sc-if>
+
+            <sc-if value="{{isPhone}}" hint-placeholder-val="{{false}}">
+              <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 14px">
+                <div><div class="stat-label" style="font-size: 10.5px">Price</div><div class="stat-val" style="font-size: 14px">{{h.price}}</div></div>
+                <div><div class="stat-label" style="font-size: 10.5px">Units</div><div class="stat-val" style="font-size: 14px">{{h.units}}</div></div>
+                <div><div class="stat-label" style="font-size: 10.5px">G/L</div><div class="stat-val" style="font-size: 14px; color: {{h.gainColor}}">{{h.gainShort}}</div></div>
+              </div>
+            </sc-if>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </main>
+
+  <sc-if value="{{showFab}}" hint-placeholder-val="{{false}}">
+    <button class="fab" aria-label="Add holding" style="bottom: 106px" onClick="{{openNew}}"><span class="ic i-plus"></span></button>
+  </sc-if>
+
+  <sc-if value="{{formOpen}}" hint-placeholder-val="{{false}}">
+    <div class="scrim" onClick="{{close}}"></div>
+    <div class="{{boxClass}}" role="dialog" aria-label="{{f.title}}" style="padding-bottom: {{sheetPadB}}; top: {{modalTop}}">
+      <sc-if value="{{isPhone}}" hint-placeholder-val="{{false}}"><div class="sheet-grip"></div></sc-if>
+      <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}"><button class="fm-x" aria-label="Close" onClick="{{close}}">×</button></sc-if>
+      <div class="fm-head"><span class="fm-head-ic"><span class="{{f.icon}}"></span></span>{{f.title}}</div>
+      <div class="fm-body">
+        <div class="field"><div class="field-lbl">Symbol <em class="req">*</em></div><div class="{{f.symCls}}">{{f.sym}}</div></div>
+        <div class="field"><div class="field-lbl">Name</div><div class="{{f.nameCls}}">{{f.name}}</div></div>
+        <div class="field"><div class="field-lbl">Currency <em class="req">*</em></div><div class="fld sel">{{f.cur}}<span class="chev"><span class="ic i-down"></span></span></div><div class="field-hint">USD prices are fetched automatically. Other currencies are entered manually.</div></div>
+        <div class="field"><div class="field-lbl">Type <em class="req">*</em></div><div class="fld sel">ETF<span class="chev"><span class="ic i-down"></span></span></div></div>
+        <div class="fm-row">
+          <div class="field"><div class="field-lbl">Quantity <em class="req">*</em></div><div class="{{f.qtyCls}}">{{f.qty}}</div></div>
+          <div class="field"><div class="field-lbl">Avg Cost Price <em class="req">*</em></div><div class="{{f.avgCls}}"><span class="cur-tag" style="font-size: 12px">{{f.cur}}</span>{{f.avg}}</div><div class="field-hint">Up to 4 decimal places</div></div>
+        </div>
+        <div class="field"><div class="field-lbl">Color</div><div><span class="swatch-fld"><i style="background: #1ec98a"></i>#1EC98A</span></div></div>
+      </div>
+      <div class="fm-foot">
+        <sc-if value="{{isEdit}}" hint-placeholder-val="{{false}}"><button class="btn-pill danger">Delete</button></sc-if>
+        <div class="fm-foot-right"><button class="btn-pill ghost" onClick="{{close}}">Cancel</button><button class="btn-pill primary">{{f.primary}}</button></div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"form":{"editor":"enum","options":["none","new","edit"],"default":"none"},"proposed":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const phone = (this.props.size ?? 'desktop') === 'phone';
+    const form = s.form ?? this.props.form ?? 'none';
+    const n2 = (n) => Math.abs(n).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const n4 = (n) => Math.abs(n).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+    // proposed: draws the changes proposed on 23 Nov 2026 (see the Proposed changes page); off is the live app.
+    const P = !!(this.props.proposed ?? false);
+    const sp = P ? ' ' : '';
+    const rows = [
+      ['VGT', 'Vanguard Information Technology ETF', 'ETF', 'USD', 10, 520, 641.25, 36.95, '#13c2c2'],
+      ['BTC', 'Bitcoin', 'Crypto', 'USD', 0.05, 42000, 91000, 26.22, '#722ed1'],
+      ['MAYBANK', 'Malayan Banking Bhd', 'Stock', 'MYR', 2000, 9.85, 9.54, 24.71, '#fa8c16'],
+      ['NVDA', 'NVIDIA Corp', 'Stock', 'USD', 15, 85.4, 140.22, 12.12, '#1677ff']
+    ];
+    const holdings = rows.map(([symbol, name, type, cur, qty, avg, price, weight, color]) => {
+      const value = qty * price, cost = qty * avg, gain = value - cost;
+      const pct = (gain / cost) * 100;
+      const up = gain >= 0;
+      return {
+        symbol, name, hasName: !!name, type, cur, color,
+        short: symbol.slice(0, 3),
+        tint: 'color-mix(in oklab, ' + color + ' 22%, transparent)',
+        value: cur + ' ' + n2(value),
+        pillCls: up ? 'pill up' : 'pill down', pillIcon: 'ic ' + (up ? 'i-rise' : 'i-fall'),
+        gainPct: (up ? '+' : '−') + Math.abs(pct).toFixed(1) + '%',
+        price: P ? n2(price) : n4(price), units: qty.toLocaleString('en-MY', { maximumFractionDigits: 4 }), avg: P ? n2(avg) : n4(avg),
+        gain: (up ? '+' : '−') + sp + cur + ' ' + n2(gain),
+        gainShort: (up ? '+' : '−') + sp + n2(gain),
+        gainColor: up ? 'var(--pos)' : 'var(--neg)',
+        manual: cur !== 'USD', auto: cur === 'USD',
+        weight: weight.toFixed(1) + '%',
+        cost: cur + ' ' + n2(cost)
+      };
+    });
+    let acc = 0;
+    const donut = 'conic-gradient(' + rows.map((r) => { const a = acc; acc += r[7]; return r[8] + ' ' + a.toFixed(2) + '% ' + acc.toFixed(2) + '%'; }).join(', ') + ')';
+    const edit = form === 'edit';
+    const f = edit
+      ? { title: 'Edit Holding', icon: 'ic i-edit', sym: 'VGT', symCls: 'fld', name: 'Vanguard Information Technology ETF', nameCls: 'fld', qty: '10', qtyCls: 'fld', avg: '520', avgCls: 'fld cur', cur: 'USD', primary: 'Save Changes' }
+      : { title: 'Add Holding', icon: 'ic i-plus', sym: 'e.g. VGT', symCls: 'fld ph focus', name: 'e.g. Vanguard Information Technology ETF', nameCls: 'fld ph', qty: '0', qtyCls: 'fld ph', avg: '0.00', avgCls: 'fld cur ph', cur: 'MYR', primary: 'Add Holding' };
+    return {
+      size: phone ? 'phone' : 'desktop', isPhone: phone, isDesktop: !phone, proposed: P,
+      heroGain: '+' + sp + 'RM 19,337.37',
+      navHint: phone ? '402px,90px' : '200px,900px',
+      rootW: phone ? '402px' : '1440px', rootH: phone ? '874px' : '900px',
+      rootDir: phone ? 'column-reverse' : 'row',
+      pad: phone ? '12px 12px 84px' : '24px',
+      h1Size: phone ? '22px' : '26px',
+      gridCols: phone ? 'minmax(0, 1fr)' : '340px minmax(0, 1fr)', gridGap: phone ? '12px' : '16px',
+      heroSize: phone ? '28px' : '32px',
+      holdings, donut,
+      cardPad: phone ? '15px' : '20px', cardGap: phone ? '12px' : '14px',
+      badge: phone ? '38px' : '44px', badgeFont: phone ? '11.4px' : '13.2px',
+      symSize: phone ? '14.5px' : '16px', nameSize: phone ? '11.5px' : '12.5px', valSize: phone ? '15px' : '18px',
+      showFab: phone && form === 'none',
+      openNew: () => this.setState({ form: 'new' }),
+      openEdit: () => this.setState({ form: 'edit' }),
+      close: () => this.setState({ form: 'none' }),
+      formOpen: form !== 'none', isEdit: edit, f,
+      boxClass: phone ? 'sheet' : 'fm-modal',
+      sheetPadB: phone ? '34px' : '0px',
+      modalTop: phone ? 'auto' : '60px'
+    };
+  }
+}
+</script>
+</body>
+</html>

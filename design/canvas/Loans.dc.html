@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Loans</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/891fbe9142f7298e7fe04f5467c0b7f3">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1ec98a}a:hover{color:#5fe0b0}
+</style>
+</helmet>
+<div class="fa-root" style="width: {{rootW}}; height: {{rootH}}; position: relative; overflow: hidden; display: flex; flex-direction: {{rootDir}}">
+  <dc-import name="Nav" size="{{size}}" active="{{navActive}}" proposed="{{proposed}}" hint-size="{{navHint}}"></dc-import>
+  <main style="flex: 1; min-width: 0; min-height: 0; overflow: auto; padding: {{pad}}">
+    <div class="titlebar">
+      <h1 class="h1" style="font-size: {{h1Size}}">{{k.title}}</h1>
+      <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}">
+        <button class="btn-primary-emerald" onClick="{{openNew}}"><span class="ic i-plus"></span>{{k.addLabel}}</button>
+      </sc-if>
+    </div>
+
+    <div style="display: grid; grid-template-columns: {{gridCols}}; gap: {{gridGap}}; align-items: start">
+      <div style="display: flex; flex-direction: column; gap: 14px">
+        <div class="panel" style="padding: 18px 20px">
+          <div class="stat-label">Total outstanding debt</div>
+          <div class="num" style="font-size: {{bigSize}}; font-weight: 700; letter-spacing: -0.01em; margin: 3px 0 13px; color: var(--neg); line-height: 1.25">{{k.outstanding}}</div>
+          <div style="display: flex; justify-content: space-between; font-size: 12.5px; color: var(--t3); margin-bottom: 8px">
+            <span>{{k.paidPct}}% paid off</span>
+            <span>Borrowed {{k.borrowed}}</span>
+          </div>
+          <div class="bar-track"><div class="bar-fill" style="width: {{k.paidW}}"></div></div>
+        </div>
+
+        <sc-if value="{{k.showAlloc}}" hint-placeholder-val="{{true}}">
+          <div class="panel" style="padding: 18px 20px">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px">
+              <span style="font-size: 13.5px; font-weight: 600; color: var(--t2)">Allocation</span>
+              <span style="font-size: 12px; color: var(--t3)">3 loans</span>
+            </div>
+            <div style="display: flex; justify-content: center; margin-bottom: 16px">
+              <div role="img" aria-label="Loan allocation donut chart" style="width: 146px; height: 146px; border-radius: 50%; background: {{donut}}; display: grid; place-items: center">
+                <div style="width: 110px; height: 110px; border-radius: 50%; background: var(--panel); display: flex; flex-direction: column; align-items: center; justify-content: center">
+                  <span style="color: var(--t3); font-size: 10.5px">Total loans</span>
+                  <span class="num" style="font-weight: 700; font-size: {{k.donutSize}}">{{k.donut}}</span>
+                </div>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 9px">
+              <sc-for list="{{items}}" as="l" hint-placeholder-count="3">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12.5px">
+                  <span style="display: flex; align-items: center; gap: 8px; min-width: 0"><span style="width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; background: {{l.color}}"></span><span style="color: var(--t2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{l.name}}</span></span>
+                  <span class="num" style="font-weight: 600; color: var(--t1)">{{l.share}}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <div class="panel" style="padding: 18px 20px">
+          <div class="srow"><span class="k"><span class="ic i-calendar" style="color: var(--t2)"></span>Monthly obligations</span><span class="v">{{k.monthly}}</span></div>
+          <div class="srow"><span class="k"><span class="ic i-unordered-list" style="color: var(--t2)"></span>{{k.activeLabel}}</span><span class="v">{{k.active}}</span></div>
+          <div class="srow last"><span class="k"><span class="ic i-percentage" style="color: var(--neg)"></span>Total interest (life)</span><span class="v">{{k.interest}}</span></div>
+        </div>
+      </div>
+
+      <div>
+        <sc-for list="{{items}}" as="l" hint-placeholder-count="3">
+          <div class="panel" style="padding: {{cardPad}}; margin-bottom: 14px">
+            <div style="display: flex; align-items: center; gap: 12px">
+              <span class="icc" style="width: {{iconBox}}; height: {{iconBox}}; font-size: {{iconFont}}; color: {{l.color}}; background: {{l.tint}}"><span class="ic i-file-text"></span></span>
+              <div style="flex: 1; min-width: 0">
+                <div style="font-size: {{nameSize}}; font-weight: 600">{{l.name}}</div>
+                <div style="font-size: {{subSize}}; color: var(--t3)">{{l.sub}}</div>
+              </div>
+              <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}">
+                <div style="display: flex; align-items: center; gap: 8px">
+                  <button class="btn-ghost" onClick="{{l.toggle}}"><span class="ic i-calendar"></span>{{l.schedLabel}}</button>
+                  <sc-if value="{{l.canAdjust}}" hint-placeholder-val="{{false}}"><button class="icon-btn sm" aria-label="Adjustments" onClick="{{openAdjust}}"><span class="ic i-control"></span></button></sc-if>
+                  <sc-if value="{{k.isLoan}}" hint-placeholder-val="{{true}}"><button class="icon-btn sm" aria-label="Edit"><span class="ic i-edit"></span></button></sc-if>
+                  <sc-if value="{{k.isInst}}" hint-placeholder-val="{{false}}"><button class="icon-btn sm" aria-label="Delete instalment"><span class="ic i-delete"></span></button></sc-if>
+                </div>
+              </sc-if>
+            </div>
+
+            <div style="display: grid; grid-template-columns: {{statCols}}; gap: 16px; margin: 18px 0 16px">
+              <div><div class="stat-label">Principal</div><div class="stat-val">{{l.principal}}</div></div>
+              <div><div class="stat-label">Monthly payment</div><div class="stat-val">{{l.payment}}</div></div>
+              <div><div class="stat-label">Interest rate</div><div class="stat-val">{{l.rate}} <span style="font-size: 12px; color: var(--t3); font-weight: 400">% p.a.</span></div></div>
+              <div><div class="stat-label">Total interest</div><div class="stat-val" style="color: var(--neg)">{{l.totalInterest}}</div></div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; margin-bottom: 8px">
+              <span style="color: var(--t3)">{{l.paid}} months paid <span style="color: var(--t4)">· {{l.pct}}%</span><sc-if value="{{l.early}}" hint-placeholder-val="{{false}}"><span style="color: var(--pos)"> · paid off 24 mo early</span></sc-if></span>
+              <span style="color: var(--t3); white-space: nowrap">Remaining <b class="num" style="color: var(--t1); font-weight: 600">{{l.remaining}}</b></span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" style="width: {{l.pctW}}"></div></div>
+
+            <sc-if value="{{isPhone}}" hint-placeholder-val="{{false}}">
+              <div style="display: flex; gap: 8px; margin-top: 14px">
+                <button class="btn-ghost" style="flex: 1; height: 40px" onClick="{{l.toggle}}"><span class="ic i-calendar"></span>{{l.schedLabelPhone}}</button>
+                <sc-if value="{{l.canAdjust}}" hint-placeholder-val="{{false}}"><button class="icon-btn" aria-label="Adjustments" onClick="{{openAdjust}}"><span class="ic i-control"></span></button></sc-if>
+                <sc-if value="{{k.isLoan}}" hint-placeholder-val="{{true}}"><button class="icon-btn" aria-label="Edit"><span class="ic i-edit"></span></button></sc-if>
+                <sc-if value="{{k.isInst}}" hint-placeholder-val="{{false}}"><button class="icon-btn" aria-label="Delete instalment"><span class="ic i-delete"></span></button></sc-if>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{l.open}}" hint-placeholder-val="{{false}}">
+              <div style="margin-top: 18px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden">
+                <div style="padding: 10px 14px; font-size: 12.5px; font-weight: 600; color: var(--t2); background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--line)">Amortization schedule</div>
+                <div style="max-height: 260px; overflow: auto">
+                  <table class="lg-table">
+                    <thead><tr><th>#</th><th class="r">Payment</th><th class="r">Principal</th><th class="r">Interest</th><th class="r">Balance</th></tr></thead>
+                    <tbody>
+                      <sc-for list="{{l.schedule}}" as="r" hint-placeholder-count="12">
+                        <tr><td>{{r.n}}</td><td class="r">{{r.pay}}</td><td class="r" style="color: var(--pos)">{{r.prin}}</td><td class="r" style="color: var(--neg)">{{r.int}}</td><td class="r" style="color: var(--t2)">{{r.bal}}</td></tr>
+                      </sc-for>
+                    </tbody>
+                  </table>
+                </div>
+                <div style="padding: 9px; font-size: 11.5px; color: var(--t3); text-align: center">Showing first 12 of {{l.term}} payments</div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </main>
+
+  <sc-if value="{{showFab}}" hint-placeholder-val="{{false}}">
+    <button class="fab" aria-label="{{k.addLabel}}" style="bottom: 106px" onClick="{{openNew}}"><span class="ic i-plus"></span></button>
+  </sc-if>
+
+  <sc-if value="{{newOpen}}" hint-placeholder-val="{{false}}">
+    <div class="scrim" onClick="{{close}}"></div>
+    <div class="{{boxClass}}" role="dialog" aria-label="{{k.formTitle}}" style="padding-bottom: {{sheetPadB}}; top: {{modalTop}}">
+      <sc-if value="{{isPhone}}" hint-placeholder-val="{{false}}"><div class="sheet-grip"></div></sc-if>
+      <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}"><button class="fm-x" aria-label="Close" onClick="{{close}}">×</button></sc-if>
+      <div class="fm-head"><span class="fm-head-ic"><span class="ic i-plus"></span></span>{{k.formTitle}}</div>
+      <div class="fm-body">
+        <div class="field"><div class="field-lbl">{{k.nameLabel}} <em class="req">*</em></div><div class="fld ph focus">{{k.namePh}}</div></div>
+        <div class="fm-row">
+          <div class="field"><div class="field-lbl">Principal Amount <em class="req">*</em></div><div class="fld cur ph"><span class="cur-tag">RM</span>0.00</div></div>
+          <div class="field"><div class="field-lbl">Interest Rate <em class="req">*</em></div><div class="fld ph">0.00</div><div class="field-hint">Annual % rate (p.a.)</div></div>
+        </div>
+        <div class="fm-row">
+          <div class="field"><div class="field-lbl">Term <em class="req">*</em></div><div class="fld ph">{{k.termPh}}</div><div class="field-hint">Number of months</div></div>
+          <div class="field"><div class="field-lbl">Start Date <em class="req">*</em></div><div class="fld ph" style="justify-content: space-between">dd/mm/yyyy<span class="ic i-calendar" style="color: var(--t2)"></span></div></div>
+        </div>
+        <sc-if value="{{k.isLoan}}" hint-placeholder-val="{{true}}">
+          <div class="field"><div class="field-lbl">Payment Type <em class="req">*</em></div><div class="fld sel">Fixed Rate (Flat Rate / Hire Purchase)<span class="chev"><span class="ic i-down"></span></span></div></div>
+          <div class="field"><div class="field-lbl">Color</div><div><span class="swatch-fld"><i style="background: #fa541c"></i>#FA541C</span></div></div>
+        </sc-if>
+        <sc-if value="{{k.isInst}}" hint-placeholder-val="{{false}}">
+          <div class="fm-row">
+            <div class="field"><div class="field-lbl">Pay From Account <em class="req">*</em></div><div class="fld sel ph">Select account<span class="chev"><span class="ic i-down"></span></span></div><div class="field-hint">Balance deducted monthly</div></div>
+            <div class="field"><div class="field-lbl">Payment Day <em class="req">*</em></div><div class="fld ph">e.g. 5</div><div class="field-hint">Day of month (1–31)</div></div>
+          </div>
+          <div class="field"><div class="field-lbl">Category</div><div class="fld sel">—<span class="chev"><span class="ic i-down"></span></span></div><div class="field-hint">Optional — used on each posted payment</div></div>
+        </sc-if>
+      </div>
+      <div class="fm-foot"><div class="fm-foot-right"><button class="btn-pill ghost" onClick="{{close}}">Cancel</button><button class="btn-pill primary">{{k.addLabel}}</button></div></div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{adjustOpen}}" hint-placeholder-val="{{false}}">
+    <div class="scrim" onClick="{{close}}"></div>
+    <div class="{{boxClass}}" role="dialog" aria-label="Adjustments · Home Loan" style="padding-bottom: {{sheetPadB}}; top: {{modalTop}}">
+      <sc-if value="{{isPhone}}" hint-placeholder-val="{{false}}"><div class="sheet-grip"></div></sc-if>
+      <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}"><button class="fm-x" aria-label="Close" onClick="{{close}}">×</button></sc-if>
+      <div class="fm-head"><span class="fm-head-ic"><span class="ic i-edit"></span></span>Adjustments · Home Loan</div>
+      <div class="fm-body">
+        <div class="field"><div class="field-lbl">Type <em class="req">*</em></div><div class="fld sel">Extra payment (one-off)<span class="chev"><span class="ic i-down"></span></span></div></div>
+        <div class="fm-row">
+          <div class="field"><div class="field-lbl">Effective Date <em class="req">*</em></div><div class="fld ph" style="justify-content: space-between">dd/mm/yyyy<span class="ic i-calendar" style="color: var(--t2)"></span></div></div>
+          <div class="field"><div class="field-lbl">Extra Amount <em class="req">*</em></div><div class="fld cur ph"><span class="cur-tag">RM</span>0.00</div></div>
+        </div>
+        <div class="field"><div class="field-lbl">Note (optional)</div><div class="fld ph">e.g. OPR hike, bonus prepayment</div></div>
+        <div>
+          <div class="stat-label" style="margin-bottom: 6px">Timeline</div>
+          <div style="display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line-soft)">
+            <div style="flex: 1"><div style="font-size: 13px; font-weight: 600">Extra payment <span style="color: var(--t3)">· RM 10,000.00</span></div><div style="font-size: 11.5px; color: var(--t3)">2024-06-01 · bonus prepayment</div></div>
+            <button class="icon-btn sm" aria-label="Remove adjustment"><span class="ic i-delete"></span></button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line-soft)">
+            <div style="flex: 1"><div style="font-size: 13px; font-weight: 600">Rate change <span style="color: var(--t3)">· 3.90% p.a.</span></div><div style="font-size: 11.5px; color: var(--t3)">2025-07-10 · OPR cut</div></div>
+            <button class="icon-btn sm" aria-label="Remove adjustment"><span class="ic i-delete"></span></button>
+          </div>
+        </div>
+      </div>
+      <div class="fm-foot"><div class="fm-foot-right"><button class="btn-pill ghost" onClick="{{close}}">Cancel</button><button class="btn-pill primary">Add Adjustment</button></div></div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"kind":{"editor":"enum","options":["loans","instalments"],"default":"loans"},"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"schedule":{"editor":"boolean","default":false},"form":{"editor":"enum","options":["none","new","adjust"],"default":"none"},"proposed":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    // proposed: draws the changes proposed on 23 Nov 2026 (see the Proposed changes page); off is the live app.
+    const P = !!(this.props.proposed ?? false);
+    const inst = (this.props.kind ?? 'loans') === 'instalments';
+    const phone = (this.props.size ?? 'desktop') === 'phone';
+    const form = s.form ?? this.props.form ?? 'none';
+    const openIdx = s.openIdx !== undefined ? s.openIdx : (this.props.schedule ? 0 : -1);
+    const n2 = (n) => Math.abs(n).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const n0 = (n) => Math.round(n).toLocaleString('en-MY');
+
+    const loans = [
+      { name: 'Home Loan', kind: 'reducing', principal: 450000, rate: 4.15, term: 420, start: '2021-03-01', payment: 2187.4, remaining: 412330.18, paid: 56, ti: 468708, color: '#fa541c' },
+      { name: 'Car Loan (Myvi)', kind: 'fixed', principal: 45000, rate: 2.8, term: 108, start: '2023-01-15', payment: 521.67, remaining: 32343.54, paid: 46, ti: 11340, color: '#1677ff' },
+      { name: 'PTPTN', kind: 'fixed', principal: 10000, rate: 1, term: 120, start: '2019-07-01', payment: 91.67, remaining: 2933.44, paid: 88, ti: 1000, color: '#722ed1' }
+    ];
+    const insts = [
+      { name: 'iPhone 17 Pro', kind: 'fixed', principal: 5499, rate: 0, term: 12, start: '2026-09-05', payment: 458.25, remaining: 4124.25, paid: 3, ti: 0, color: '#ff6b6b' },
+      { name: 'Dyson V15', kind: 'fixed', principal: 2999, rate: 0, term: 6, start: '2026-10-10', payment: 499.83, remaining: 1999.34, paid: 2, ti: 0, color: '#ff6b6b' },
+      { name: 'Sofa (IKEA)', kind: 'fixed', principal: 3600, rate: 3.5, term: 24, start: '2026-04-01', payment: 160.5, remaining: 2568, paid: 8, ti: 252, color: '#ff6b6b' }
+    ];
+    const list = inst ? insts : loans;
+    const totalRemaining = list.reduce((a, l) => a + l.remaining, 0);
+
+    const schedule = (l) => {
+      const rows = [];
+      let bal = l.principal;
+      const r = l.rate / 100 / 12;
+      const flatInt = l.kind === 'fixed' ? (l.principal * (l.rate / 100) * (l.term / 12)) / l.term : 0;
+      for (let i = 1; i <= 12; i++) {
+        const int = l.kind === 'reducing' ? bal * r : flatInt;
+        const prin = l.payment - int;
+        bal = Math.max(0, bal - prin);
+        rows.push({ n: i, pay: n2(l.payment), prin: n2(prin), int: n2(int), bal: n2(bal) });
+      }
+      return rows;
+    };
+
+    const items = list.map((l, i) => {
+      const totalInterest = l.ti;
+      const pct = Math.round((l.paid / l.term) * 100);
+      const isOpen = openIdx === i;
+      return {
+        name: l.name, color: l.color,
+        tint: 'color-mix(in oklab, ' + l.color + ' 24%, transparent)',
+        sub: inst
+          ? l.rate.toFixed(2) + '% p.a. · started ' + l.start
+          : (l.kind === 'reducing' ? 'Reducing balance' : 'Fixed rate') + ' · ' + l.rate.toFixed(2) + '% p.a. · started ' + l.start,
+        principal: 'RM ' + n2(l.principal), payment: 'RM ' + n2(l.payment), rate: l.rate.toFixed(2),
+        totalInterest: 'RM ' + n2(totalInterest),
+        paid: l.paid + '/' + l.term, pct, pctW: pct + '%', early: !inst && !!l.early,
+        remaining: 'RM ' + n2(l.remaining),
+        share: ((l.remaining / totalRemaining) * 100).toFixed(1) + '%',
+        canAdjust: !inst && l.kind === 'reducing',
+        open: isOpen, schedLabel: isOpen ? 'Hide' : 'Schedule',
+        schedLabelPhone: inst ? (isOpen ? 'Hide schedule' : 'View schedule') : (isOpen ? 'Hide' : 'Schedule'),
+        toggle: () => this.setState({ openIdx: isOpen ? -1 : i }),
+        schedule: schedule(l), term: l.term
+      };
+    });
+    let acc = 0;
+    const donut = 'conic-gradient(' + list.map((l) => { const a = acc; acc += (l.remaining / totalRemaining) * 100; return l.color + ' ' + a.toFixed(2) + '% ' + acc.toFixed(2) + '%'; }).join(', ') + ')';
+
+    const k = inst
+      ? { title: 'Instalments', addLabel: 'Add Instalment', formTitle: 'New Instalment', nameLabel: 'Instalment Name', namePh: 'e.g. iPhone 17', termPh: 'e.g. 12', outstanding: 'RM 8,691.59', borrowed: P ? 'RM 12,098.00' : 'RM 12,098', paidPct: 28, paidW: '28%', monthly: 'RM 1,118.58', activeLabel: 'Active instalments', active: '3', interest: P ? 'RM 252.00' : 'RM 252', showAlloc: false, isLoan: false, isInst: true }
+      : { title: 'Loans', addLabel: 'Add Loan', formTitle: 'New Loan', nameLabel: 'Loan Name', namePh: 'e.g. Home Loan', termPh: 'e.g. 36', outstanding: 'RM 447,607.16', borrowed: P ? 'RM 505,000.00' : 'RM 505,000', paidPct: 11, paidW: '11%', monthly: 'RM 2,800.74', activeLabel: 'Active loans', active: '3', interest: P ? 'RM 481,048.00' : 'RM 481,048', donut: P ? 'RM 447,607.16' : 'RM 447,607', donutSize: P ? '14px' : '15px', showAlloc: true, isLoan: true, isInst: false };
+
+    return {
+      size: phone ? 'phone' : 'desktop', isPhone: phone, isDesktop: !phone, proposed: P,
+      navActive: inst ? 'instalments' : 'loans',
+      navHint: phone ? '402px,90px' : '200px,900px',
+      rootW: phone ? '402px' : '1440px', rootH: phone ? '874px' : '900px',
+      rootDir: phone ? 'column-reverse' : 'row',
+      pad: phone ? '12px 12px 84px' : '24px',
+      h1Size: phone ? '22px' : '26px',
+      gridCols: phone ? 'minmax(0, 1fr)' : '320px minmax(0, 1fr)', gridGap: phone ? '14px' : '16px',
+      bigSize: phone ? '27px' : '30px',
+      cardPad: phone ? '16px' : '20px', iconBox: phone ? '36px' : '40px', iconFont: phone ? '18px' : '20px',
+      nameSize: phone ? '14.5px' : '16px', subSize: phone ? '11.5px' : '12.5px',
+      statCols: phone ? 'repeat(2, minmax(0, 1fr))' : 'repeat(4, minmax(0, 1fr))',
+      k, items, donut,
+      showFab: phone && form === 'none',
+      openNew: () => this.setState({ form: 'new' }),
+      openAdjust: () => this.setState({ form: 'adjust' }),
+      close: () => this.setState({ form: 'none' }),
+      newOpen: form === 'new', adjustOpen: form === 'adjust' && !inst,
+      boxClass: phone ? 'sheet' : 'fm-modal',
+      sheetPadB: phone ? '34px' : '0px',
+      modalTop: phone ? 'auto' : '70px'
+    };
+  }
+}
+</script>
+</body>
+</html>

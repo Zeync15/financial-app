@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Budgets</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/891fbe9142f7298e7fe04f5467c0b7f3">
+<link rel="stylesheet" href="/_blob/5942119103d6ffeff8f8a6c0d63f8db0">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1ec98a}a:hover{color:#5fe0b0}
+</style>
+</helmet>
+<div class="fa-root" style="width: {{rootW}}; height: {{rootH}}; position: relative; overflow: hidden; display: flex; flex-direction: {{rootDir}}">
+  <dc-import name="Nav" size="{{size}}" active="budgets" hint-size="{{navHint}}"></dc-import>
+  <main style="flex: 1; min-width: 0; min-height: 0; overflow: auto; padding: {{pad}}">
+    <div class="titlebar">
+      <h1 class="h1" style="font-size: {{h1Size}}">Budgets</h1>
+      <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}">
+        <button class="btn-primary-emerald" onClick="{{openNew}}"><span class="ic i-plus"></span>Add Budget</button>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{isEmpty}}" hint-placeholder-val="{{true}}">
+      <div class="empty">
+        <svg width="64" height="41" viewBox="0 0 64 41" aria-hidden="true"><g transform="translate(0 1)" fill="none" fill-rule="evenodd"><ellipse fill="#272727" cx="32" cy="33" rx="32" ry="7"></ellipse><g fill-rule="nonzero" stroke="#3e3e3e"><path d="M55 12.76L44.854 1.258C44.367.474 43.656 0 42.907 0H21.093c-.749 0-1.46.474-1.947 1.257L9 12.761V22h46v-9.24z"></path><path d="M41.613 15.931c0-1.605.994-2.93 2.227-2.931H55v18.137C55 33.26 53.68 35 52.05 35h-40.1C10.32 35 9 33.259 9 31.137V13h11.16c1.233 0 2.227 1.323 2.227 2.928v.022c0 1.605 1.005 2.901 2.237 2.901h14.752c1.232 0 2.237-1.308 2.237-2.913v-.007z" fill="#1d1d1d"></path></g></g></svg>
+        <span>No budgets yet</span>
+      </div>
+    </sc-if>
+    <sc-if value="{{hasData}}" hint-placeholder-val="{{false}}">
+    <div style="display: grid; grid-template-columns: {{cols}}; gap: {{gap}}">
+      <sc-for list="{{budgets}}" as="b" hint-placeholder-count="6">
+        <div class="panel" style="overflow: hidden">
+          <div class="card-head">
+            <span>{{b.name}}</span>
+            <button aria-label="Delete budget" style="width: 24px; height: 24px; display: grid; place-items: center; border-radius: 4px; border: 1px solid #a61d24; background: transparent; color: #dc4446; font-size: 12px"><span class="ic i-delete"></span></button>
+          </div>
+          <div style="padding: {{bodyPad}}">
+            <div style="color: rgba(255,255,255,0.45); font-size: 14px">{{b.period}} budget</div>
+            <div class="prog" style="margin: 8px 0">
+              <div class="tr"><div class="fl" style="width: {{b.w}}; background: {{b.stroke}}"></div></div>
+              <sc-if value="{{b.ok}}" hint-placeholder-val="{{true}}"><span class="pc">{{b.pct}}%</span></sc-if>
+              <sc-if value="{{b.over}}" hint-placeholder-val="{{false}}"><span aria-label="Over budget" style="width: 14px; height: 14px; border-radius: 50%; background: #dc4446; color: #141414; display: grid; place-items: center; font-size: 10px; font-weight: 700; margin-right: 22px">×</span></sc-if>
+            </div>
+            <div class="num" style="display: flex; justify-content: space-between; font-size: 14px; color: rgba(255,255,255,0.85)">
+              <span>Spent: RM {{b.spent}}</span>
+              <span>Budget: RM {{b.amount}}</span>
+            </div>
+            <sc-if value="{{b.over}}" hint-placeholder-val="{{false}}">
+              <div class="num" style="color: #dc4446; font-size: 14px; margin-top: 4px">Over budget by RM {{b.overBy}}</div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    </sc-if>
+  </main>
+
+  <sc-if value="{{showFab}}" hint-placeholder-val="{{false}}">
+    <button class="fab" aria-label="Add budget" style="bottom: 106px" onClick="{{openNew}}"><span class="ic i-plus"></span></button>
+  </sc-if>
+
+  <sc-if value="{{formOpen}}" hint-placeholder-val="{{false}}">
+    <div class="scrim" onClick="{{close}}"></div>
+    <div class="{{boxClass}}" role="dialog" aria-label="New Budget" style="padding-bottom: {{sheetPadB}}">
+      <sc-if value="{{isPhone}}" hint-placeholder-val="{{false}}"><div class="sheet-grip"></div></sc-if>
+      <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}"><button class="fm-x" aria-label="Close" onClick="{{close}}">×</button></sc-if>
+      <div class="fm-head"><span class="fm-head-ic"><span class="ic i-plus"></span></span>New Budget</div>
+      <div class="fm-body">
+        <div class="field"><div class="field-lbl">Category <em class="req">*</em></div><div class="fld sel ph">Select category<span class="chev"><span class="ic i-down"></span></span></div></div>
+        <div class="field"><div class="field-lbl">Budget Amount <em class="req">*</em></div><div class="fld cur ph"><span class="cur-tag">RM</span>0.00</div></div>
+        <div class="field"><div class="field-lbl">Period <em class="req">*</em></div><div class="fld sel">Monthly<span class="chev"><span class="ic i-down"></span></span></div></div>
+      </div>
+      <div class="fm-foot"><div class="fm-foot-right"><button class="btn-pill ghost" onClick="{{close}}">Cancel</button><button class="btn-pill primary">Add Budget</button></div></div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"form":{"editor":"enum","options":["none","new"],"default":"none"},"empty":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const phone = (this.props.size ?? 'desktop') === 'phone';
+    const form = s.form ?? this.props.form ?? 'none';
+    const budgets = [
+      ['Groceries', 'monthly', 612.4, 800],
+      ['Food & Drinks', 'monthly', 452.3, 400],
+      ['Transport', 'weekly', 85, 150],
+      ['Utilities', 'monthly', 276.65, 350],
+      ['Shopping', 'monthly', 159.9, 500],
+      ['Subscription', 'monthly', 55, 80]
+    ].map(([name, period, spent, amount]) => {
+      const pct = Math.min(100, Math.round((spent / amount) * 100));
+      const over = spent > amount;
+      return {
+        name, period, pct, over, ok: !over,
+        w: pct + '%', stroke: over ? '#ff4d4f' : '#1677ff',
+        spent: spent.toFixed(2), amount: amount.toFixed(2), overBy: (spent - amount).toFixed(2)
+      };
+    });
+    return {
+      size: phone ? 'phone' : 'desktop', isPhone: phone, isDesktop: !phone,
+      navHint: phone ? '402px,90px' : '200px,900px',
+      rootW: phone ? '402px' : '1440px', rootH: phone ? '874px' : '900px',
+      rootDir: phone ? 'column-reverse' : 'row',
+      pad: phone ? '12px 12px 84px' : '24px',
+      h1Size: phone ? '22px' : '26px',
+      cols: phone ? 'minmax(0, 1fr)' : 'repeat(3, minmax(0, 1fr))',
+      gap: phone ? '8px' : '16px', bodyPad: phone ? '12px' : '24px',
+      budgets,
+      isEmpty: this.props.empty ?? true, hasData: !(this.props.empty ?? true),
+      showFab: phone && form === 'none',
+      openNew: () => this.setState({ form: 'new' }),
+      close: () => this.setState({ form: 'none' }),
+      formOpen: form !== 'none',
+      boxClass: phone ? 'sheet' : 'fm-modal',
+      sheetPadB: phone ? '34px' : '0px'
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Transactions</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/891fbe9142f7298e7fe04f5467c0b7f3">
+<link rel="stylesheet" href="/_blob/5942119103d6ffeff8f8a6c0d63f8db0">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1ec98a}a:hover{color:#5fe0b0}
+</style>
+</helmet>
+<div class="fa-root" style="width: {{rootW}}; height: {{rootH}}; position: relative; overflow: hidden; display: flex; flex-direction: {{rootDir}}">
+  <dc-import name="Nav" size="{{size}}" active="{{navActive}}" proposed="{{proposed}}" hint-size="{{navHint}}"></dc-import>
+  <main style="flex: 1; min-width: 0; min-height: 0; overflow: auto; padding: {{pad}}">
+
+    <div class="titlebar">
+      <sc-if value="{{showSearch}}" hint-placeholder-val="{{false}}">
+        <div class="tx-search"><span class="ic i-search"></span><span class="grow">Search transactions...</span><button class="tx-search-close" aria-label="Close search" onClick="{{closeSearch}}"><span class="ic i-close"></span></button></div>
+      </sc-if>
+      <sc-if value="{{showTitle}}" hint-placeholder-val="{{true}}">
+        <h1 class="h1" style="font-size: {{h1Size}}">Transactions</h1>
+        <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}">
+          <button class="btn-primary-emerald" onClick="{{openNew}}"><span class="ic i-plus"></span>Add Transaction</button>
+        </sc-if>
+        <sc-if value="{{isPhone}}" hint-placeholder-val="{{false}}">
+          <button class="icon-btn ghost" aria-label="Search transactions" onClick="{{openSearch}}"><span class="ic i-search"></span></button>
+        </sc-if>
+      </sc-if>
+    </div>
+
+    <div style="margin-bottom: 12px; display: flex; justify-content: {{pickerJustify}}">
+      <sc-if value="{{proposed}}" hint-placeholder-val="{{false}}"><div class="fld" style="width: {{pickerW}}; justify-content: space-between; font-size: {{pickerFontNew}}"><span>November 2026</span><span class="ic i-calendar" style="color: var(--t2)"></span></div></sc-if>
+      <sc-if value="{{live}}" hint-placeholder-val="{{true}}"><div class="picker" style="width: {{pickerW}}; height: {{pickerH}}; font-size: {{pickerFont}}"><span>November 2026</span><span class="ic i-calendar"></span></div></sc-if>
+    </div>
+
+    <sc-if value="{{isPhone}}" hint-placeholder-val="{{false}}">
+      <div style="margin-bottom: 12px">
+        <div class="seg full">
+          <sc-for list="{{tabs}}" as="t" hint-placeholder-count="2">
+            <button class="{{t.cls}}" onClick="{{t.pick}}" style="padding: 8px 14px">{{t.label}}</button>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{showHero}}" hint-placeholder-val="{{false}}">
+      <div class="panel" style="padding: 15px 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px">
+        <div style="min-width: 0">
+          <div style="color: var(--t3); font-size: 12.5px; margin-bottom: 2px">Net flow</div>
+          <div class="num" style="color: var(--pos); font-size: 26px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.3">{{m.net}}</div>
+        </div>
+        <span style="flex: 0 0 auto; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: color-mix(in oklab, var(--pos) 20%, transparent); color: var(--pos); font-size: 20px"><span class="ic i-rise"></span></span>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{showFilters}}" hint-placeholder-val="{{true}}">
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap">
+        <div class="seg">
+          <button class="on">All</button>
+          <button>In</button>
+          <button>Out</button>
+        </div>
+        <span class="chip-select" style="font-size: {{chipFont}}"><span class="ic i-filter"></span>All Categories<span class="chev">▾</span></span>
+        <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}">
+          <div class="inp" style="margin-left: auto; width: 280px"><span class="ic i-search"></span>Search transactions...</div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <div style="display: grid; grid-template-columns: {{gridCols}}; gap: 16px; align-items: start">
+
+      <sc-if value="{{showRail}}" hint-placeholder-val="{{true}}">
+        <div style="display: flex; flex-direction: column; gap: 14px">
+          <div class="panel" style="padding: 18px 20px">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px">
+              <span style="display: flex; align-items: center; gap: 9px; color: var(--t2); font-size: 13.5px"><span class="ic i-rise" style="color: var(--pos)"></span>Income</span>
+              <span class="num" style="color: var(--pos); font-weight: 600; font-size: 16px">{{m.inc}}</span>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px">
+              <span style="display: flex; align-items: center; gap: 9px; color: var(--t2); font-size: 13.5px"><span class="ic i-fall" style="color: var(--neg)"></span>Expenses</span>
+              <span class="num" style="color: var(--neg); font-weight: 600; font-size: 16px">{{m.exp}}</span>
+            </div>
+            <div style="padding-top: 14px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between">
+              <span style="color: var(--t2); font-size: 13.5px">Net flow</span>
+              <span class="num" style="color: var(--pos); font-weight: 600; font-size: 20px">{{m.net}}</span>
+            </div>
+          </div>
+
+          <div class="panel" style="padding: 18px 20px">
+            <div style="color: var(--t1); font-weight: 600; margin-bottom: 16px; font-size: 14px">Spending by category</div>
+            <div style="display: flex; justify-content: center; margin-bottom: 18px">
+              <div role="img" aria-label="Spending by category donut chart" style="width: 168px; height: 168px; border-radius: 50%; background: {{donut}}; display: grid; place-items: center">
+                <div style="width: 124px; height: 124px; border-radius: 50%; background: var(--panel); display: flex; flex-direction: column; align-items: center; justify-content: center">
+                  <span style="color: var(--t3); font-size: 11.5px">Total</span>
+                  <span class="num" style="color: var(--t1); font-weight: 700; font-size: 16px">RM 4,318.65</span>
+                </div>
+              </div>
+            </div>
+            <sc-for list="{{slices}}" as="s" hint-placeholder-count="9">
+              <button class="cat-row" onClick="{{s.pick}}">
+                <span style="display: flex; align-items: center; gap: 9px; min-width: 0">
+                  <span style="width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; background: {{s.color}}; box-shadow: {{s.ring}}"></span>
+                  <span style="color: var(--t1); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{s.label}}</span>
+                  <span class="num" style="color: var(--t3); font-size: 12.5px; flex-shrink: 0">{{s.pct}}%</span>
+                </span>
+                <span style="display: flex; align-items: center; gap: 6px; flex-shrink: 0">
+                  <span class="num" style="color: var(--t1); font-weight: 600; font-size: 14px; white-space: nowrap">{{s.amt}}</span>
+                  <span class="ic i-right" style="font-size: 11px; color: var(--t4)"></span>
+                </span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{showList}}" hint-placeholder-val="{{true}}">
+        <div class="panel" style="overflow: hidden">
+          <sc-for list="{{days}}" as="day" hint-placeholder-count="5">
+            <div>
+              <div class="day-head">
+                <span class="lbl"><span class="d">{{day.label}}</span><span class="wd">{{day.wd}}</span></span>
+                <span class="t" style="color: {{day.color}}">{{day.total}}</span>
+              </div>
+              <sc-for list="{{day.items}}" as="tx" hint-placeholder-count="3">
+                <button class="{{tx.cls}}" onClick="{{tx.open}}" style="width: 100%; background: transparent; border-left: 0; border-right: 0; border-bottom: 0; text-align: left; color: inherit; cursor: pointer">
+                  <span class="icc" style="width: 38px; height: 38px; font-size: 19px; color: {{tx.color}}; background: {{tx.tint}}; box-shadow: {{tx.ring}}"><span class="{{tx.icon}}"></span></span>
+                  <span class="meta" style="display: block">
+                    <span class="lbl" style="display: block">{{tx.label}}</span>
+                    <span class="sub">
+                      <span style="display: inline-flex; align-items: center; gap: 5px"><span class="ic i-wallet" style="font-size: 11px"></span>{{tx.account}}</span>
+                      <sc-if value="{{tx.hasCat}}" hint-placeholder-val="{{true}}"><span class="dot"></span><span>{{tx.cat}}</span></sc-if>
+                    </span>
+                  </span>
+                  <span class="amt" style="color: {{tx.amtColor}}">{{tx.amt}}</span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+  </main>
+
+  <sc-if value="{{showFab}}" hint-placeholder-val="{{false}}">
+    <button class="fab" aria-label="Add transaction" style="bottom: 106px" onClick="{{openNew}}"><span class="ic i-plus"></span></button>
+  </sc-if>
+
+  <sc-if value="{{formOpen}}" hint-placeholder-val="{{false}}">
+    <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}"><div class="scrim" onClick="{{close}}"></div></sc-if>
+    <div class="{{boxClass}}" role="dialog" aria-label="{{formTitle}}" style="bottom: {{fullBottom}}">
+      <sc-if value="{{isDesktop}}" hint-placeholder-val="{{true}}">
+        <button class="fm-x" aria-label="Close" onClick="{{close}}">×</button>
+        <div class="fm-head"><span class="fm-head-ic"><span class="{{formIcon}}"></span></span>{{formTitle}}</div>
+      </sc-if>
+      <sc-if value="{{isPhone}}" hint-placeholder-val="{{false}}">
+        <div class="fm-full-head"><span class="fm-head-ic"><span class="{{formIcon}}"></span></span>{{formTitle}}</div>
+      </sc-if>
+      <div class="fm-body">
+        <div class="field">
+          <div class="field-lbl">Type <em class="req">*</em></div>
+          <div class="seg full">
+            <sc-for list="{{types}}" as="t" hint-placeholder-count="3">
+              <button class="{{t.cls}}" onClick="{{t.pick}}">{{t.label}}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div class="amt-anchor">
+          <div class="fm-row">
+            <div class="field">
+              <div class="field-lbl">Account <em class="req">*</em></div>
+              <div class="fld sel">Maybank Savings<span class="chev"><span class="ic i-down"></span></span></div>
+            </div>
+            <div class="field">
+              <div class="field-lbl">Amount <em class="req">*</em></div>
+              <button class="{{f.amountCls}}" onClick="{{togglePad}}" style="width: 100%; text-align: left; font-family: inherit; cursor: pointer"><span class="cur-tag">RM</span>{{f.amount}}<sc-if value="{{padOpen}}" hint-placeholder-val="{{false}}"><span class="amt-caret"></span></sc-if></button>
+            </div>
+          </div>
+          <sc-if value="{{padDesktop}}" hint-placeholder-val="{{false}}">
+            <div class="amt-pad">
+              <div class="amt-disp">
+                <div class="amt-disp-top">
+                  <span class="amt-disp-lbl">Working</span>
+                  <span class="amt-echo">{{f.working}}</span>
+                  <span class="{{f.resCls}}">{{f.result}}</span>
+                </div>
+                <span class="amt-hint">Type + − × ÷ straight into the field, or use the keys. Enter commits.</span>
+              </div>
+              <div class="amt-keys">
+                <sc-for list="{{keys}}" as="k" hint-placeholder-count="20">
+                  <button class="{{k.cls}}" aria-label="{{k.label}}">{{k.face}}<sc-if value="{{k.back}}" hint-placeholder-val="{{false}}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6H9.5L4 12l5.5 6H20a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1z"></path><path d="M16 10l-4 4M12 10l4 4"></path></svg></sc-if></button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{padPhone}}" hint-placeholder-val="{{false}}">
+            <div class="amt-pad amt-pad-m">
+              <div class="amt-echo-row"><span class="amt-echo">{{f.echo}}</span><span class="{{f.resClsM}}">{{f.resultM}}</span></div>
+              <div class="amt-keys">
+                <sc-for list="{{keys}}" as="k" hint-placeholder-count="20">
+                  <button class="{{k.cls}}" aria-label="{{k.label}}">{{k.face}}<sc-if value="{{k.back}}" hint-placeholder-val="{{false}}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6H9.5L4 12l5.5 6H20a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1z"></path><path d="M16 10l-4 4M12 10l4 4"></path></svg></sc-if></button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+        <sc-if value="{{isTransfer}}" hint-placeholder-val="{{false}}">
+          <div class="field">
+            <div class="field-lbl">Transfer To <em class="req">*</em></div>
+            <div class="fld sel ph">Select destination<span class="chev"><span class="ic i-down"></span></span></div>
+          </div>
+        </sc-if>
+        <div class="fm-row">
+          <div class="field">
+            <div class="field-lbl">Category <em class="req">*</em></div>
+            <div class="{{f.catCls}}">{{f.category}}<span class="chev"><span class="ic i-down"></span></span></div>
+          </div>
+          <div class="field">
+            <div class="field-lbl">Date <em class="req">*</em></div>
+            <div class="fld" style="justify-content: space-between">{{f.date}}<span class="ic i-calendar" style="color: var(--t2)"></span></div>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-lbl">Note</div>
+          <div class="{{f.noteCls}}">{{f.note}}</div>
+        </div>
+      </div>
+      <div class="fm-foot">
+        <sc-if value="{{isEdit}}" hint-placeholder-val="{{false}}"><button class="btn-pill danger">Delete</button></sc-if>
+        <div class="fm-foot-right">
+          <button class="btn-pill ghost" onClick="{{close}}">Cancel</button>
+          <button class="btn-pill primary">{{f.primary}}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{moreOpen}}" hint-placeholder-val="{{false}}">
+    <div class="scrim"></div>
+    <div class="sheet" role="dialog" aria-label="More" style="padding: 10px 18px 60px">
+      <div class="sheet-grip"></div>
+      <div class="more-head"><span>More</span><a class="more-x" href="Main-phone.dc.html" aria-label="Close">×</a></div>
+      <div class="more-list">
+        <a class="more-item" href="Budgets-phone.dc.html"><span class="more-ic"><span class="ic i-pie-chart"></span></span><span class="more-lbl">Budgets</span><span class="more-chev">›</span></a>
+        <a class="more-item" href="Categories-phone.dc.html"><span class="more-ic"><span class="ic i-tag"></span></span><span class="more-lbl">Categories</span><span class="more-chev">›</span></a>
+        <a class="more-item" href="Instalments-phone.dc.html"><span class="more-ic"><span class="ic i-credit-card"></span></span><span class="more-lbl">Instalments</span><span class="more-chev">›</span></a>
+        <a class="more-item" href="Recurring-phone.dc.html"><span class="more-ic"><span class="ic i-retweet"></span></span><span class="more-lbl">Recurring</span><span class="more-chev">›</span></a>
+        <div class="more-sep"></div>
+        <a class="more-item danger" href="SignIn-phone.dc.html"><span class="more-ic"><span class="ic i-logout"></span></span><span class="more-lbl">Sign Out</span></a>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"tab":{"editor":"enum","options":["list","insights"],"default":"list"},"form":{"editor":"enum","options":["none","new","edit"],"default":"none"},"pad":{"editor":"boolean","default":false},"search":{"editor":"boolean","default":false},"more":{"editor":"boolean","default":false},"proposed":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    // proposed: draws the changes proposed on 23 Nov 2026 (see the Proposed changes page); off is the live app.
+    const P = !!(this.props.proposed ?? false);
+    const sp = P ? ' ' : '';
+    const size = this.props.size ?? 'desktop';
+    const phone = size === 'phone';
+    const tab = s.tab ?? this.props.tab ?? 'list';
+    const form = s.form ?? this.props.form ?? 'none';
+    const padOpen = form !== 'none' && (s.pad ?? !!(this.props.pad ?? false));
+    const search = phone && tab === 'list' && (s.search ?? !!(this.props.search ?? false));
+    const more = !!(this.props.more ?? false) && form === 'none';
+    const fmt = (n) => Math.abs(n).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const tint = (c) => 'color-mix(in oklab, ' + c + ' 24%, transparent)';
+
+    // Sample categories: colour and the icon the app resolves from the name.
+    const C = {
+      food: ['Food & Drinks', '#fa8c16', 'i-coffee'],
+      groc: ['Groceries', '#52c41a', 'i-shopping-cart'],
+      trans: ['Transport', '#1677ff', 'i-car'],
+      rent: ['Rent', '#722ed1', 'i-home'],
+      util: ['Utilities', '#faad14', 'i-thunderbolt'],
+      shop: ['Shopping', '#eb2f96', 'i-shopping'],
+      subs: ['Subscription', '#2f54eb', 'i-credit-card'],
+      free: ['Freelance', '#13c2c2', 'i-dollar'],
+      car: ['Car', '#383838', 'i-tag'],
+      cat: ['Cat', '#000000', 'i-tag']
+    };
+    // Very dark colours vanish as a 24% tint on the dark panel, so they are
+    // drawn as a solid tile in the real colour, with a light rim and a white icon.
+    const isDark = (hex) => { const n = parseInt(hex.slice(1), 16); return 0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255) < 60; };
+    const ringFor = (c) => P && isDark(c) ? 'inset 0 0 0 1px rgba(255,255,255,0.2)' : 'none';
+    const open = () => this.setState({ form: 'edit', pad: false });
+    const tx = (cat, desc, account, type, amount) => {
+      const c = cat ? C[cat] : null;
+      const color = c ? c[1] : '#8c8c8c';
+      const income = type === 'income', expense = type === 'expense';
+      return {
+        label: desc, account, cat: c ? c[0] : '', hasCat: !!c,
+        icon: 'ic ' + (c ? c[2] : 'i-tag'),
+        color: P && isDark(color) ? 'rgba(255,255,255,0.92)' : color,
+        tint: P && isDark(color) ? color : tint(color), ring: ringFor(color),
+        amt: (income ? '+' + sp : expense ? '−' + sp : '') + 'RM ' + fmt(amount),
+        amtColor: income ? 'var(--pos)' : expense ? 'var(--neg)' : 'var(--t2)',
+        signed: income ? amount : expense ? -amount : 0, open
+      };
+    };
+    const raw = [
+      ['Today', 'Mon', [tx('food', 'Nasi lemak & teh tarik', "Touch 'n Go", 'expense', 12.5), tx('trans', 'Grab to office', "Touch 'n Go", 'expense', 18)]],
+      ['Yesterday', 'Sun', [tx('groc', 'Jaya Grocer', 'Maybank Savings', 'expense', 186.4), tx('food', "Dinner at Madam Kwan's", 'CIMB Credit Card', 'expense', 64.2)]],
+      ['November 21', 'Sat', [tx('free', 'Logo project', 'Maybank Savings', 'income', 1200), tx('shop', 'Uniqlo', 'CIMB Credit Card', 'expense', 159.9), tx('car', 'Petrol', 'CIMB Credit Card', 'expense', 80)]],
+      ['November 20', 'Fri', [tx('util', 'TNB electricity', 'Maybank Savings', 'expense', 142.35), tx(null, "Top up Touch 'n Go", 'Maybank Savings', 'transfer', 100)]],
+      ['November 19', 'Thu', [tx('subs', 'Netflix', 'CIMB Credit Card', 'expense', 55), tx('cat', 'Cat food & litter', 'Maybank Savings', 'expense', 96.8)]]
+    ];
+    const days = raw.map(([label, wd, items]) => {
+      const total = items.reduce((a, t) => a + t.signed, 0);
+      return {
+        label, wd,
+        total: (total < 0 ? '−' + sp : total > 0 ? '+' + sp : '') + 'RM ' + fmt(total),
+        color: total < 0 ? 'var(--neg)' : total > 0 ? 'var(--pos)' : 'var(--t3)',
+        items: items.map((t, i) => Object.assign({}, t, { cls: 'tx-row' + (i === 0 ? ' first' : '') }))
+      };
+    });
+
+    const spend = [['rent', 1800], ['groc', 715.6], ['food', 596.7], ['shop', 359.9], ['trans', 338], ['util', 276.65], ['cat', 96.8], ['car', 80], ['subs', 55]];
+    const total = spend.reduce((a, x) => a + x[1], 0);
+    let acc = 0;
+    const stops = [];
+    const slices = spend.map(([k, val]) => {
+      const [label, color] = C[k];
+      const pct = (val / total) * 100;
+      stops.push(color + ' ' + acc.toFixed(2) + '% ' + (acc + pct).toFixed(2) + '%');
+      acc += pct;
+      return {
+        label, color, ring: ringFor(color), amt: 'RM ' + fmt(val),
+        pct: pct >= 1 || pct === 0 ? String(Math.round(pct)) : pct.toFixed(1),
+        pick: () => this.setState({ tab: 'list' })
+      };
+    });
+
+    const txType = s.txType ?? 'expense';
+    const types = [['income', 'Income'], ['expense', 'Expense'], ['transfer', 'Transfer']].map(([k, label]) => ({
+      label, cls: k === txType ? 'on' : '', pick: () => this.setState({ txType: k })
+    }));
+    const edit = form === 'edit';
+    const f = edit
+      ? { amount: '186.4', category: 'Groceries', catCls: 'fld sel', date: '22/11/2026', note: 'Jaya Grocer', noteCls: 'fld', primary: 'Save Changes' }
+      : { amount: '0.00', category: 'Select category', catCls: 'fld sel ph', date: '23/11/2026', note: 'What was this for?', noteCls: 'fld ph', primary: 'Add Transaction' };
+    const blank = !edit;
+    f.amountCls = 'fld cur' + (blank ? ' ph' : '') + (padOpen ? ' amt-on' : '');
+    f.working = blank ? 'Nothing entered yet' : '186.4';
+    f.result = blank ? 'RM 0.00' : 'RM 186.40';
+    f.resCls = 'amt-res amt-res-lg' + (blank ? ' amt-res-idle' : '');
+    f.echo = '';
+    f.resultM = blank ? 'RM 0.00' : 'RM 186.40';
+    f.resClsM = 'amt-res' + (blank ? ' amt-res-idle' : '');
+
+    const faces = { '*': '×', '/': '÷', '-': '−', back: '' };
+    const names = { C: 'Clear', '(': 'Open bracket', ')': 'Close bracket', '/': 'Divide', '*': 'Multiply', '-': 'Minus', '+': 'Plus', '.': 'Decimal point', back: 'Backspace', '=': 'Equals' };
+    const keys = ['C', '(', ')', '/', '7', '8', '9', '*', '4', '5', '6', '-', '1', '2', '3', '+', '0', '.', 'back', '='].map((k) => {
+      let cls = 'amt-key';
+      if (k === 'C') cls += ' amt-key-clr';
+      else if (k === 'back' || k === '(' || k === ')') cls += ' amt-key-fn';
+      else if (k === '=') cls += ' amt-key-eq' + (blank ? ' amt-key-off' : '');
+      else if (faces[k] !== undefined || k === '+') cls += ' amt-key-op';
+      return { cls, face: faces[k] !== undefined ? faces[k] : k, back: k === 'back', label: names[k] || k };
+    });
+
+    return {
+      size, isPhone: phone, isDesktop: !phone,
+      navActive: this.props.more ? 'more' : 'transactions',
+      navHint: phone ? '402px,90px' : '200px,900px',
+      rootW: phone ? '402px' : '1440px', rootH: phone ? '874px' : '900px',
+      rootDir: phone ? 'column-reverse' : 'row',
+      pad: phone ? '12px 12px 84px' : '24px',
+      h1Size: phone ? '22px' : '26px',
+      showSearch: search, showTitle: !search,
+      openSearch: () => this.setState({ search: true }),
+      closeSearch: () => this.setState({ search: false }),
+      pickerJustify: phone ? 'center' : 'flex-start', pickerW: phone ? '100%' : '220px',
+      pickerFont: phone ? '16px' : '14px', pickerFontNew: phone ? '16px' : '14.5px', pickerH: phone ? '34px' : '32px',
+      proposed: P, live: !P,
+      m: { net: '+' + sp + 'RM 4,381.35', inc: '+' + sp + 'RM 8,700.00', exp: '−' + sp + 'RM 4,318.65' }, chipFont: phone ? '16px' : '14px',
+      tabs: [['list', 'List'], ['insights', 'Insights']].map(([k, label]) => ({ label, cls: k === tab ? 'on' : '', pick: () => this.setState({ tab: k }) })),
+      showHero: phone && tab === 'list',
+      showFilters: !phone || tab === 'list',
+      gridCols: phone ? 'minmax(0, 1fr)' : '320px minmax(0, 1fr)',
+      showRail: !phone || tab === 'insights',
+      showList: !phone || tab === 'list',
+      donut: 'conic-gradient(' + stops.join(', ') + ')',
+      slices, days,
+      showFab: phone && form === 'none' && !more,
+      openNew: () => this.setState({ form: 'new', txType: 'expense', pad: false }),
+      close: () => this.setState({ form: 'none', pad: false }),
+      togglePad: () => this.setState({ pad: !padOpen }),
+      formOpen: form !== 'none',
+      moreOpen: more,
+      boxClass: phone ? 'fm-full' : 'fm-modal',
+      fullBottom: phone ? '90px' : 'auto',
+      formTitle: edit ? 'Edit Transaction' : 'New Transaction',
+      formIcon: 'ic ' + (edit ? 'i-edit' : 'i-plus'),
+      isEdit: edit, isTransfer: txType === 'transfer',
+      padOpen, padDesktop: padOpen && !phone, padPhone: padOpen && phone,
+      types, f, keys
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Before: delete dialog, iPhone</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/891fbe9142f7298e7fe04f5467c0b7f3">
+<link rel="stylesheet" href="/_blob/5942119103d6ffeff8f8a6c0d63f8db0">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 402px; height: 874px; position: relative">
+  <dc-import name="Main" size="phone" tab="list" form="edit" hint-size="402px,874px"></dc-import>
+  <div style="position: absolute; inset: 0; z-index: 100">
+    <dc-import name="Confirm" size="phone" kind="transaction" hint-size="402px,874px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":402,"height":874}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

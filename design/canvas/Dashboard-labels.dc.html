@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dashboard row labels, now and proposed</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/891fbe9142f7298e7fe04f5467c0b7f3">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="fa-root" style="width: 1240px; height: 880px; padding: 40px; background: var(--bg); display: flex; flex-direction: column; gap: 24px">
+  <div>
+    <div class="stat-label">Dashboard · Accounts tab</div>
+    <h1 class="h1" style="font-size: 22px">Row labels: now and approved</h1>
+    <p style="margin: 6px 0 0; color: var(--t2); font-size: 13.5px; max-width: 900px">Today the second line repeats the group ("Investment · Investment", "Loan · Loan"). The proposal puts the line to work: what the holding is and how much of it, the loan's rate and progress, what an instalment costs each month.</p>
+  </div>
+  <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; flex: 1; min-height: 0">
+    <sc-for list="{{columns}}" as="col" hint-placeholder-count="2">
+      <div style="display: flex; flex-direction: column; gap: 10px; min-height: 0">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: {{col.headColor}}"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{col.headColor}}"></span>{{col.name}}</div>
+        <div class="panel" style="overflow: hidden">
+          <sc-for list="{{col.groups}}" as="g" hint-placeholder-count="4">
+            <div>
+              <div class="grp-head"><span class="d">{{g.title}}</span><span class="t" style="color: {{g.color}}">{{g.total}}</span></div>
+              <sc-for list="{{g.rows}}" as="a" hint-placeholder-count="2">
+                <div style="display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--line-soft)">
+                  <span class="icc" style="width: 36px; height: 36px; font-size: 18px; color: {{a.color}}; background: {{a.tint}}"><span class="{{a.icon}}"></span></span>
+                  <div style="flex: 1; min-width: 0">
+                    <div style="font-size: 14px; font-weight: 600; color: var(--t1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{a.name}}</div>
+                    <div style="font-size: 12px; color: {{a.subColor}}; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{a.sub}}</div>
+                  </div>
+                  <div class="num" style="flex: 0 0 auto; color: {{a.balColor}}; font-weight: 600; font-size: 14px">{{a.balance}}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1240,"height":880}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const T = {
+      savings: ['#52c41a', 'i-save'], investment: ['#13c2c2', 'i-fund'], credit_card: ['#ff4d4f', 'i-credit-card'],
+      loan: ['#fa541c', 'i-file-text'], instalment: ['#eb2f96', 'i-schedule']
+    };
+    const row = (type, name, nowSub, newSub, balance, debt) => ({ type, name, nowSub, newSub, balance, debt });
+    const groups = [
+      ['Banking & Cash', 'RM 28,667.35', false, [row('savings', 'Maybank Savings', 'Savings · Maybank', 'Savings · Maybank', 'RM 24,850.40')]],
+      ['Investments', 'RM 77,222.82', false, [
+        row('investment', 'VGT · Vanguard Information Technology ETF', 'Investment · Investment', 'ETF · 10 units · + 23.3%', 'RM 28,535.63'),
+        row('investment', 'BTC · Bitcoin', 'Investment · Investment', 'Crypto · 0.05 units · + 116.7%', 'RM 20,247.50')
+      ]],
+      ['Loans', '− RM 448,891.76', true, [
+        row('loan', 'Home Loan', 'Loan · Loan', 'Reducing balance · 4.15% p.a. · 56/420 paid', '− RM 412,330.18', true),
+        row('credit_card', 'CIMB Credit Card', 'Credit Card · CIMB', 'Credit card · CIMB', '− RM 1,284.60', true)
+      ]],
+      ['Instalments', '− RM 8,691.59', true, [
+        row('instalment', 'iPhone 17 Pro', 'Instalment · Instalment', 'RM 458.25 a month · 3/12 paid', '− RM 4,124.25', true)
+      ]]
+    ];
+    const build = (proposed) => groups.map(([title, total, neg, rows]) => ({
+      title, total, color: neg ? 'var(--neg)' : 'var(--t1)',
+      rows: rows.map((r) => {
+        const [c, icon] = T[r.type];
+        const changed = r.nowSub !== r.newSub;
+        return {
+          name: proposed && r.type === 'investment' ? r.name.split(' · ')[0] : r.name,
+          sub: proposed ? r.newSub : r.nowSub,
+          subColor: proposed && changed ? 'var(--t2)' : 'var(--t3)',
+          color: c, tint: 'color-mix(in oklab, ' + c + ' 24%, transparent)', icon: 'ic ' + icon,
+          balance: r.balance, balColor: r.debt ? 'var(--neg)' : 'var(--t1)'
+        };
+      })
+    }));
+    return {
+      columns: [
+        { name: 'Now', headColor: 'var(--t3)', groups: build(false) },
+        { name: 'Approved (23 Nov 2026)', headColor: 'var(--accent)', groups: build(true) }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
