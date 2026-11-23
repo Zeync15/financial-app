@@ -805,7 +805,6 @@ export default function Dashboard() {
       style={{
         padding: isMobile ? "18px 20px" : "20px 24px",
         width: isMobile ? "100%" : 320,
-        background: "linear-gradient(150deg, color-mix(in oklab, var(--accent) 16%, var(--panel)), var(--panel))",
         flex: "0 0 auto",
       }}
     >

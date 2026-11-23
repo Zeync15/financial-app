@@ -845,8 +845,6 @@ export default function Investments() {
         style={{
           padding: "20px 22px",
           marginBottom: 14,
-          background:
-            "linear-gradient(150deg, color-mix(in oklab, var(--accent) 14%, var(--panel)), var(--panel))",
         }}
       >
         <div className="stat-label" style={{ marginBottom: 0 }}>
