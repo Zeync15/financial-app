@@ -699,6 +699,181 @@ body {
 .fld.has-cur .fld-input {
   padding-left: 48px;
 }
+
+/* Form that fits the screen (Modal `fill` + FormBody `fill`): the fields and
+   the footer stay put and only `.fm-scroll` scrolls, in the space left. */
+.fm-full.fm-fill {
+  overflow: hidden;
+}
+/* Ant Design 6 calls the dialog box .ant-modal-container (5: -content). */
+.fm-modal.fm-fill .ant-modal-container,
+.fm-modal.fm-fill .ant-modal-content {
+  display: flex;
+  flex-direction: column;
+  /* Centred (see Modal), with a 32px margin above and below. */
+  max-height: calc(100dvh - 64px);
+}
+.fm-modal.fm-fill .ant-modal-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.fm-body-fill {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.field-fill {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.fm-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  /* No scrollbar: the cut-off row underneath shows there is more. */
+  scrollbar-width: none;
+}
+.fm-scroll::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+.field-aside {
+  margin-left: auto;
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--t3);
+}
+
+/* Category picker: every category as a round emoji with its name under it,
+   one tap to choose. 4 a row on phone, 6 on desktop. */
+.qcat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px 8px;
+  align-content: start;
+  padding: 2px 0 8px;
+}
+@media (min-width: 768px) {
+  .qcat-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+.qcat {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--t2);
+  font-family: inherit;
+  cursor: pointer;
+}
+.qcat-ic {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.qcat:hover .qcat-ic {
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 50%, transparent);
+}
+.qcat.on .qcat-ic {
+  background: color-mix(in oklab, var(--accent) 18%, transparent);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.qcat-name {
+  width: 100%;
+  font-size: 11px;
+  line-height: 1.25;
+  text-align: center;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow-wrap: break-word;
+}
+.qcat.on .qcat-name {
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Date as one field that names the day, with a Today / Yesterday pill inside.
+   A see-through native date input lies over it, so a tap opens the calendar. */
+.fld-day {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 12px 0 14px;
+  border: 1.5px solid rgba(255, 255, 255, 0.34);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--t1);
+  font-size: 14.5px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.fld-day:hover {
+  border-color: var(--accent);
+}
+.fld-day:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 18%, transparent);
+}
+.fld-day-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fld-day-cal {
+  display: grid;
+  place-items: center;
+  color: var(--t2);
+}
+.fld-day-native {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  /* 16px stops iOS zooming in on focus. */
+  font-size: 16px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.fld-day-pill {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in oklab, var(--accent) 50%, transparent);
+  background: color-mix(in oklab, var(--accent) 14%, transparent);
+  color: #fff;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
 /* ---------------- Spending-by-category legend ---------------- */
 /* Each row jumps to the List tab filtered to that category, so it needs a
    real tap target: 44px min, and it bleeds into the panel padding so the
@@ -1191,7 +1366,9 @@ body {
      iOS its bottom edge hides under the dynamic browser toolbar and takes the
      footer with it. Same reason the app shell uses dvh. */
   height: 100dvh;
-  z-index: 50;
+  /* Above the bottom nav (z-50, later in the DOM), which otherwise covers the
+     footer once the form is taller than the screen. */
+  z-index: 60;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -1544,4 +1721,169 @@ body {
    panel without a tile, so they get a thin light outline instead. */
 .cat-emoji-dark {
   filter: drop-shadow(0 0 0.5px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 1px rgba(255, 255, 255, 0.5));
+}
+
+/* ---------------- Emoji picker (Categories form) ---------------- */
+.fm-noscrollbar {
+  scrollbar-width: none;
+}
+.fm-noscrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+/* Name field with the picked emoji inside it, at the left. */
+.fld-emoji .fld-input {
+  padding-left: 50px;
+}
+.fld-emoji-ic {
+  position: absolute;
+  left: 8px;
+  top: 7px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 0 1px var(--line);
+  pointer-events: none;
+  overflow: hidden;
+}
+.emo-search {
+  flex: 0 0 auto;
+}
+.emo-search .fld-input {
+  padding-left: 40px;
+  padding-right: 40px;
+}
+.emo-search .fld-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+.emo-search-ic {
+  position: absolute;
+  left: 14px;
+  top: 0;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  color: var(--t2);
+  pointer-events: none;
+}
+.emo-search-x {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--t2);
+  cursor: pointer;
+}
+.emo-chips {
+  display: flex;
+  gap: 6px;
+  flex: 0 0 auto;
+  overflow-x: auto;
+  padding-top: 2px;
+}
+.emo-chip {
+  flex: 0 0 auto;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 15px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--t2);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.emo-chip.on {
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 14%, transparent);
+  color: #fff;
+}
+.emo-scroll {
+  padding: 0 2px 8px;
+}
+.emo-head {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--t3);
+  padding: 12px 0 8px;
+}
+.emo-scroll > div:first-child .emo-head {
+  padding-top: 4px;
+}
+.emo-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px 4px;
+}
+@media (min-width: 768px) {
+  .emo-grid {
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+  }
+}
+.emo {
+  justify-self: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.emo:hover {
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 50%, transparent);
+}
+.emo.on {
+  background: color-mix(in oklab, var(--accent) 18%, transparent);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.emo img {
+  display: block;
+}
+.emo-note {
+  padding: 14px 0 0;
+  font-size: 12px;
+  color: var(--t3);
+  text-align: center;
+}
+
+/* Insights spending list: the category's emoji with a dot in its slice colour. */
+.slice-emo {
+  position: relative;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+}
+.slice-dot {
+  position: absolute;
+  right: -2px;
+  bottom: -1px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--panel);
+}
+/* The emoji grid keeps its height while searching, so the dialog doesn't jump
+   as the results shrink and grow. */
+@media (min-width: 768px) {
+  .emo-scroll {
+    min-height: min(360px, 40dvh);
+  }
 }

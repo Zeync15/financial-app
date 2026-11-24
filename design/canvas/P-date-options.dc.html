@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Date row options</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/891fbe9142f7298e7fe04f5467c0b7f3">
+<link rel="stylesheet" href="/_blob/5942119103d6ffeff8f8a6c0d63f8db0">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="fa-root" style="width: 1382px; height: 700px; box-sizing: border-box; padding: 40px 48px; background: var(--bg); display: flex; flex-direction: column; gap: 28px">
+  <div style="display: flex; flex-direction: column; gap: 6px">
+    <div style="font-size: 22px; font-weight: 600; color: var(--t1)">Date row: options</div>
+    <div style="font-size: 13px; color: var(--t2)">Each drawn at the phone form's width (370 px). Tap them to try. Today is Monday 23 November 2026. Every option uses the field look (44 px, 1.5 px border, 10 px corners) so it sits with Account | Amount.</div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px 40px">
+
+    <div style="background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 14px; font-weight: 600; color: var(--t1)">Now (for comparison)</div>
+        <div style="font-size: 12px; color: var(--t2)">Today half, Yesterday and a short picker squeezed into the other half.</div>
+      </div>
+      <div class="field">
+        <div class="field-lbl">Date <em class="req">*</em></div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+          <button onClick="{{now.today.pick}}" style="height: 44px; padding: 0 13px; border-radius: 9px; border: 1px solid {{now.today.border}}; background: {{now.today.bg}}; color: {{now.today.fg}}; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer">Today</button>
+          <div style="display: flex; gap: 6px; min-width: 0">
+            <button onClick="{{now.yest.pick}}" style="flex: 1 1 auto; min-width: 0; height: 44px; padding: 0 8px; border-radius: 9px; border: 1px solid {{now.yest.border}}; background: {{now.yest.bg}}; color: {{now.yest.fg}}; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer">Yesterday</button>
+            <div class="fld" style="flex: 0 0 auto; width: auto; padding: 0 10px; gap: 6px; font-size: 14px; white-space: nowrap">{{now.short}}<span class="ic i-calendar" style="color: var(--t2)"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 14px; font-weight: 600; color: var(--t1)">A · Segmented, like the Type tabs</div>
+        <div style="font-size: 12px; color: var(--t2)">One bar, three equal parts. The third opens the calendar and then shows the date picked.</div>
+      </div>
+      <div class="field">
+        <div class="field-lbl">Date <em class="req">*</em></div>
+        <div class="seg full">
+          <sc-for list="{{a}}" as="o" hint-placeholder-count="3">
+            <button class="{{o.cls}}" onClick="{{o.pick}}" style="display: flex; align-items: center; justify-content: center; gap: 6px"><sc-if value="{{o.icon}}" hint-placeholder-val="{{false}}"><span class="ic i-calendar"></span></sc-if>{{o.label}}</button>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 14px; font-weight: 600; color: var(--t1)">B · Three equal buttons</div>
+        <div style="font-size: 12px; color: var(--t2)">Same size and border as the fields; the picked one is green.</div>
+      </div>
+      <div class="field">
+        <div class="field-lbl">Date <em class="req">*</em></div>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+          <sc-for list="{{b}}" as="o" hint-placeholder-count="3">
+            <button onClick="{{o.pick}}" style="min-width: 0; height: 44px; border-radius: 10px; border: 1.5px solid {{o.border}}; background: {{o.bg}}; color: {{o.fg}}; font-family: inherit; font-size: 14px; font-weight: {{o.weight}}; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; white-space: nowrap"><sc-if value="{{o.icon}}" hint-placeholder-val="{{false}}"><span class="ic i-calendar"></span></sc-if>{{o.label}}</button>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 14px; font-weight: 600; color: var(--t1)">C · Shortcuts on the label row</div>
+        <div style="font-size: 12px; color: var(--t2)">The date field stays full width with the whole date; Today and Yesterday sit small beside the label.</div>
+      </div>
+      <div class="field">
+        <div style="display: flex; align-items: center; justify-content: space-between">
+          <div class="field-lbl">Date <em class="req">*</em></div>
+          <div style="display: flex; gap: 6px">
+            <sc-for list="{{c}}" as="o" hint-placeholder-count="2">
+              <button onClick="{{o.pick}}" style="height: 28px; padding: 0 12px; border-radius: 14px; border: 1px solid {{o.border}}; background: {{o.bg}}; color: {{o.fg}}; font-family: inherit; font-size: 12px; font-weight: {{o.weight}}; cursor: pointer">{{o.label}}</button>
+            </sc-for>
+          </div>
+        </div>
+        <button class="fld" onClick="{{cPickOther}}" style="width: 100%; justify-content: space-between; font-family: inherit; cursor: pointer; text-align: left">{{cDate}}<span class="ic i-calendar" style="color: var(--t2)"></span></button>
+      </div>
+    </div>
+
+    <div style="background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 14px; font-weight: 600; color: var(--t1)">D · Last 6 days</div>
+        <div style="font-size: 12px; color: var(--t2)">Any day this week in one tap; the calendar at the end for older ones.</div>
+      </div>
+      <div class="field">
+        <div class="field-lbl">Date <em class="req">*</em></div>
+        <div style="display: flex; gap: 6px">
+          <sc-for list="{{d}}" as="o" hint-placeholder-count="6">
+            <button onClick="{{o.pick}}" aria-label="{{o.aria}}" style="flex: 1 1 0; min-width: 0; height: 44px; border-radius: 10px; border: 1.5px solid {{o.border}}; background: {{o.bg}}; color: {{o.fg}}; font-family: inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; cursor: pointer; padding: 0">
+              <span style="font-size: 10px; font-weight: 500; opacity: 0.8">{{o.top}}</span>
+              <span style="font-size: 15px; font-weight: {{o.weight}}; line-height: 1.1">{{o.num}}</span>
+            </button>
+          </sc-for>
+          <button onClick="{{dPickOther}}" aria-label="Pick another date" style="flex: 0 0 44px; height: 44px; border-radius: 10px; border: 1.5px solid {{dCal.border}}; background: {{dCal.bg}}; color: {{dCal.fg}}; display: grid; place-items: center; cursor: pointer; padding: 0"><span class="ic i-calendar"></span></button>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <div style="font-size: 14px; font-weight: 600; color: var(--t1)">E · One field, the other day inside</div>
+        <div style="font-size: 12px; color: var(--t2)">The field says the day in words; the pill swaps between Today and Yesterday. Tap the field for the calendar.</div>
+      </div>
+      <div class="field">
+        <div class="field-lbl">Date <em class="req">*</em></div>
+        <div class="fld" style="width: 100%; justify-content: space-between; gap: 8px">
+          <button onClick="{{ePickOther}}" style="flex: 1 1 auto; min-width: 0; padding: 0; border: 0; background: transparent; color: var(--t1); font-family: inherit; font-size: inherit; text-align: left; cursor: pointer; height: 100%">{{eText}}</button>
+          <button onClick="{{eSwap}}" style="flex: 0 0 auto; height: 28px; padding: 0 12px; border-radius: 14px; border: 1px solid color-mix(in oklab, var(--accent) 50%, transparent); background: color-mix(in oklab, var(--accent) 14%, transparent); color: #fff; font-family: inherit; font-size: 12px; font-weight: 500; cursor: pointer">{{ePill}}</button>
+          <span class="ic i-calendar" style="color: var(--t2)"></span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1382,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    // Picked: green tint, accent border, white text. Not picked: the form field look.
+    const ON = { bg: 'color-mix(in oklab, var(--accent) 18%, transparent)', border: 'var(--accent)', fg: '#fff', weight: '600' };
+    const OFF = { bg: 'rgba(255, 255, 255, 0.05)', border: 'rgba(255, 255, 255, 0.34)', fg: 'var(--t1)', weight: '500' };
+    const look = (on) => (on ? ON : OFF);
+    const set = (key, v) => () => this.setState({ [key]: v });
+    const sel = (key) => s[key] ?? 'today';
+
+    // Now: as drawn on the After boards today (chip look, 1 px dim border, 9 px corners).
+    const nowSel = sel('now');
+    const chip = (on) => on
+      ? { bg: 'color-mix(in oklab, var(--accent) 18%, transparent)', border: 'color-mix(in oklab, var(--accent) 50%, transparent)', fg: '#fff' }
+      : { bg: 'rgba(255, 255, 255, 0.04)', border: 'var(--line)', fg: 'var(--t2)' };
+    const now = {
+      today: Object.assign(chip(nowSel === 'today'), { pick: set('now', 'today') }),
+      yest: Object.assign(chip(nowSel === 'yesterday'), { pick: set('now', 'yesterday') }),
+      short: nowSel === 'yesterday' ? '22 Nov' : '23 Nov'
+    };
+
+    const three = (key) => {
+      const v = sel(key);
+      return [['today', 'Today'], ['yesterday', 'Yesterday'], ['other', v === 'other' ? '19 Nov' : 'Pick date']].map(([k, label]) => {
+        const on = v === k;
+        return Object.assign({}, look(on), { label, icon: k === 'other', cls: on ? 'on' : '', pick: set(key, k) });
+      });
+    };
+
+    const cSel = sel('c');
+    const c = [['today', 'Today'], ['yesterday', 'Yesterday']].map(([k, label]) => {
+      const on = cSel === k;
+      return {
+        label, pick: set('c', k), weight: on ? '600' : '500',
+        bg: on ? 'color-mix(in oklab, var(--accent) 18%, transparent)' : 'rgba(255, 255, 255, 0.05)',
+        border: on ? 'var(--accent)' : 'rgba(255, 255, 255, 0.34)', fg: on ? '#fff' : 'var(--t1)'
+      };
+    });
+    const longDate = { today: 'Mon, 23 Nov 2026', yesterday: 'Sun, 22 Nov 2026', other: 'Thu, 19 Nov 2026' };
+
+    const dSel = sel('d');
+    const d = [['today', 'Today', '23'], ['yesterday', 'Yest.', '22'], ['sat', 'Sat', '21'], ['fri', 'Fri', '20'], ['thu', 'Thu', '19'], ['wed', 'Wed', '18']].map(([k, top, num]) =>
+      Object.assign({}, look(dSel === k), { top, num, aria: top + ' ' + num + ' November', pick: set('d', k) })
+    );
+
+    const eSel = sel('e');
+    return {
+      now,
+      a: three('a'),
+      b: three('b'),
+      c, cDate: longDate[cSel], cPickOther: set('c', 'other'),
+      d, dCal: look(dSel === 'other'), dPickOther: set('d', 'other'),
+      eText: eSel === 'yesterday' ? 'Yesterday, 22 Nov' : eSel === 'other' ? 'Thu, 19 Nov' : 'Today, 23 Nov',
+      ePill: eSel === 'today' ? 'Yesterday' : 'Today',
+      eSwap: set('e', eSel === 'today' ? 'yesterday' : 'today'),
+      ePickOther: set('e', 'other')
+    };
+  }
+}
+</script>
+</body>
+</html>

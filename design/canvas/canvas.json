@@ -1,114 +1,1061 @@
 {
   "v": 3,
-  "createdOnFiles": {"v": 1, "at": "2026-11-23T10:00:00Z"},
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-23T10:00:00Z"
+  },
   "title": "Financial App",
-  "launch": {"view": "canvas", "page": "design"},
+  "launch": {
+    "view": "canvas",
+    "page": "design"
+  },
   "pages": [
-    {"id": "design", "name": "Design (live app)"},
-    {"id": "proposed", "name": "Proposed changes"}
+    {
+      "id": "design",
+      "name": "Design (live app)"
+    },
+    {
+      "id": "proposed",
+      "name": "Proposed changes"
+    }
   ],
   "boards": {
-    "Main.dc.html": {"x": 1928, "y": 1320, "w": 1440, "h": 900, "title": "Desktop: Transactions, the list", "is_interactive": true, "radius": 10},
-    "Nav.dc.html": {"x": 2762, "y": 0, "w": 200, "h": 900, "title": "Navigation (sidebar on desktop, bottom bar on phone)", "is_interactive": true},
-    "SignIn.dc.html": {"x": 482, "y": 0, "w": 1440, "h": 900, "title": "Desktop: Sign in", "radius": 10},
-    "SignIn-phone.dc.html": {"x": 0, "y": 0, "w": 402, "h": 874, "title": "iPhone: Sign in", "radius": 36},
-    "AppIcon.dc.html": {"x": 2002, "y": 0, "w": 680, "h": 520, "title": "App icon"},
-    "Main-phone.dc.html": {"x": 0, "y": 1320, "w": 402, "h": 874, "title": "iPhone: Transactions, the list", "is_interactive": true, "radius": 36},
-    "Main-insights-phone.dc.html": {"x": 482, "y": 1320, "w": 402, "h": 874, "title": "iPhone: Transactions, insights", "is_interactive": true, "radius": 36},
-    "Main-new-phone.dc.html": {"x": 964, "y": 1320, "w": 402, "h": 874, "title": "iPhone: New transaction (full-screen page)", "is_interactive": true, "radius": 36},
-    "Main-search-phone.dc.html": {"x": 6488, "y": 1320, "w": 402, "h": 874, "title": "iPhone: Transactions, search open", "is_interactive": true, "radius": 36},
-    "Main-amount-phone.dc.html": {"x": 6970, "y": 1320, "w": 402, "h": 874, "title": "iPhone: New transaction, amount keypad", "is_interactive": true, "radius": 36},
-    "Main-amount.dc.html": {"x": 7452, "y": 1320, "w": 1440, "h": 900, "title": "Desktop: New transaction, amount keypad", "is_interactive": true, "radius": 10},
-    "Main-more-phone.dc.html": {"x": 1446, "y": 1320, "w": 402, "h": 874, "title": "iPhone: More sheet", "is_interactive": true, "radius": 36},
-    "Main-new.dc.html": {"x": 3448, "y": 1320, "w": 1440, "h": 900, "title": "Desktop: New transaction", "is_interactive": true, "radius": 10},
-    "Main-edit.dc.html": {"x": 4968, "y": 1320, "w": 1440, "h": 900, "title": "Desktop: Edit transaction", "is_interactive": true, "radius": 10},
-    "Dashboard.dc.html": {"x": 964, "y": 2640, "w": 1440, "h": 900, "title": "Desktop: Dashboard, accounts", "is_interactive": true, "radius": 10},
-    "Dashboard-phone.dc.html": {"x": 0, "y": 2640, "w": 402, "h": 874, "title": "iPhone: Dashboard, accounts", "is_interactive": true, "radius": 36},
-    "Dashboard-allocation-phone.dc.html": {"x": 482, "y": 2640, "w": 402, "h": 874, "title": "iPhone: Dashboard, allocation", "is_interactive": true, "radius": 36},
-    "Dashboard-allocation.dc.html": {"x": 2484, "y": 2640, "w": 1440, "h": 900, "title": "Desktop: Dashboard, allocation", "is_interactive": true, "radius": 10},
-    "Dashboard-account.dc.html": {"x": 4004, "y": 2640, "w": 1440, "h": 900, "title": "Desktop: New account", "is_interactive": true, "radius": 10},
-    "Budgets.dc.html": {"x": 482, "y": 3960, "w": 1440, "h": 900, "title": "Desktop: Budgets", "is_interactive": true, "radius": 10},
-    "Budgets-phone.dc.html": {"x": 0, "y": 3960, "w": 402, "h": 874, "title": "iPhone: Budgets", "is_interactive": true, "radius": 36},
-    "Categories.dc.html": {"x": 2484, "y": 3960, "w": 1440, "h": 900, "title": "Desktop: Categories", "is_interactive": true, "radius": 10},
-    "Categories-phone.dc.html": {"x": 2002, "y": 3960, "w": 402, "h": 874, "title": "iPhone: Categories", "is_interactive": true, "radius": 36},
-    "Categories-new.dc.html": {"x": 4004, "y": 3960, "w": 1440, "h": 900, "title": "Desktop: New category", "is_interactive": true, "radius": 10},
-    "Investments.dc.html": {"x": 482, "y": 5280, "w": 1440, "h": 900, "title": "Desktop: Investments", "is_interactive": true, "radius": 10},
-    "Investments-phone.dc.html": {"x": 0, "y": 5280, "w": 402, "h": 874, "title": "iPhone: Investments", "is_interactive": true, "radius": 36},
-    "Investments-new.dc.html": {"x": 2002, "y": 5280, "w": 1440, "h": 900, "title": "Desktop: Add holding", "is_interactive": true, "radius": 10},
-    "Loans.dc.html": {"x": 482, "y": 6600, "w": 1440, "h": 900, "title": "Desktop: Loans", "is_interactive": true, "radius": 10},
-    "Loans-phone.dc.html": {"x": 0, "y": 6600, "w": 402, "h": 874, "title": "iPhone: Loans", "is_interactive": true, "radius": 36},
-    "Loans-schedule.dc.html": {"x": 2002, "y": 6600, "w": 1440, "h": 900, "title": "Desktop: Loans, schedule open", "is_interactive": true, "radius": 10},
-    "Loans-adjust.dc.html": {"x": 3522, "y": 6600, "w": 1440, "h": 900, "title": "Desktop: Loan adjustments", "is_interactive": true, "radius": 10},
-    "Instalments.dc.html": {"x": 482, "y": 7920, "w": 1440, "h": 900, "title": "Desktop: Instalments", "is_interactive": true, "radius": 10},
-    "Instalments-phone.dc.html": {"x": 0, "y": 7920, "w": 402, "h": 874, "title": "iPhone: Instalments", "is_interactive": true, "radius": 36},
-    "Recurring.dc.html": {"x": 2484, "y": 7920, "w": 1440, "h": 900, "title": "Desktop: Recurring", "is_interactive": true, "radius": 10},
-    "Recurring-phone.dc.html": {"x": 2002, "y": 7920, "w": 402, "h": 874, "title": "iPhone: Recurring", "is_interactive": true, "radius": 36},
-    "Main-delete-phone.dc.html": {"x": 0, "y": 9240, "w": 402, "h": 874, "title": "iPhone: Delete a transaction (every edit form's Delete)", "is_interactive": true, "radius": 36},
-    "Main-delete.dc.html": {"x": 482, "y": 9240, "w": 1440, "h": 900, "title": "Desktop: Delete a transaction (every edit form's Delete)", "is_interactive": true, "radius": 10},
-    "Budgets-delete.dc.html": {"x": 2002, "y": 9240, "w": 1440, "h": 900, "title": "Desktop: Delete a budget", "is_interactive": true, "radius": 10},
-    "Categories-delete.dc.html": {"x": 3522, "y": 9240, "w": 1440, "h": 900, "title": "Desktop: Delete a category", "is_interactive": true, "radius": 10},
-    "Instalments-delete.dc.html": {"x": 5042, "y": 9240, "w": 1440, "h": 900, "title": "Desktop: Delete an instalment", "is_interactive": true, "radius": 10},
-    "Loans-adjust-remove.dc.html": {"x": 6562, "y": 9240, "w": 1440, "h": 900, "title": "Desktop: Remove a loan adjustment", "is_interactive": true, "radius": 10},
-    "Confirm.dc.html": {"x": 8082, "y": 9240, "w": 1440, "h": 900, "title": "Delete confirmation (component)"},
-
-    "P-delete-before-phone.dc.html": {"page": "proposed", "x": 0, "y": 0, "w": 402, "h": 874, "title": "Before (live): iPhone delete dialog", "radius": 36},
-    "P-delete-after-phone.dc.html": {"page": "proposed", "x": 482, "y": 0, "w": 402, "h": 874, "title": "After (proposed): iPhone delete sheet", "radius": 36},
-    "P-delete-before.dc.html": {"page": "proposed", "x": 964, "y": 0, "w": 1440, "h": 900, "title": "Before (live): desktop delete dialog", "radius": 10},
-    "P-delete-after.dc.html": {"page": "proposed", "x": 2484, "y": 0, "w": 1440, "h": 900, "title": "After (proposed): desktop delete dialog", "radius": 10},
-    "P-transactions-before-phone.dc.html": {"page": "proposed", "x": 0, "y": 1320, "w": 402, "h": 874, "title": "Before (live): iPhone Transactions", "radius": 36},
-    "P-transactions-after-phone.dc.html": {"page": "proposed", "x": 482, "y": 1320, "w": 402, "h": 874, "title": "After (proposed): iPhone Transactions", "radius": 36},
-    "P-transactions-before.dc.html": {"page": "proposed", "x": 964, "y": 1320, "w": 1440, "h": 900, "title": "Before (live): desktop Transactions", "radius": 10},
-    "P-transactions-after.dc.html": {"page": "proposed", "x": 2484, "y": 1320, "w": 1440, "h": 900, "title": "After (proposed): desktop Transactions", "radius": 10},
-    "P-dashboard-before.dc.html": {"page": "proposed", "x": 0, "y": 2640, "w": 1440, "h": 900, "title": "Before (live): Dashboard", "radius": 10},
-    "P-dashboard-after.dc.html": {"page": "proposed", "x": 1520, "y": 2640, "w": 1440, "h": 900, "title": "After (proposed): Dashboard", "radius": 10},
-    "Dashboard-labels.dc.html": {"page": "proposed", "x": 3040, "y": 2640, "w": 1240, "h": 880, "title": "Dashboard row labels: now and approved"},
-    "P-loans-before.dc.html": {"page": "proposed", "x": 0, "y": 3960, "w": 1440, "h": 900, "title": "Before (live): Loans", "radius": 10},
-    "P-loans-after.dc.html": {"page": "proposed", "x": 1520, "y": 3960, "w": 1440, "h": 900, "title": "After (proposed): Loans", "radius": 10},
-    "P-investments-before.dc.html": {"page": "proposed", "x": 3040, "y": 3960, "w": 1440, "h": 900, "title": "Before (live): Investments", "radius": 10},
-    "P-investments-after.dc.html": {"page": "proposed", "x": 4560, "y": 3960, "w": 1440, "h": 900, "title": "After (proposed): Investments", "radius": 10},
-    "P-categories-before.dc.html": {"page": "proposed", "x": 0, "y": 5280, "w": 1440, "h": 900, "title": "Before (live): Categories", "radius": 10},
-    "P-categories-after.dc.html": {"page": "proposed", "x": 1520, "y": 5280, "w": 1440, "h": 900, "title": "After (proposed): Categories", "radius": 10},
-    "P-categories-before-income.dc.html": {"page": "proposed", "x": 0, "y": 6260, "w": 1440, "h": 900, "title": "Before (live): Categories, income", "radius": 10},
-    "P-categories-after-income.dc.html": {"page": "proposed", "x": 1520, "y": 6260, "w": 1440, "h": 900, "title": "After (proposed): Categories, income", "radius": 10}
+    "Main.dc.html": {
+      "x": 1928,
+      "y": 1320,
+      "w": 1440,
+      "h": 900,
+      "title": "Desktop: Transactions, the list",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "Nav.dc.html": {
+      "x": 2762,
+      "y": 0,
+      "w": 200,
+      "h": 900,
+      "title": "Navigation (sidebar on desktop, bottom bar on phone)",
+      "is_interactive": true
+    },
+    "SignIn.dc.html": {
+      "x": 482,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Desktop: Sign in",
+      "radius": 10
+    },
+    "SignIn-phone.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "iPhone: Sign in",
+      "radius": 36
+    },
+    "AppIcon.dc.html": {
+      "x": 2002,
+      "y": 0,
+      "w": 680,
+      "h": 520,
+      "title": "App icon"
+    },
+    "Main-phone.dc.html": {
+      "x": 0,
+      "y": 1320,
+      "w": 402,
+      "h": 874,
+      "title": "iPhone: Transactions, the list",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "Main-insights-phone.dc.html": {
+      "x": 482,
+      "y": 1320,
+      "w": 402,
+      "h": 874,
+      "title": "iPhone: Transactions, insights",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "Main-new-phone.dc.html": {
+      "x": 964,
+      "y": 1320,
+      "w": 402,
+      "h": 874,
+      "title": "iPhone: New transaction (full-screen page)",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "Main-search-phone.dc.html": {
+      "x": 6488,
+      "y": 1320,
+      "w": 402,
+      "h": 874,
+      "title": "iPhone: Transactions, search open",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "Main-amount-phone.dc.html": {
+      "x": 6970,
+      "y": 1320,
+      "w": 402,
+      "h": 874,
+      "title": "iPhone: New transaction, amount keypad",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "Main-amount.dc.html": {
+      "x": 7452,
+      "y": 1320,
+      "w": 1440,
+      "h": 900,
+      "title": "Desktop: New transaction, amount keypad",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "Main-more-phone.dc.html": {
+      "x": 1446,
+      "y": 1320,
+      "w": 402,
+      "h": 874,
+      "title": "iPhone: More sheet",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "Main-new.dc.html": {
+      "x": 3448,
+      "y": 1320,
+      "w": 1440,
+      "h": 900,
+      "title": "Desktop: New transaction",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "Main-edit.dc.html": {
+      "x": 4968,
+      "y": 1320,
+      "w": 1440,
+      "h": 900,
+      "title": "Desktop: Edit transaction",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "Dashboard.dc.html": {
+      "x": 964,
+      "y": 2640,
+      "w": 1440,
+      "h": 900,
+      "title": "Desktop: Dashboard, accounts",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "Dashboard-phone.dc.html": {
+      "x": 0,
+      "y": 2640,
+      "w": 402,
+      "h": 874,
+      "title": "iPhone: Dashboard, accounts",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "Dashboard-allocation-phone.dc.html": {
+      "x": 482,
+      "y": 2640,
+      "w": 402,
+      "h": 874,
+      "title": "iPhone: Dashboard, allocation",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "Dashboard-allocation.dc.html": {
+      "x": 2484,
+      "y": 2640,
+      "w": 1440,
+      "h": 900,
+      "title": "Desktop: Dashboard, allocation",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "Dashboard-account.dc.html": {
+      "x": 4004,
+      "y": 2640,
+      "w": 1440,
+      "h": 900,
+      "title": "Desktop: New account",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "Budgets.dc.html": {
+      "x": 482,
+      "y": 3960,
+      "w": 1440,
+      "h": 900,
+      "title": "Desktop: Budgets",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "Budgets-phone.dc.html": {
+      "x": 0,
+      "y": 3960,
+      "w": 402,
+      "h": 874,
+      "title": "iPhone: Budgets",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "Categories.dc.html": {
+      "x": 2484,
+      "y": 3960,
+      "w": 1440,
+      "h": 900,
+      "title": "Desktop: Categories",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "Categories-phone.dc.html": {
+      "x": 2002,
+      "y": 3960,
+      "w": 402,
+      "h": 874,
+      "title": "iPhone: Categories",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "Categories-new.dc.html": {
+      "x": 4004,
+      "y": 3960,
+      "w": 1440,
+      "h": 900,
+      "title": "Desktop: New category",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "Investments.dc.html": {
+      "x": 482,
+      "y": 5280,
+      "w": 1440,
+      "h": 900,
+      "title": "Desktop: Investments",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "Investments-phone.dc.html": {
+      "x": 0,
+      "y": 5280,
+      "w": 402,
+      "h": 874,
+      "title": "iPhone: Investments",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "Investments-new.dc.html": {
+      "x": 2002,
+      "y": 5280,
+      "w": 1440,
+      "h": 900,
+      "title": "Desktop: Add holding",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "Loans.dc.html": {
+      "x": 482,
+      "y": 6600,
+      "w": 1440,
+      "h": 900,
+      "title": "Desktop: Loans",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "Loans-phone.dc.html": {
+      "x": 0,
+      "y": 6600,
+      "w": 402,
+      "h": 874,
+      "title": "iPhone: Loans",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "Loans-schedule.dc.html": {
+      "x": 2002,
+      "y": 6600,
+      "w": 1440,
+      "h": 900,
+      "title": "Desktop: Loans, schedule open",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "Loans-adjust.dc.html": {
+      "x": 3522,
+      "y": 6600,
+      "w": 1440,
+      "h": 900,
+      "title": "Desktop: Loan adjustments",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "Instalments.dc.html": {
+      "x": 482,
+      "y": 7920,
+      "w": 1440,
+      "h": 900,
+      "title": "Desktop: Instalments",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "Instalments-phone.dc.html": {
+      "x": 0,
+      "y": 7920,
+      "w": 402,
+      "h": 874,
+      "title": "iPhone: Instalments",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "Recurring.dc.html": {
+      "x": 2484,
+      "y": 7920,
+      "w": 1440,
+      "h": 900,
+      "title": "Desktop: Recurring",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "Recurring-phone.dc.html": {
+      "x": 2002,
+      "y": 7920,
+      "w": 402,
+      "h": 874,
+      "title": "iPhone: Recurring",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "Main-delete-phone.dc.html": {
+      "x": 0,
+      "y": 9240,
+      "w": 402,
+      "h": 874,
+      "title": "iPhone: Delete a transaction (every edit form's Delete)",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "Main-delete.dc.html": {
+      "x": 482,
+      "y": 9240,
+      "w": 1440,
+      "h": 900,
+      "title": "Desktop: Delete a transaction (every edit form's Delete)",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "Budgets-delete.dc.html": {
+      "x": 2002,
+      "y": 9240,
+      "w": 1440,
+      "h": 900,
+      "title": "Desktop: Delete a budget",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "Categories-delete.dc.html": {
+      "x": 3522,
+      "y": 9240,
+      "w": 1440,
+      "h": 900,
+      "title": "Desktop: Delete a category",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "Instalments-delete.dc.html": {
+      "x": 5042,
+      "y": 9240,
+      "w": 1440,
+      "h": 900,
+      "title": "Desktop: Delete an instalment",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "Loans-adjust-remove.dc.html": {
+      "x": 6562,
+      "y": 9240,
+      "w": 1440,
+      "h": 900,
+      "title": "Desktop: Remove a loan adjustment",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "Confirm.dc.html": {
+      "x": 8082,
+      "y": 9240,
+      "w": 1440,
+      "h": 900,
+      "title": "Delete confirmation (component)"
+    },
+    "P-delete-before-phone.dc.html": {
+      "page": "proposed",
+      "x": 0,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "Before (old): iPhone delete dialog",
+      "radius": 36
+    },
+    "P-delete-after-phone.dc.html": {
+      "page": "proposed",
+      "x": 482,
+      "y": 0,
+      "w": 402,
+      "h": 874,
+      "title": "After (built, live): iPhone delete sheet",
+      "radius": 36
+    },
+    "P-delete-before.dc.html": {
+      "page": "proposed",
+      "x": 964,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Before (old): desktop delete dialog",
+      "radius": 10
+    },
+    "P-delete-after.dc.html": {
+      "page": "proposed",
+      "x": 2484,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "After (built, live): desktop delete dialog",
+      "radius": 10
+    },
+    "P-transactions-before-phone.dc.html": {
+      "page": "proposed",
+      "x": 0,
+      "y": 1320,
+      "w": 402,
+      "h": 874,
+      "title": "Before (old): iPhone Transactions",
+      "radius": 36
+    },
+    "P-transactions-after-phone.dc.html": {
+      "page": "proposed",
+      "x": 482,
+      "y": 1320,
+      "w": 402,
+      "h": 874,
+      "title": "After (built, live): iPhone Transactions",
+      "radius": 36
+    },
+    "P-transactions-before.dc.html": {
+      "page": "proposed",
+      "x": 964,
+      "y": 1320,
+      "w": 1440,
+      "h": 900,
+      "title": "Before (old): desktop Transactions",
+      "radius": 10
+    },
+    "P-transactions-after.dc.html": {
+      "page": "proposed",
+      "x": 2484,
+      "y": 1320,
+      "w": 1440,
+      "h": 900,
+      "title": "After (built, live): desktop Transactions",
+      "radius": 10
+    },
+    "P-dashboard-before.dc.html": {
+      "page": "proposed",
+      "x": 0,
+      "y": 2640,
+      "w": 1440,
+      "h": 900,
+      "title": "Before (old): Dashboard",
+      "radius": 10
+    },
+    "P-dashboard-after.dc.html": {
+      "page": "proposed",
+      "x": 1520,
+      "y": 2640,
+      "w": 1440,
+      "h": 900,
+      "title": "After (built, live): Dashboard",
+      "radius": 10
+    },
+    "Dashboard-labels.dc.html": {
+      "page": "proposed",
+      "x": 3040,
+      "y": 2640,
+      "w": 1240,
+      "h": 880,
+      "title": "Dashboard row labels: now and approved"
+    },
+    "P-loans-before.dc.html": {
+      "page": "proposed",
+      "x": 0,
+      "y": 3960,
+      "w": 1440,
+      "h": 900,
+      "title": "Before (old): Loans",
+      "radius": 10
+    },
+    "P-loans-after.dc.html": {
+      "page": "proposed",
+      "x": 1520,
+      "y": 3960,
+      "w": 1440,
+      "h": 900,
+      "title": "After (built, live): Loans",
+      "radius": 10
+    },
+    "P-investments-before.dc.html": {
+      "page": "proposed",
+      "x": 3040,
+      "y": 3960,
+      "w": 1440,
+      "h": 900,
+      "title": "Before (old): Investments",
+      "radius": 10
+    },
+    "P-investments-after.dc.html": {
+      "page": "proposed",
+      "x": 4560,
+      "y": 3960,
+      "w": 1440,
+      "h": 900,
+      "title": "After (built, live): Investments",
+      "radius": 10
+    },
+    "P-categories-before.dc.html": {
+      "page": "proposed",
+      "x": 0,
+      "y": 5280,
+      "w": 1440,
+      "h": 900,
+      "title": "Before (old): Categories",
+      "radius": 10
+    },
+    "P-categories-after.dc.html": {
+      "page": "proposed",
+      "x": 1520,
+      "y": 5280,
+      "w": 1440,
+      "h": 900,
+      "title": "After (built, live): Categories",
+      "radius": 10
+    },
+    "P-categories-before-income.dc.html": {
+      "page": "proposed",
+      "x": 0,
+      "y": 6260,
+      "w": 1440,
+      "h": 900,
+      "title": "Before (old): Categories, income",
+      "radius": 10
+    },
+    "P-categories-after-income.dc.html": {
+      "page": "proposed",
+      "x": 1520,
+      "y": 6260,
+      "w": 1440,
+      "h": 900,
+      "title": "After (built, live): Categories, income",
+      "radius": 10
+    },
+    "P-form-before-phone.dc.html": {
+      "page": "proposed",
+      "x": 0,
+      "y": 7580,
+      "w": 402,
+      "h": 874,
+      "title": "Before (live): iPhone new transaction, expense",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "P-form-after-phone.dc.html": {
+      "page": "proposed",
+      "x": 482,
+      "y": 7580,
+      "w": 402,
+      "h": 874,
+      "title": "After (proposed): iPhone new transaction, expense",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "P-form-before.dc.html": {
+      "page": "proposed",
+      "x": 964,
+      "y": 7580,
+      "w": 1440,
+      "h": 900,
+      "title": "Before (live): desktop new transaction, expense",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "P-form-after.dc.html": {
+      "page": "proposed",
+      "x": 2484,
+      "y": 7580,
+      "w": 1440,
+      "h": 900,
+      "title": "After (proposed): desktop new transaction, expense",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "P-date-options.dc.html": {
+      "page": "proposed",
+      "x": 4484,
+      "y": 7580,
+      "w": 1382,
+      "h": 700,
+      "title": "Date row: options to pick from",
+      "is_interactive": true,
+      "radius": 16
+    },
+    "P-form-before-income-phone.dc.html": {
+      "page": "proposed",
+      "x": 0,
+      "y": 8560,
+      "w": 402,
+      "h": 874,
+      "title": "Before (live): iPhone new transaction, income",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "P-form-after-income-phone.dc.html": {
+      "page": "proposed",
+      "x": 482,
+      "y": 8560,
+      "w": 402,
+      "h": 874,
+      "title": "After (proposed): iPhone new transaction, income",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "P-form-before-income.dc.html": {
+      "page": "proposed",
+      "x": 964,
+      "y": 8560,
+      "w": 1440,
+      "h": 900,
+      "title": "Before (live): desktop new transaction, income",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "P-form-after-income.dc.html": {
+      "page": "proposed",
+      "x": 2484,
+      "y": 8560,
+      "w": 1440,
+      "h": 900,
+      "title": "After (proposed): desktop new transaction, income",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "P-form-before-transfer-phone.dc.html": {
+      "page": "proposed",
+      "x": 0,
+      "y": 9540,
+      "w": 402,
+      "h": 874,
+      "title": "Before (live): iPhone new transaction, transfer",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "P-form-after-transfer-phone.dc.html": {
+      "page": "proposed",
+      "x": 482,
+      "y": 9540,
+      "w": 402,
+      "h": 874,
+      "title": "After (proposed): iPhone new transaction, transfer",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "P-form-before-transfer.dc.html": {
+      "page": "proposed",
+      "x": 964,
+      "y": 9540,
+      "w": 1440,
+      "h": 900,
+      "title": "Before (live): desktop new transaction, transfer",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "P-form-after-transfer.dc.html": {
+      "page": "proposed",
+      "x": 2484,
+      "y": 9540,
+      "w": 1440,
+      "h": 900,
+      "title": "After (proposed): desktop new transaction, transfer",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "P-picker-before-phone.dc.html": {
+      "page": "proposed",
+      "x": 0,
+      "y": 11040,
+      "w": 402,
+      "h": 874,
+      "title": "Before (live): iPhone new category",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "P-picker-after-phone.dc.html": {
+      "page": "proposed",
+      "x": 482,
+      "y": 11040,
+      "w": 402,
+      "h": 874,
+      "title": "After (proposed): iPhone new category, emoji picker",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "P-picker-search-phone.dc.html": {
+      "page": "proposed",
+      "x": 964,
+      "y": 11040,
+      "w": 402,
+      "h": 874,
+      "title": "After (proposed): iPhone, searching \"pet\"",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "P-picker-before.dc.html": {
+      "page": "proposed",
+      "x": 1446,
+      "y": 11040,
+      "w": 1440,
+      "h": 900,
+      "title": "Before (live): desktop edit category",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "P-picker-after.dc.html": {
+      "page": "proposed",
+      "x": 2966,
+      "y": 11040,
+      "w": 1440,
+      "h": 900,
+      "title": "After (proposed): desktop edit category, emoji picker",
+      "is_interactive": true,
+      "radius": 10
+    },
+    "P-insights-own-phone.dc.html": {
+      "page": "proposed",
+      "x": 0,
+      "y": 12040,
+      "w": 402,
+      "h": 874,
+      "title": "Now (live): Insights, each category's own colour",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "P-insights-auto-phone.dc.html": {
+      "page": "proposed",
+      "x": 482,
+      "y": 12040,
+      "w": 402,
+      "h": 874,
+      "title": "Option A: Insights, colours given by the app",
+      "is_interactive": true,
+      "radius": 36
+    },
+    "P-insights-emoji-phone.dc.html": {
+      "page": "proposed",
+      "x": 964,
+      "y": 12040,
+      "w": 402,
+      "h": 874,
+      "title": "Chosen, option B: Insights, given colours with the emoji",
+      "is_interactive": true,
+      "radius": 36
+    }
   },
   "order": [
-    "Main.dc.html", "Nav.dc.html", "SignIn.dc.html", "SignIn-phone.dc.html", "AppIcon.dc.html",
-    "Main-phone.dc.html", "Main-insights-phone.dc.html", "Main-new-phone.dc.html", "Main-more-phone.dc.html", "Main-new.dc.html", "Main-edit.dc.html", "Main-search-phone.dc.html", "Main-amount-phone.dc.html", "Main-amount.dc.html",
-    "Dashboard.dc.html", "Dashboard-phone.dc.html", "Dashboard-allocation-phone.dc.html", "Dashboard-allocation.dc.html", "Dashboard-account.dc.html",
-    "Budgets.dc.html", "Budgets-phone.dc.html", "Categories.dc.html", "Categories-phone.dc.html", "Categories-new.dc.html",
-    "Investments.dc.html", "Investments-phone.dc.html", "Investments-new.dc.html",
-    "Loans.dc.html", "Loans-phone.dc.html", "Loans-schedule.dc.html", "Loans-adjust.dc.html",
-    "Instalments.dc.html", "Instalments-phone.dc.html", "Recurring.dc.html", "Recurring-phone.dc.html",
-    "Main-delete-phone.dc.html", "Main-delete.dc.html", "Budgets-delete.dc.html", "Categories-delete.dc.html", "Instalments-delete.dc.html", "Loans-adjust-remove.dc.html", "Confirm.dc.html",
-    "P-delete-before-phone.dc.html", "P-delete-after-phone.dc.html", "P-delete-before.dc.html", "P-delete-after.dc.html",
-    "P-transactions-before-phone.dc.html", "P-transactions-after-phone.dc.html", "P-transactions-before.dc.html", "P-transactions-after.dc.html",
-    "P-dashboard-before.dc.html", "P-dashboard-after.dc.html", "Dashboard-labels.dc.html",
-    "P-loans-before.dc.html", "P-loans-after.dc.html", "P-investments-before.dc.html", "P-investments-after.dc.html",
-    "P-categories-before.dc.html", "P-categories-after.dc.html", "P-categories-before-income.dc.html", "P-categories-after-income.dc.html"
+    "Main.dc.html",
+    "Nav.dc.html",
+    "SignIn.dc.html",
+    "SignIn-phone.dc.html",
+    "AppIcon.dc.html",
+    "Main-phone.dc.html",
+    "Main-insights-phone.dc.html",
+    "Main-new-phone.dc.html",
+    "Main-more-phone.dc.html",
+    "Main-new.dc.html",
+    "Main-edit.dc.html",
+    "Main-search-phone.dc.html",
+    "Main-amount-phone.dc.html",
+    "Main-amount.dc.html",
+    "Dashboard.dc.html",
+    "Dashboard-phone.dc.html",
+    "Dashboard-allocation-phone.dc.html",
+    "Dashboard-allocation.dc.html",
+    "Dashboard-account.dc.html",
+    "Budgets.dc.html",
+    "Budgets-phone.dc.html",
+    "Categories.dc.html",
+    "Categories-phone.dc.html",
+    "Categories-new.dc.html",
+    "Investments.dc.html",
+    "Investments-phone.dc.html",
+    "Investments-new.dc.html",
+    "Loans.dc.html",
+    "Loans-phone.dc.html",
+    "Loans-schedule.dc.html",
+    "Loans-adjust.dc.html",
+    "Instalments.dc.html",
+    "Instalments-phone.dc.html",
+    "Recurring.dc.html",
+    "Recurring-phone.dc.html",
+    "Main-delete-phone.dc.html",
+    "Main-delete.dc.html",
+    "Budgets-delete.dc.html",
+    "Categories-delete.dc.html",
+    "Instalments-delete.dc.html",
+    "Loans-adjust-remove.dc.html",
+    "Confirm.dc.html",
+    "P-delete-before-phone.dc.html",
+    "P-delete-after-phone.dc.html",
+    "P-delete-before.dc.html",
+    "P-delete-after.dc.html",
+    "P-transactions-before-phone.dc.html",
+    "P-transactions-after-phone.dc.html",
+    "P-transactions-before.dc.html",
+    "P-transactions-after.dc.html",
+    "P-dashboard-before.dc.html",
+    "P-dashboard-after.dc.html",
+    "Dashboard-labels.dc.html",
+    "P-loans-before.dc.html",
+    "P-loans-after.dc.html",
+    "P-investments-before.dc.html",
+    "P-investments-after.dc.html",
+    "P-categories-before.dc.html",
+    "P-categories-after.dc.html",
+    "P-categories-before-income.dc.html",
+    "P-categories-after-income.dc.html",
+    "P-form-before-phone.dc.html",
+    "P-form-after-phone.dc.html",
+    "P-form-before.dc.html",
+    "P-form-after.dc.html",
+    "P-date-options.dc.html",
+    "P-form-before-income-phone.dc.html",
+    "P-form-after-income-phone.dc.html",
+    "P-form-before-income.dc.html",
+    "P-form-after-income.dc.html",
+    "P-form-before-transfer-phone.dc.html",
+    "P-form-after-transfer-phone.dc.html",
+    "P-form-before-transfer.dc.html",
+    "P-form-after-transfer.dc.html",
+    "P-picker-before-phone.dc.html",
+    "P-picker-after-phone.dc.html",
+    "P-picker-search-phone.dc.html",
+    "P-picker-before.dc.html",
+    "P-picker-after.dc.html",
+    "P-insights-own-phone.dc.html",
+    "P-insights-auto-phone.dc.html",
+    "P-insights-emoji-phone.dc.html"
   ],
   "notes": {
-    "t-signin": {"x": 0, "y": -300, "text": "Sign in", "kind": "title1", "maxW": 2962},
-    "t-tx": {"x": 0, "y": 1020, "text": "Transactions (the landing page)", "kind": "title1", "maxW": 8892},
-    "t-dash": {"x": 0, "y": 2340, "text": "Dashboard", "kind": "title1", "maxW": 5444},
-    "t-budcat": {"x": 0, "y": 3660, "text": "Budgets and categories", "kind": "title1", "maxW": 5444},
-    "t-inv": {"x": 0, "y": 4980, "text": "Investments", "kind": "title1", "maxW": 3442},
-    "t-loans": {"x": 0, "y": 6300, "text": "Loans", "kind": "title1", "maxW": 4962},
-    "t-inst": {"x": 0, "y": 7620, "text": "Instalments and recurring", "kind": "title1", "maxW": 3924},
-    "t-del": {"x": 0, "y": 8940, "text": "Delete confirmations", "kind": "title1", "maxW": 9522},
-    "n-design": {"x": 3542, "y": 0, "w": 380, "fill": "orange", "text": "This page is the live app as it is today. Changes proposed for it, each drawn as Before and After side by side, are on the \"Proposed changes\" page (page menu, top left)."},
-    "n-how": {"x": 3042, "y": 0, "w": 420, "text": "How the boards are built: each screen is one component board (Main = Transactions, Dashboard, Budgets, Categories, Investments, Loans, Recurring, SignIn; Loans also draws Instalments through its kind prop) that draws every state at both sizes, chosen by props: size is phone (iPhone 402 × 874, under 768 px wide) or desktop (1440 × 900). The other boards are small wrappers that mount it with different props, so a change to a screen is made once, in its component. Navigation lives in Nav. Every delete asks through one confirm dialog, drawn once in Confirm; the delete boards lay it over the screen it comes from.\n\nProposed changes: the components take a proposed prop. Off (the default, used on this page) draws the live app; on draws the proposal. The Proposed changes page sets it on its After boards.\n\nImages: the app icon, the Google logo and every Ant Design icon the app uses are uploaded to this canvas's image store and referenced as /_blob/ links. The icons are drawn through one shared stylesheet (also uploaded) as masks, so they take the text colour. That stylesheet also carries the app's own tokens and classes from src/index.css. A second uploaded stylesheet adds the classes from the live release b57ac88 (search in the title row, tappable spending rows, the full-screen phone form, the amount keypad).\n\nFollows the live site, financial-app-zy.vercel.app, as of 23 November 2026: its layout, with sample data in place of the owner's real accounts and amounts. Today is Monday 23 November 2026, amounts in RM.", "fill": "teal", "size": "s"},
-
-    "pt-del": {"page": "proposed", "x": 0, "y": -300, "text": "1 · Delete dialog redesign", "kind": "title1", "maxW": 4404},
-    "pn-del": {"page": "proposed", "x": 4004, "y": 0, "w": 400, "fill": "orange", "text": "Before: Ant Design's stock confirm. \"Delete?\" with no name, a yellow warning icon, small 32 px buttons and a different red from the rest of the app.\n\nAfter: the app's own form style. A 16 px panel, a red bin chip, a title that names the thing, a line saying exactly what goes, and the app's 42 px pill buttons. On phone it is a bottom sheet with full-width Delete and Cancel.\n\nSame change for budget, category, instalment and loan-adjustment deletes."},
-    "pt-tx": {"page": "proposed", "x": 0, "y": 1020, "text": "2 · Transactions: money format, month picker, emoji category icons", "kind": "title1", "maxW": 4404},
-    "pn-tx": {"page": "proposed", "x": 4004, "y": 1320, "w": 400, "fill": "orange", "text": "Money: a sign then a space then RM, always 2 decimals: \"+ RM 4,381.35\", \"− RM 12.50\" (was \"+RM\", \"−RM\").\n\nMonth picker: drawn like the form fields, 44 tall with a 1.5 px border and 10 px corners (was a 32 px Ant Design picker).\n\nCategory icons: every category shows an emoji that looks like the thing (🍴 Food & Drinks, 🛒 Groceries, 🚆 Transport, 🧾 Bills & Fees, 🚗 Car, 🐈‍⬛ Cat…) instead of a line icon, with no tile background behind it. Fluent Emoji Flat images, the set the note app uses. Rows with no category keep the grey line icon on its tile.\n\nCar becomes #383838 (live #9aa3ad), and the car itself is drawn in that colour; the cat is black. Both get a thin light outline so they show on the dark panel. The chart swatches in a very dark colour get a light rim."},
-    "pt-dash": {"page": "proposed", "x": 0, "y": 2340, "text": "3 · Dashboard: money format and row labels", "kind": "title1", "maxW": 4280},
-    "pn-dash": {"page": "proposed", "x": 4360, "y": 2640, "w": 400, "fill": "orange", "text": "Money: net worth reads \"− RM 351,693.18\" (was \"RM -351,693.18\"); assets, liabilities and yearly gain get 2 decimals; account rows say RM instead of MYR, with a space after the minus.\n\nRow labels, approved 23 Nov 2026 and drawn on the After board: the second line stops repeating the group. Investments show the symbol, with type, units and gain underneath; loans show rate type, rate and months paid; instalments show the monthly amount and months paid; bank accounts and cards keep type · bank. The labels board just left of this note compares them with today's."},
-    "pt-loans": {"page": "proposed", "x": 0, "y": 3660, "text": "4 · Loans and Investments: 2 decimals, sidebar Loans icon", "kind": "title1", "maxW": 6000},
-    "pn-loans": {"page": "proposed", "x": 6080, "y": 3960, "w": 400, "fill": "orange", "text": "Loans: Borrowed, Total interest and the donut total get 2 decimals (RM 505,000.00, RM 481,048.00, RM 447,607.16).\n\nSidebar: the Loans icon becomes the account book the phone bar already uses (was a dollar coin). Visible on every After board.\n\nInvestments: price and average cost always 2 decimals; gains read \"+ USD 1,212.50\" and \"+ RM 19,337.37\"."},
-    "pt-cat": {"page": "proposed", "x": 0, "y": 4980, "text": "5 · Categories: emoji icons", "kind": "title1", "maxW": 2960},
-    "pn-cat": {"page": "proposed", "x": 3040, "y": 5280, "w": 400, "fill": "orange", "text": "The real categories, as on the live site. Every one shows an emoji that looks like the thing instead of a line icon, with no tile background behind it. Fluent Emoji Flat images, the set the note app uses (MIT licence).\n\nExpense: 🍴 Food & Drinks, 🛍️ Shopping, 🚗 Car, 🧾 Bills & Fees, 🚆 Transport, 🛒 Groceries, 🎬 Entertainment, 🎾 Sports & Hobbies, 💊 Healthcare, ✂️ Beauty, 🎁 Gifts, 🐈‍⬛ Cat, ✈️ Travel, 🏠 Home, 📚 Education, 🏷️ Other.\nIncome: 💰 Salary, 🎉 Bonus, 👛 Allowance, 🪙 Cash Back, 🏷️ Other, 🎁 Gifts, 📋 Claims, 💵 Extra Income, 🏦 Savings.\n\nCar and Cat are the real ones: the car is recoloured to #383838 and the cat to black, each with a thin light outline so they show on the dark panel. Car's category colour becomes #383838 (live #9aa3ad).\n\nThe category form's Icon field would become an emoji picker."},
-    "pn-skip": {"page": "proposed", "x": 3520, "y": 5280, "w": 400, "fill": "gray", "text": "Not on this page:\n\n• One form pattern on phone (Transactions is a full-screen page, the rest are bottom sheets): later.\n• Budgets: left as it is.\n• Where the Delete buttons sit: fine for now."}
+    "t-signin": {
+      "x": 0,
+      "y": -300,
+      "text": "Sign in",
+      "kind": "title1",
+      "maxW": 2962
+    },
+    "t-tx": {
+      "x": 0,
+      "y": 1020,
+      "text": "Transactions (the landing page)",
+      "kind": "title1",
+      "maxW": 8892
+    },
+    "t-dash": {
+      "x": 0,
+      "y": 2340,
+      "text": "Dashboard",
+      "kind": "title1",
+      "maxW": 5444
+    },
+    "t-budcat": {
+      "x": 0,
+      "y": 3660,
+      "text": "Budgets and categories",
+      "kind": "title1",
+      "maxW": 5444
+    },
+    "t-inv": {
+      "x": 0,
+      "y": 4980,
+      "text": "Investments",
+      "kind": "title1",
+      "maxW": 3442
+    },
+    "t-loans": {
+      "x": 0,
+      "y": 6300,
+      "text": "Loans",
+      "kind": "title1",
+      "maxW": 4962
+    },
+    "t-inst": {
+      "x": 0,
+      "y": 7620,
+      "text": "Instalments and recurring",
+      "kind": "title1",
+      "maxW": 3924
+    },
+    "t-del": {
+      "x": 0,
+      "y": 8940,
+      "text": "Delete confirmations",
+      "kind": "title1",
+      "maxW": 9522
+    },
+    "n-design": {
+      "x": 3542,
+      "y": 0,
+      "w": 380,
+      "fill": "orange",
+      "text": "This page is the live app as it is today. Changes proposed for it, each drawn as Before and After side by side, are on the \"Proposed changes\" page (page menu, top left)."
+    },
+    "n-how": {
+      "x": 3042,
+      "y": 0,
+      "w": 420,
+      "text": "How the boards are built: each screen is one component board (Main = Transactions, Dashboard, Budgets, Categories, Investments, Loans, Recurring, SignIn; Loans also draws Instalments through its kind prop) that draws every state at both sizes, chosen by props: size is phone (iPhone 402 × 874, under 768 px wide) or desktop (1440 × 900). The other boards are small wrappers that mount it with different props, so a change to a screen is made once, in its component. Navigation lives in Nav. Every delete asks through one confirm dialog, drawn once in Confirm; the delete boards lay it over the screen it comes from.\n\nProposed changes: the components take a proposed prop. Off (the default, used on this page) draws the live app; on draws the proposal. The Proposed changes page sets it on its After boards.\n\nImages: the app icon, the Google logo and every Ant Design icon the app uses are uploaded to this canvas's image store and referenced as /_blob/ links. The icons are drawn through one shared stylesheet (also uploaded) as masks, so they take the text colour. That stylesheet also carries the app's own tokens and classes from src/index.css. A second uploaded stylesheet adds the classes from the live release b57ac88 (search in the title row, tappable spending rows, the full-screen phone form, the amount keypad).\n\nFollows the live site, financial-app-zy.vercel.app, as of 23 November 2026: its layout, with sample data in place of the owner's real accounts and amounts. Today is Monday 23 November 2026, amounts in RM.",
+      "fill": "teal",
+      "size": "s"
+    },
+    "pt-del": {
+      "page": "proposed",
+      "x": 0,
+      "y": -300,
+      "text": "1 · Delete dialog redesign",
+      "kind": "title1",
+      "maxW": 4404
+    },
+    "pn-del": {
+      "page": "proposed",
+      "x": 4004,
+      "y": 0,
+      "w": 400,
+      "fill": "orange",
+      "text": "Built and live since 23 Nov 2026 (commit c4f82ce), and drawn on the Design page. The Before boards here keep the old look.\n\nBefore: Ant Design's stock confirm. \"Delete?\" with no name, a yellow warning icon, small 32 px buttons and a different red from the rest of the app.\n\nAfter: the app's own form style. A 16 px panel, a red bin chip, a title that names the thing, a line saying exactly what goes, and the app's 42 px pill buttons. On phone it is a bottom sheet with full-width Delete and Cancel.\n\nSame change for budget, category, instalment and loan-adjustment deletes."
+    },
+    "pt-tx": {
+      "page": "proposed",
+      "x": 0,
+      "y": 1020,
+      "text": "2 · Transactions: money format, month picker, emoji category icons",
+      "kind": "title1",
+      "maxW": 4404
+    },
+    "pn-tx": {
+      "page": "proposed",
+      "x": 4004,
+      "y": 1320,
+      "w": 400,
+      "fill": "orange",
+      "text": "Built and live since 23 Nov 2026 (commit c4f82ce), and drawn on the Design page. The Before boards here keep the old look.\n\nMoney: a sign then a space then RM, always 2 decimals: \"+ RM 4,381.35\", \"− RM 12.50\" (was \"+RM\", \"−RM\").\n\nMonth picker: drawn like the form fields, 44 tall with a 1.5 px border and 10 px corners (was a 32 px Ant Design picker).\n\nCategory icons: every category shows an emoji that looks like the thing (🍴 Food & Drinks, 🛒 Groceries, 🚆 Transport, 🧾 Bills & Fees, 🚗 Car, 🐈‍⬛ Cat…) instead of a line icon, with no tile background behind it. Fluent Emoji Flat images, the set the note app uses. Rows with no category keep the grey line icon on its tile.\n\nCar becomes #383838 (live #9aa3ad), and the car itself is drawn in that colour; the cat is black. Both get a thin light outline so they show on the dark panel. The chart swatches in a very dark colour get a light rim."
+    },
+    "pt-dash": {
+      "page": "proposed",
+      "x": 0,
+      "y": 2340,
+      "text": "3 · Dashboard: money format and row labels",
+      "kind": "title1",
+      "maxW": 4280
+    },
+    "pn-dash": {
+      "page": "proposed",
+      "x": 4360,
+      "y": 2640,
+      "w": 400,
+      "fill": "orange",
+      "text": "Built and live since 23 Nov 2026 (commit c4f82ce), and drawn on the Design page. The Before boards here keep the old look.\n\nMoney: net worth reads \"− RM 351,693.18\" (was \"RM -351,693.18\"); assets, liabilities and yearly gain get 2 decimals; account rows say RM instead of MYR, with a space after the minus.\n\nRow labels, approved 23 Nov 2026: the second line stops repeating the group. Investments show the symbol, with type, units and gain underneath; loans show rate type, rate and months paid; instalments show the monthly amount and months paid; bank accounts and cards keep type · bank. The labels board just left of this note compares them with today's."
+    },
+    "pt-loans": {
+      "page": "proposed",
+      "x": 0,
+      "y": 3660,
+      "text": "4 · Loans and Investments: 2 decimals, sidebar Loans icon",
+      "kind": "title1",
+      "maxW": 6000
+    },
+    "pn-loans": {
+      "page": "proposed",
+      "x": 6080,
+      "y": 3960,
+      "w": 400,
+      "fill": "orange",
+      "text": "Built and live since 23 Nov 2026 (commit c4f82ce), and drawn on the Design page. The Before boards here keep the old look.\n\nLoans: Borrowed, Total interest and the donut total get 2 decimals (RM 505,000.00, RM 481,048.00, RM 447,607.16).\n\nSidebar: the Loans icon becomes the account book the phone bar already uses (was a dollar coin). Visible on every After board.\n\nInvestments: price and average cost always 2 decimals; gains read \"+ USD 1,212.50\" and \"+ RM 19,337.37\"."
+    },
+    "pt-cat": {
+      "page": "proposed",
+      "x": 0,
+      "y": 4980,
+      "text": "5 · Categories: emoji icons",
+      "kind": "title1",
+      "maxW": 2960
+    },
+    "pn-cat": {
+      "page": "proposed",
+      "x": 3040,
+      "y": 5280,
+      "w": 400,
+      "fill": "orange",
+      "text": "Built and live since 23 Nov 2026 (commit c4f82ce), and drawn on the Design page. The Before boards here keep the old look.\n\nThe real categories, as on the live site. Every one shows an emoji that looks like the thing instead of a line icon, with no tile background behind it. Fluent Emoji Flat images, the set the note app uses (MIT licence).\n\nExpense: 🍴 Food & Drinks, 🛍️ Shopping, 🚗 Car, 🧾 Bills & Fees, 🚆 Transport, 🛒 Groceries, 🎬 Entertainment, 🎾 Sports & Hobbies, 💊 Healthcare, ✂️ Beauty, 🎁 Gifts, 🐈‍⬛ Cat, ✈️ Travel, 🏠 Home, 📚 Education, 🏷️ Other.\nIncome: 💰 Salary, 🎉 Bonus, 👛 Allowance, 🪙 Cash Back, 🏷️ Other, 🎁 Gifts, 📋 Claims, 💵 Extra Income, 🏦 Savings.\n\nCar and Cat are the real ones: the car is recoloured to #383838 and the cat to black, each with a thin light outline so they show on the dark panel. Car's category colour becomes #383838 (live #9aa3ad).\n\nThe category form's Icon field would become an emoji picker."
+    },
+    "pt-form": {
+      "page": "proposed",
+      "x": 0,
+      "y": 7280,
+      "text": "6 · New transaction: fewer taps",
+      "kind": "title1",
+      "maxW": 4404
+    },
+    "pn-form": {
+      "page": "proposed",
+      "x": 4004,
+      "y": 7580,
+      "w": 400,
+      "fill": "orange",
+      "text": "Approved 23 Nov 2026, not built yet. The Design page now draws this form on every board that opens it (new, amount keypad, edit, delete); the Before boards here keep the old one.\n\nOrder: Account | Amount on one row, then Date, Note, Category.\n\nDate (option E from the options board): one full-width field that names the day in words (\"Today, 23 Nov\"). A pill inside swaps to Yesterday in one tap (and back to Today); tapping the field opens the calendar.\n\nCategory: every category on show as a round icon with its name underneath, one tap to pick, instead of a dropdown; the picked one gets a green ring. 4 a row on phone, 6 on desktop.\n\nRows, top to bottom: expense, income, transfer. Income shows the income categories. A transfer has no category (live asks for one): it keeps the live Transfer To field under Account | Amount, then Date and Note.\n\nNo page scroll: Type, Account | Amount, Date and Note stay put and Cancel / Add stay pinned at the bottom; only the category grid scrolls, inside the space left between them (on a shorter phone, or with the keypad open). On phone the form covers the bottom bar.\n\nTry it: the After boards (and the Design page boards) are interactive (tap a tile, Yesterday, the tabs)."
+    },
+    "pn-skip": {
+      "page": "proposed",
+      "x": 3520,
+      "y": 5280,
+      "w": 400,
+      "fill": "gray",
+      "text": "Not on this page:\n\n• One form pattern on phone (Transactions is a full-screen page, the rest are bottom sheets): later.\n• Budgets: left as it is.\n• Where the Delete buttons sit: fine for now."
+    },
+    "pt-picker": {
+      "page": "proposed",
+      "x": 0,
+      "y": 10740,
+      "text": "7 · Category icon: emoji picker",
+      "kind": "title1",
+      "maxW": 4886
+    },
+    "pn-picker": {
+      "page": "proposed",
+      "x": 4486,
+      "y": 11040,
+      "w": 400,
+      "fill": "orange",
+      "text": "Approved 23 Nov 2026, not built yet. The Design page now draws this form wherever a category is added or edited; the Before boards here keep the old one.\n\nThe \"Icon (optional)\" text box, where you had to guess a word the app knows, becomes a picker: tap the emoji you want.\n\nSuggested: about 100 Fluent Flat emoji chosen for a family budget in Malaysia, in groups (Food & drink, Transport, Home & bills, Family, Pets, Health & care, Shopping, Leisure & hobbies, Travel, Giving & occasions, Money & work, Finance & admin, Other). The chips on top filter to one group.\n\nSearch covers the whole Fluent set (1,595 emoji), so any category you make later can have its emoji without a code change. Tap the search field on the After boards to see a sample search for \"pet\".\n\nNo Color field: the app gives each new category its colour (see the Insights boards below). The form is Name, Type, then the picker.\n\nThe picked emoji shows inside the Name field and gets a green ring, as on the transaction form. Only the emoji grid scrolls; on phone the form becomes a full-screen page (like the transaction form) instead of a bottom sheet, so the grid has room. No scrollbars.\n\nThe car and the black cat are the app's own recoloured ones. Not built yet; the app needs the emoji files and stores the picked emoji's name in the icon column."
+    },
+    "pn-insights": {
+      "page": "proposed",
+      "x": 1446,
+      "y": 12040,
+      "w": 400,
+      "fill": "orange",
+      "text": "Approved 23 Nov 2026: option B, and the Color field is gone from the category form (the picker boards above). Not built yet. The Design page now draws Insights this way; the Now board here keeps the old colours.\n\nIf the form stops asking for a colour, this is the only place it changes: the spending breakdown on Insights.\n\nNow: each category shows the colour you picked. Picked colours repeat (Entertainment and Education are both blue, Healthcare and Beauty both red, most income categories the same blue), and the cat and the car are near-black slices that barely show on the dark panel.\n\nOption A: the app gives each new category the next colour from a set of 12 that stay apart on the dark panel (Ant Design's chart colours). It is given once, when the category is made, so a category keeps its colour every month. You could still change it in the edit form.\n\nOption B: the same colours, and the list shows each category's emoji instead of a plain square, with a small dot in its slice colour, so the rows read like the rest of the app."
+    }
   },
   "designSystems": []
 }

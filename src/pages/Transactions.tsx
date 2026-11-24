@@ -31,6 +31,7 @@ interface Transaction {
   date: string;
   categoryName: string | null;
   categoryColor: string | null;
+  categoryIcon: string | null;
   accountName: string | null;
   transferToId?: string | null;
 }
@@ -139,7 +140,13 @@ function TxRow({
       onKeyDown={(e) => e.key === "Enter" && onClick()}
       className="tx-row cursor-pointer"
     >
-      <CategoryIcon name={tx.categoryName} color={color} size={38} />
+      <CategoryIcon
+        // A transfer has no category: show the transfer arrows instead.
+        name={tx.categoryName ?? (tx.type === "transfer" ? "Transfer" : null)}
+        iconKey={tx.categoryIcon}
+        color={color}
+        size={38}
+      />
       <div className="meta">
         <div className="lbl">{tx.description || categoryLabel}</div>
         <div className="sub">
@@ -466,13 +473,13 @@ export default function Transactions() {
   const spendByCategory = useMemo(() => {
     const map = new Map<
       string,
-      { val: number; color: string; categoryId: string | null }
+      { val: number; color: string; icon: string | null; categoryId: string | null }
     >();
     for (const tx of insightTxns) {
       if (tx.type !== "expense") continue;
       const name = tx.categoryName ?? "Other";
       const color = tx.categoryColor ?? DEFAULT_CATEGORY_COLOR;
-      const cur = map.get(name) ?? { val: 0, color, categoryId: tx.categoryId };
+      const cur = map.get(name) ?? { val: 0, color, icon: tx.categoryIcon, categoryId: tx.categoryId };
       cur.val += Number(tx.amount);
       cur.color = color;
       map.set(name, cur);
@@ -480,10 +487,11 @@ export default function Transactions() {
     const total = [...map.values()].reduce((s, v) => s + v.val, 0) || 1;
     // Every category that had spending gets its own slice — no "Other" roll-up.
     const ranked = [...map.entries()]
-      .map(([label, { val, color, categoryId }]) => ({
+      .map(([label, { val, color, icon, categoryId }]) => ({
         label,
         val,
         color,
+        icon,
         categoryId,
       }))
       .sort((a, b) => b.val - a.val);
@@ -633,18 +641,22 @@ export default function Transactions() {
               disabled={!d.categoryId}
               onClick={() => d.categoryId && showCategory(d.categoryId)}
             >
-              <span style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
-                <span
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: 3,
-                    background: d.color,
-                    // Near-black colours (e.g. Cat) vanish on the dark panel: add a light rim.
-                    boxShadow: isVeryDark(d.color) ? "inset 0 0 0 1px rgba(255,255,255,0.35)" : undefined,
-                    flexShrink: 0,
-                  }}
-                />
+              <span style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                {/* The category's emoji, with a dot in its slice colour so the
+                    row still matches its slice of the chart. */}
+                <span className="slice-emo">
+                  <CategoryIcon name={d.label} iconKey={d.icon} color={d.color} size={24} />
+                  <span
+                    className="slice-dot"
+                    style={{
+                      background: d.color,
+                      // Near-black colours vanish on the dark panel: add a light rim.
+                      boxShadow: isVeryDark(d.color)
+                        ? "0 0 0 2px var(--panel), inset 0 0 0 1px rgba(255,255,255,0.35)"
+                        : undefined,
+                    }}
+                  />
+                </span>
                 <span
                   style={{
                     color: "var(--t1)",

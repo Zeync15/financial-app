@@ -154,7 +154,7 @@ a{color:#1ec98a}a:hover{color:#5fe0b0}
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"form":{"editor":"enum","options":["none","new","edit"],"default":"none"},"proposed":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"form":{"editor":"enum","options":["none","new","edit"],"default":"none"},"proposed":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
     const s = this.state || {};
@@ -162,8 +162,8 @@ class Component extends DCLogic {
     const form = s.form ?? this.props.form ?? 'none';
     const n2 = (n) => Math.abs(n).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const n4 = (n) => Math.abs(n).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
-    // proposed: draws the changes proposed on 23 Nov 2026 (see the Proposed changes page); off is the live app.
-    const P = !!(this.props.proposed ?? false);
+    // proposed: the changes proposed on 23 Nov 2026, built and live (commit c4f82ce), so on by default; off draws the old look (the Before boards in rows 1–5).
+    const P = !!(this.props.proposed ?? true);
     const sp = P ? ' ' : '';
     const rows = [
       ['VGT', 'Vanguard Information Technology ETF', 'ETF', 'USD', 10, 520, 641.25, 36.95, '#13c2c2'],

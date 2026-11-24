@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Modal as AntdModal, Drawer as AntdDrawer } from "antd";
-import { PlusOutlined, EditOutlined, DownOutlined } from "@ant-design/icons";
+import { PlusOutlined, EditOutlined, DownOutlined, CalendarOutlined } from "@ant-design/icons";
+import dayjs from "dayjs";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useConfirmDelete } from "@/components/common/ConfirmDelete";
 import type { ConfirmDeleteOptions } from "@/components/common/ConfirmDelete";
@@ -19,6 +20,7 @@ export function Modal({
   icon = "plus",
   width = 560,
   fullscreen = false,
+  fill = false,
   children,
 }: {
   open: boolean;
@@ -30,6 +32,10 @@ export function Modal({
   // Mobile: render as a full-screen page instead of a bottom sheet, so the form
   // grows downward from the top rather than upward from the bottom edge.
   fullscreen?: boolean;
+  // The form fits the screen instead of scrolling as a page: the header, the
+  // fields and the footer stay put, and one inner part (class `fm-scroll`)
+  // scrolls in the space left. Pair with <FormBody fill>.
+  fill?: boolean;
   children: React.ReactNode;
 }) {
   const iconNode =
@@ -46,7 +52,7 @@ export function Modal({
   if (isMobile && fullscreen) {
     if (!open) return null;
     return (
-      <div className="fm-full" role="dialog" aria-modal="true">
+      <div className={fill ? "fm-full fm-fill" : "fm-full"} role="dialog" aria-modal="true">
         <div className="fm-full-head">
           <span className="fm-head-ic">{iconNode}</span>
           {title}
@@ -81,7 +87,9 @@ export function Modal({
       width={width}
       destroyOnClose
       closeIcon={<span style={{ fontSize: 16 }}>×</span>}
-      className="fm-modal"
+      className={fill ? "fm-modal fm-fill" : "fm-modal"}
+      // A form that fits the screen sits in the middle, so it gets the most height.
+      centered={fill}
       styles={{ body: { padding: 0 } }}
     >
       {header}
@@ -90,8 +98,15 @@ export function Modal({
   );
 }
 
-export function FormBody({ children }: { children: React.ReactNode }) {
-  return <div className="fm-body">{children}</div>;
+export function FormBody({
+  fill = false,
+  children,
+}: {
+  // Takes the height the form has left (see Modal's `fill`).
+  fill?: boolean;
+  children: React.ReactNode;
+}) {
+  return <div className={fill ? "fm-body fm-body-fill" : "fm-body"}>{children}</div>;
 }
 
 export function Row({ children }: { children: React.ReactNode }) {
@@ -102,18 +117,24 @@ export function Field({
   label,
   required,
   hint,
+  aside,
+  className,
   children,
 }: {
   label: string;
   required?: boolean;
   hint?: string;
+  /** Small text at the right end of the label row. */
+  aside?: React.ReactNode;
+  className?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="field">
+    <div className={className ? `field ${className}` : "field"}>
       <div className="field-lbl">
         {label}
         {required && <span className="req">*</span>}
+        {aside && <span className="field-aside">{aside}</span>}
       </div>
       {children}
       {hint && <div className="field-hint">{hint}</div>}
@@ -477,6 +498,67 @@ export function DateInput({
         onChange={(e) => onChange?.(e.target.value)}
       />
     </span>
+  );
+}
+
+/**
+ * A date as one field that names the day ("Today, 23 Nov"), with a pill inside
+ * that swaps between today and yesterday in one tap. Tapping anywhere else on
+ * the field opens the native calendar: a see-through date input lies over it.
+ */
+export function DayInput({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const now = dayjs();
+  const today = now.format("YYYY-MM-DD");
+  const yesterday = now.subtract(1, "day").format("YYYY-MM-DD");
+  const d = dayjs(value);
+  const short = d.isValid() ? d.format(d.year() === now.year() ? "D MMM" : "D MMM YYYY") : "";
+  const text = !d.isValid()
+    ? "Pick a date"
+    : value === today
+      ? `Today, ${short}`
+      : value === yesterday
+        ? `Yesterday, ${short}`
+        : `${d.format("ddd")}, ${short}`;
+  const isToday = value === today;
+  const openPicker = () => {
+    // Chrome only opens the calendar from its icon unless asked; Safari and
+    // Firefox open it on tap anyway, and may not support showPicker.
+    try {
+      inputRef.current?.showPicker();
+    } catch {
+      /* the tap itself opens it */
+    }
+  };
+  return (
+    <div className="fld-day">
+      <span className="fld-day-text">{text}</span>
+      <button
+        type="button"
+        className="fld-day-pill"
+        onClick={() => onChange(isToday ? yesterday : today)}
+      >
+        {isToday ? "Yesterday" : "Today"}
+      </button>
+      <span className="fld-day-cal" aria-hidden>
+        <CalendarOutlined />
+      </span>
+      <input
+        ref={inputRef}
+        className="fld-day-native"
+        type="date"
+        aria-label="Date"
+        value={value}
+        onClick={openPicker}
+        onChange={(e) => e.target.value && onChange(e.target.value)}
+      />
+    </div>
   );
 }
 

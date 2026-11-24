@@ -12,12 +12,14 @@ import {
   AmountKeypad,
   evaluateAmount,
   formatAmountResult,
-  DateInput,
+  DayInput,
   SelectInput,
   Segmented,
   FormFooter,
   useFormState,
 } from "@/components/forms/FormKit";
+import CategoryIcon from "@/components/common/CategoryIcon";
+import { DEFAULT_CATEGORY_COLOR } from "@/lib/categoryIcons";
 
 interface Account {
   id: string;
@@ -28,6 +30,7 @@ interface Category {
   id: string;
   name: string;
   type: string;
+  icon: string | null;
   color: string | null;
 }
 
@@ -106,9 +109,9 @@ export default function AddTransactionForm({
     });
   }, [open, initial, setState]);
 
-  const filteredCategories = categories.filter(
-    (c) => state.type === "transfer" || c.type === state.type,
-  );
+  // A transfer moves money between your own accounts, so it has no category.
+  const isTransfer = state.type === "transfer";
+  const filteredCategories = categories.filter((c) => c.type === state.type);
 
   const handleSubmit = async () => {
     if (!state.accountId || !state.amount || !state.date) {
@@ -122,11 +125,11 @@ export default function AddTransactionForm({
       message.error("Enter a valid amount");
       return;
     }
-    if (!state.categoryId) {
+    if (!isTransfer && !state.categoryId) {
       message.error("Category is required");
       return;
     }
-    if (state.type === "transfer" && !state.transferToId) {
+    if (isTransfer && !state.transferToId) {
       message.error("Transfer destination is required");
       return;
     }
@@ -135,9 +138,9 @@ export default function AddTransactionForm({
       const payload = {
         type: state.type,
         accountId: state.accountId,
-        transferToId: state.type === "transfer" ? state.transferToId : null,
+        transferToId: isTransfer ? state.transferToId : null,
         amount: formatAmountResult(amount),
-        categoryId: state.categoryId,
+        categoryId: isTransfer ? null : state.categoryId,
         date: state.date,
         description: state.description || null,
       };
@@ -184,8 +187,10 @@ export default function AddTransactionForm({
       title={isEditing ? "Edit Transaction" : "New Transaction"}
       icon={isEditing ? "pencil" : "plus"}
       fullscreen
+      fill
     >
-      <FormBody>
+      {/* The form fits the screen: only the category grid scrolls. */}
+      <FormBody fill>
         <Field label="Type" required>
           <Segmented<TxType>
             value={state.type}
@@ -225,7 +230,7 @@ export default function AddTransactionForm({
             onClose={() => setPadOpen(false)}
           />
         </div>
-        {state.type === "transfer" && (
+        {isTransfer && (
           <Field label="Transfer To" required>
             <SelectInput
               value={state.transferToId}
@@ -237,22 +242,9 @@ export default function AddTransactionForm({
             />
           </Field>
         )}
-        <Row>
-          <Field label="Category" required>
-            <SelectInput
-              value={state.categoryId}
-              onChange={(v) => set("categoryId", v)}
-              options={filteredCategories.map((c) => ({
-                value: c.id,
-                label: c.name,
-              }))}
-              placeholder="Select category"
-            />
-          </Field>
-          <Field label="Date" required>
-            <DateInput value={state.date} onChange={(v) => set("date", v)} />
-          </Field>
-        </Row>
+        <Field label="Date" required>
+          <DayInput value={state.date} onChange={(v) => set("date", v)} />
+        </Field>
         <Field label="Note">
           <TextInput
             value={state.description}
@@ -260,6 +252,35 @@ export default function AddTransactionForm({
             placeholder="What was this for?"
           />
         </Field>
+        {!isTransfer && (
+          <Field label="Category" required className="field-fill">
+            <div className="qcat-grid fm-scroll" role="radiogroup" aria-label="Category">
+              {filteredCategories.map((c) => {
+                const on = c.id === state.categoryId;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    className={on ? "qcat on" : "qcat"}
+                    onClick={() => set("categoryId", c.id)}
+                  >
+                    <span className="qcat-ic">
+                      <CategoryIcon
+                        name={c.name}
+                        iconKey={c.icon}
+                        color={c.color ?? DEFAULT_CATEGORY_COLOR}
+                        size={36}
+                      />
+                    </span>
+                    <span className="qcat-name">{c.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
+        )}
       </FormBody>
       <FormFooter
         primary={isEditing ? "Save Changes" : "Add Transaction"}

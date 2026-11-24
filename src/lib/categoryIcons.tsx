@@ -23,6 +23,7 @@ import {
   TrophyOutlined,
   SmileOutlined,
 } from "@ant-design/icons";
+import { emojiIsDark, emojiKeyOf, emojiSrc } from "@/lib/emojiCatalog";
 
 const CATEGORY_ICON_MAP: Record<string, React.ReactNode> = {
   food: <CoffeeOutlined />,
@@ -142,5 +143,8 @@ export function getCategoryEmoji(
   categoryName: string | null,
   categoryIcon?: string | null,
 ): CategoryEmoji | null {
+  // Picked in the Categories form: "emoji:<key>" names a file in the Fluent set.
+  const picked = emojiKeyOf(categoryIcon);
+  if (picked) return { src: emojiSrc(picked), dark: emojiIsDark(picked) };
   return (categoryIcon && matchEmoji(categoryIcon)) || (categoryName && matchEmoji(categoryName)) || null;
 }
