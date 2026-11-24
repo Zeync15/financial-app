@@ -1,6 +1,6 @@
 # Design canvas (copy)
 
-A copy of the "Financial App" design canvas, taken on 23 November 2026 from https://claude.ai/artifact/XpwwrUh4Q2WqcCjoqLmaLp (version 1795443933-8357). The live canvas stays there and is where designing happens; this folder is a snapshot so the design can be read and compared from the repo.
+A copy of the "Financial App" design canvas, taken on 24 November 2026 from https://claude.ai/artifact/XpwwrUh4Q2WqcCjoqLmaLp (version 1795509708-5afb). The live canvas stays there and is where designing happens; this folder is a snapshot so the design can be read and compared from the repo.
 
 The canvas follows the live site (https://financial-app-zy.vercel.app) as it looked on 23 November 2026, after release `c4f82ce`, plus the approved designs that are not built yet. The categories (names, order, colours and icons) are the real ones from the live site; every account, amount, transaction and other name on the boards is sample data, and the sidebar shows `you@example.com`. Keep it that way: this repo is public, so real figures never go on the canvas.
 
@@ -11,8 +11,9 @@ The canvas follows the live site (https://financial-app-zy.vercel.app) as it loo
 3. Dashboard (`P-dashboard-*`, `Dashboard-labels`): the money format, RM instead of MYR on account rows, and new second lines for the account rows. Investments show the symbol with "type · units · gain" underneath; loans "rate type · rate p.a. · months paid"; instalments "RM a month · months paid"; bank accounts and cards keep "type · bank". Built.
 4. Loans and Investments (`P-loans-*`, `P-investments-*`): 2 decimals everywhere, and the desktop sidebar's Loans icon becomes the account book from the phone bar. Built.
 5. Categories (`P-categories-*`, expense and income tabs): every category shows an emoji that looks like the thing instead of a line icon (🍴 Food & Drinks, 🛍️ Shopping, 🚗 Car, 🧾 Bills & Fees, 🚆 Transport, 🛒 Groceries, 🎬 Entertainment, 🎾 Sports & Hobbies, 💊 Healthcare, ✂️ Beauty, 🎁 Gifts, 🐈‍⬛ Cat, ✈️ Travel, 🏠 Home, 📚 Education, 🏷️ Other; income 💰 Salary, 🎉 Bonus, 👛 Allowance, 🪙 Cash Back, 🏷️ Other, 🎁 Gifts, 📋 Claims, 💵 Extra Income, 🏦 Savings). The car emoji is recoloured to `#383838` and the cat to black. The emoji has no tile behind it; the car and the cat get a thin light outline. Built.
-6. New transaction, fewer taps (`P-form-*`, expense, income and transfer rows, plus `P-date-options`): Type, then Account | Amount on one row, Date, Note, then every category as a round emoji with its name underneath (4 a row on phone, 6 on desktop; the picked one gets a green ring). Date is one field that names the day ("Today, 23 Nov") with a pill inside that swaps to Yesterday and back; tapping the field opens the calendar. A transfer has no category. The page does not scroll: only the category grid does, with no scrollbar; on phone the form covers the bottom bar. Approved, not built.
+6. New transaction, fewer taps (`P-form-*`, expense, income and transfer rows, plus `P-date-options`): Type, then Account | Amount on one row, Date, Note, then every category as a round emoji with its name underneath (4 a row on phone, 6 on desktop; the picked one gets a green ring). Date is one field that names the day ("Today, 23 Nov") with a pill inside that swaps to Yesterday and back; tapping the field opens the calendar. A transfer has no category. The page does not scroll: only the category grid does, with no scrollbar. On phone it meets the bottom bar as row 8 says. Approved, not built.
 7. Category icon picker (`P-picker-*`, `P-insights-*`): the Categories form loses its "Icon (optional)" text box and its Color field and becomes Name, Type, then an emoji picker: about 100 suggested Fluent emoji in 13 groups, chips to filter to one group, and a search over the whole Fluent set (1,595). On phone the form is a full-screen page. The app gives each new category its colour from a fixed set of 12, once, when the category is made. In Insights the spending list shows each category's emoji with a small dot in its slice colour (option B on the `P-insights-*` boards). Approved, not built.
+8. Phone form and the bottom bar (`P-bar-*`, `P-size-17-*`): on a phone the full-screen form ran under the bottom bar, so Cancel and Add Transaction ran into it, an empty strip sat above them, and a drag on the button row moved the page. Now the form ends at the top of the bottom bar, which stays on screen; the buttons sit right on the bar with no line above them, 12 px under the category grid; only the grid scrolls, and a drag anywhere else does nothing. The Before board draws the old phone look; the Design page's phone form boards (new, amount keypad, delete) draw the new one. Every full-screen phone form gets this, the Categories form too. Approved 24 November 2026, built.
 
 Not proposed: one form pattern on phone for the other forms (later), Budgets (left as it is), where Delete buttons sit (fine for now).
 
@@ -31,7 +32,7 @@ Each screen is one component board that draws every state at both sizes, chosen 
 | Screen | Component | Its own props | Shows by default |
 |---|---|---|---|
 | Sign in | `SignIn.dc.html` | `size` | desktop |
-| Transactions (the landing page) | `Main.dc.html` | `size`, `tab` (list, insights), `form` (none, new, edit), `txType` (expense, income, transfer), `pad` (amount keypad open), `search` (phone search open), `more` (phone More sheet), `quick`, `chart`, `proposed` | desktop, the list |
+| Transactions (the landing page) | `Main.dc.html` | `size`, `tab` (list, insights), `form` (none, new, edit), `txType` (expense, income, transfer), `pad` (amount keypad open), `search` (phone search open), `more` (phone More sheet), `quick`, `chart`, `proposed`, `navbar` (how the open phone form meets the bottom bar: `hidden` covers it, `over` is the old phone look with the bar on top, `above` is row 8) | desktop, the list |
 | Dashboard | `Dashboard.dc.html` | `size`, `tab` (accounts, allocation), `form` (none, account, income), `labels`, `proposed` | desktop, accounts |
 | Budgets | `Budgets.dc.html` | `size`, `form` (none, new), `empty` (true shows "No budgets yet", as live) | desktop, empty |
 | Categories | `Categories.dc.html` | `size`, `tab` (expense, income), `form` (none, new, edit), `picker`, `search` (picker open on a sample search), `proposed` | desktop, expense |
@@ -45,7 +46,7 @@ Each screen is one component board that draws every state at both sizes, chosen 
 
 ## Boards
 
-Sizes: iPhone 402 × 874 (the app's phone layout is anything under 768 wide) and desktop 1440 × 900. Wrapper files are named `<Component>-<state>-<size>.dc.html`; a name without `-phone` is the desktop board.
+Sizes: iPhone 17, 402 × 874 (the app's phone layout is anything under 768 wide), and desktop 1440 × 900. Phone boards are drawn at iPhone 17 size only, and every one shows the bottom bar, forms included. (`Main`, `Nav` and `Confirm` also take `phoneW` / `phoneH` / `home`, or `w` / `h` / `home`, for another phone; no board uses them.) Wrapper files are named `<Component>-<state>-<size>.dc.html`; a name without `-phone` is the desktop board.
 
 | Screen | iPhone | Desktop |
 |---|---|---|

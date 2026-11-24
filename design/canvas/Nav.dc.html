@@ -31,7 +31,7 @@ a{color:#1ec98a}a:hover{color:#5fe0b0}
     </nav>
   </sc-if>
   <sc-if value="{{isPhone}}" hint-placeholder-val="{{false}}">
-    <nav class="bnav" aria-label="Main menu" style="height: 56px; padding-bottom: 34px; box-sizing: content-box">
+    <nav class="bnav" aria-label="Main menu" style="height: 56px; padding-bottom: {{homePad}}; box-sizing: content-box">
       <sc-for list="{{tabs}}" as="t" hint-placeholder-count="5">
         <a class="{{t.cls}}" href="{{t.href}}"><span class="{{t.icon}}"></span><span class="l">{{t.label}}</span></a>
       </sc-for>
@@ -70,10 +70,14 @@ class Component extends DCLogic {
       label, href, icon: 'ic ' + icon,
       cls: 'bnav-tab' + (k === active ? ' on' : '')
     }));
+    // w: the phone's width; home: whether it has a home indicator (34 px under the bar). Default: iPhone 17.
+    const W = Number(this.props.w ?? 402);
+    const homeOn = !(this.props.home === false || this.props.home === 'false');
     return {
       isDesktop: !phone, isPhone: phone, items, tabs,
-      rootW: phone ? '402px' : '200px',
-      rootH: phone ? '90px' : '900px'
+      homePad: homeOn ? '34px' : '0px',
+      rootW: phone ? W + 'px' : '200px',
+      rootH: phone ? (homeOn ? '90px' : '56px') : '900px'
     };
   }
 }

@@ -1362,12 +1362,12 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  /* 100dvh, not inset:0 — a fixed element sizes to the LAYOUT viewport, so on
+  /* dvh, not inset:0 — a fixed element sizes to the LAYOUT viewport, so on
      iOS its bottom edge hides under the dynamic browser toolbar and takes the
-     footer with it. Same reason the app shell uses dvh. */
-  height: 100dvh;
-  /* Above the bottom nav (z-50, later in the DOM), which otherwise covers the
-     footer once the form is taller than the screen. */
+     footer with it. Same reason the app shell uses dvh.
+     Ends at the top of the bottom nav (its row plus the home-indicator inset
+     under it), so the nav stays on screen and the footer sits right on it. */
+  height: calc(100dvh - var(--bottom-nav-height) - env(safe-area-inset-bottom, 0px));
   z-index: 60;
   display: flex;
   flex-direction: column;
@@ -1377,7 +1377,6 @@ body {
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   background: var(--bg);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 .fm-full-head {
   position: sticky;
@@ -1398,8 +1397,29 @@ body {
   padding: 18px 16px 4px;
 }
 .fm-full .fm-foot {
-  /* Follows the last field rather than sinking to the bottom of the screen. */
-  padding: 20px 16px calc(env(safe-area-inset-bottom, 0px) + 20px);
+  /* Follows the last field rather than sinking to the bottom of the screen.
+     No safe-area padding: the bottom nav below already covers that inset. */
+  padding: 20px 16px;
+}
+/* Fitted page (Modal `fill`): the footer sits right on the bottom nav and the
+   scrolling grid runs down to it, 12px from the buttons. */
+.fm-full.fm-fill .fm-body {
+  padding-bottom: 0;
+}
+.fm-full.fm-fill .fm-scroll {
+  padding-bottom: 2px;
+}
+.fm-full.fm-fill .fm-foot {
+  margin-top: 0;
+  padding: 12px 16px;
+}
+/* Only the grid scrolls: a drag anywhere else (header, fields, buttons) does
+   nothing. Taps still work; the grid and any menu that scrolls set their own. */
+.fm-full.fm-fill {
+  touch-action: none;
+}
+.fm-full.fm-fill .fm-scroll {
+  touch-action: pan-y;
 }
 
 /* ---------------- Form drawer (mobile bottom sheet for form modals) ---------------- */
