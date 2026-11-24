@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Modal as AntdModal, Drawer as AntdDrawer } from "antd";
 import { PlusOutlined, EditOutlined, DownOutlined, CalendarOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
@@ -51,14 +52,18 @@ export function Modal({
 
   if (isMobile && fullscreen) {
     if (!open) return null;
-    return (
+    // Portalled to <body>: inside the layout's scrolling content pane, iOS
+    // stacked the page under the bottom nav (the nav covered the footer) and a
+    // drag on a part that doesn't scroll moved the page underneath.
+    return createPortal(
       <div className={fill ? "fm-full fm-fill" : "fm-full"} role="dialog" aria-modal="true">
         <div className="fm-full-head">
           <span className="fm-head-ic">{iconNode}</span>
           {title}
         </div>
         {children}
-      </div>
+      </div>,
+      document.body,
     );
   }
 

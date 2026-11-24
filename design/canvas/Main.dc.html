@@ -15,10 +15,16 @@ body{margin:0}
 a{color:#1ec98a}a:hover{color:#5fe0b0}
 .no-sb{scrollbar-width:none;-ms-overflow-style:none}
 .no-sb::-webkit-scrollbar{display:none;width:0;height:0}
+.fm-full.fm-full-over{padding-bottom:0}
+.fm-full .fm-foot.fm-foot-over{padding-bottom:88px}
+.fm-full .fm-body.fm-body-bar{padding-bottom:0}
+.fm-full .fm-foot.fm-foot-bar{margin-top:0;padding:12px 16px;border-top:0;background:var(--bg);touch-action:none}
 </style>
 </helmet>
 <div class="fa-root" style="width: {{rootW}}; height: {{rootH}}; position: relative; overflow: hidden; display: flex; flex-direction: {{rootDir}}">
-  <dc-import name="Nav" size="{{size}}" active="{{navActive}}" proposed="{{proposed}}" hint-size="{{navHint}}"></dc-import>
+  <div style="position: relative; z-index: {{navZ}}; flex: 0 0 auto; display: flex">
+    <dc-import name="Nav" size="{{size}}" active="{{navActive}}" proposed="{{proposed}}" w="{{navW}}" home="{{homeOn}}" hint-size="{{navHint}}"></dc-import>
+  </div>
   <main style="flex: 1; min-width: 0; min-height: 0; overflow: auto; padding: {{pad}}">
 
     <div class="titlebar">
@@ -164,7 +170,7 @@ a{color:#1ec98a}a:hover{color:#5fe0b0}
       <sc-if value="{{isPhone}}" hint-placeholder-val="{{false}}">
         <div class="fm-full-head"><span class="fm-head-ic"><span class="{{formIcon}}"></span></span>{{formTitle}}</div>
       </sc-if>
-      <div class="fm-body" style="flex: {{bodyFlex}}; min-height: {{bodyMinH}}">
+      <div class="{{bodyCls}}" style="flex: {{bodyFlex}}; min-height: {{bodyMinH}}">
         <div class="field">
           <div class="field-lbl">Type <em class="req">*</em></div>
           <div class="seg full">
@@ -264,7 +270,7 @@ a{color:#1ec98a}a:hover{color:#5fe0b0}
           </sc-if>
         </sc-if>
       </div>
-      <div class="fm-foot">
+      <div class="{{footCls}}">
         <sc-if value="{{isEdit}}" hint-placeholder-val="{{false}}"><button class="btn-pill danger">Delete</button></sc-if>
         <div class="fm-foot-right">
           <button class="btn-pill ghost" onClick="{{close}}">Cancel</button>
@@ -291,7 +297,7 @@ a{color:#1ec98a}a:hover{color:#5fe0b0}
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"tab":{"editor":"enum","options":["list","insights"],"default":"list"},"form":{"editor":"enum","options":["none","new","edit"],"default":"none"},"pad":{"editor":"boolean","default":false},"search":{"editor":"boolean","default":false},"more":{"editor":"boolean","default":false},"proposed":{"editor":"boolean","default":true},"quick":{"editor":"boolean","default":true},"chart":{"editor":"enum","options":["own","auto","emoji"],"default":"emoji"},"txType":{"editor":"enum","options":["expense","income","transfer"],"default":"expense"},"$preview":{"width":1440,"height":900}}'>
+<script type="text/x-dc" data-dc-script data-props='{"size":{"editor":"enum","options":["desktop","phone"],"default":"desktop"},"tab":{"editor":"enum","options":["list","insights"],"default":"list"},"form":{"editor":"enum","options":["none","new","edit"],"default":"none"},"pad":{"editor":"boolean","default":false},"search":{"editor":"boolean","default":false},"more":{"editor":"boolean","default":false},"proposed":{"editor":"boolean","default":true},"quick":{"editor":"boolean","default":true},"chart":{"editor":"enum","options":["own","auto","emoji"],"default":"emoji"},"txType":{"editor":"enum","options":["expense","income","transfer"],"default":"expense"},"navbar":{"editor":"enum","options":["hidden","over","above"],"default":"hidden"},"$preview":{"width":1440,"height":900}}'>
 class Component extends DCLogic {
   renderVals() {
     const s = this.state || {};
@@ -300,7 +306,12 @@ class Component extends DCLogic {
     const sp = P ? ' ' : '';
     const size = this.props.size ?? 'desktop';
     const phone = size === 'phone';
-    const tab = s.tab ?? this.props.tab ?? 'list';
+    // phoneW / phoneH / home: the phone's screen in CSS px and whether it has a home indicator
+    // (34 px under the bottom bar). Default: iPhone 17, 402 × 874, with one.
+    const W = Number(this.props.phoneW ?? 402), H = Number(this.props.phoneH ?? 874);
+    const homeOn = !(this.props.home === false || this.props.home === 'false');
+    const navH = 56 + (homeOn ? 34 : 0);
+    const tab =s.tab ?? this.props.tab ?? 'list';
     const form = s.form ?? this.props.form ?? 'none';
     const padOpen = form !== 'none' && (s.pad ?? !!(this.props.pad ?? false));
     const search = phone && tab === 'list' && (s.search ?? !!(this.props.search ?? false));
@@ -402,6 +413,14 @@ class Component extends DCLogic {
       label, cls: k === txType ? 'on' : '', pick: () => this.setState({ txType: k, qcat: '' })
     }));
     const edit = form === 'edit';
+    // navbar: how the open phone form meets the bottom bar. hidden: the form covers the bar (as approved 23 Nov 2026).
+    // over: the bar stays on top of the form, as the live app does on a phone (24 Nov 2026), so the buttons run into it.
+    // above (proposed 24 Nov 2026): the form stops at the top of the bar, the buttons sit right on it, and only the category grid scrolls.
+    const NB = this.props.navbar ?? 'hidden';
+    const barFix = phone && form !== 'none' && NB === 'above';
+    // Live on an iPhone the buttons end 88 px above the screen edge (34 px safe area under the page,
+    // plus 34 + 20 px under the footer), so they just touch the top of the 90 px bar.
+    const overBar = phone && form !== 'none' && NB === 'over';
 
     // The real categories in their real order, each with its emoji (as on the Categories proposal).
     const EM = {
@@ -484,8 +503,8 @@ class Component extends DCLogic {
     return {
       size, isPhone: phone, isDesktop: !phone,
       navActive: this.props.more ? 'more' : 'transactions',
-      navHint: phone ? '402px,90px' : '200px,900px',
-      rootW: phone ? '402px' : '1440px', rootH: phone ? '874px' : '900px',
+      navHint: phone ? W + 'px,' + navH + 'px' : '200px,900px', navW: String(W), homeOn,
+      rootW: phone ? W + 'px' : '1440px', rootH: phone ? H + 'px' : '900px',
       rootDir: phone ? 'column-reverse' : 'row',
       pad: phone ? '12px 12px 84px' : '24px',
       h1Size: phone ? '22px' : '26px',
@@ -510,9 +529,12 @@ class Component extends DCLogic {
       togglePad: () => this.setState({ pad: !padOpen }),
       formOpen: form !== 'none',
       moreOpen: more,
-      boxClass: phone ? 'fm-full' : 'fm-modal',
+      boxClass: phone ? 'fm-full' + (overBar ? ' fm-full-over' : '') : 'fm-modal',
       // The quick form is taller, so on phone it covers the bottom bar (as the build does) to keep its footer on screen.
-      fullBottom: phone ? (Q ? '0px' : '90px') : 'auto',
+      fullBottom: phone ? (barFix ? navH + 'px' : Q ? '0px' : navH + 'px') : 'auto',
+      navZ: phone && form !== 'none' && NB === 'over' ? '100' : 'auto',
+      bodyCls: 'fm-body' + (barFix ? ' fm-body-bar' : ''),
+      footCls: 'fm-foot' + (barFix ? ' fm-foot-bar' : '') + (overBar ? ' fm-foot-over' : ''),
       // Quick form never scrolls as a page: the fields and the footer stay put, and only the
       // category grid scrolls inside the space left between them (on short screens, or with the keypad open).
       boxOverflow: Q ? 'hidden' : (phone ? 'auto' : 'hidden'),

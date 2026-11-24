@@ -45,7 +45,7 @@ Schema/migrations live in `supabase/migrations/` and are applied via the Supabas
 ## Mobile UI Patterns
 - Responsive hook: `useIsMobile()` in `src/hooks/useIsMobile.ts` — `window.matchMedia('(max-width: 767px)')`
 - Layout: mobile uses `BottomNav` + `FloatingActionButton` (in `DashboardLayout`); desktop uses sidebar
-- Mobile forms: use route-based full-screen pages (`position: fixed; inset: 0; z-index: 50`) so back gesture unmounts them naturally — NOT drawers or modals
+- Mobile forms: use route-based full-screen pages (FormKit `Modal fullscreen`, class `.fm-full`) so back gesture unmounts them naturally — NOT drawers or modals. The page is portalled to `<body>` and ends at the top of the `BottomNav`, which stays on screen; with `fill`, only the `.fm-scroll` part scrolls and a drag anywhere else does nothing
 - Desktop forms: use Ant Design `Modal`
 - FAB navigates to `/transactions/new` on mobile; hidden on form pages (pathname ends with `/edit` or equals `/transactions/new`)
 - Safe area: `env(safe-area-inset-bottom)` for notched phones; `viewport-fit=cover` in `index.html`
