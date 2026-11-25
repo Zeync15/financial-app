@@ -8,6 +8,7 @@ import Transactions from "@/pages/Transactions";
 import Budgets from "@/pages/Budgets";
 import Investments from "@/pages/Investments";
 import Loans from "@/pages/Loans";
+import Retirement from "@/pages/Retirement";
 import Instalments from "@/pages/Instalments";
 import RecurringTransactions from "@/pages/RecurringTransactions";
 import Categories from "@/pages/Categories";
@@ -88,6 +89,10 @@ export default function App() {
             <Route path="/categories" element={<Categories />} />
             <Route path="/investments" element={<Investments />} />
             <Route path="/investments/new" element={<Investments />} />
+            <Route path="/retirement" element={<Retirement />} />
+            <Route path="/retirement/new" element={<Retirement />} />
+            <Route path="/retirement/:id/edit" element={<Retirement />} />
+            <Route path="/retirement/:id/dividend" element={<Retirement />} />
             <Route path="/loans" element={<Loans />} />
             <Route path="/loans/new" element={<Loans />} />
             <Route path="/instalments" element={<Instalments />} />

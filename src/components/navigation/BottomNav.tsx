@@ -12,6 +12,7 @@ import {
   RetweetOutlined,
   LogoutOutlined,
   AccountBookOutlined,
+  SafetyOutlined,
 } from "@ant-design/icons";
 import { signOut } from "@/lib/auth-client";
 
@@ -87,6 +88,14 @@ export default function BottomNav() {
       label: "Categories",
       onClick: () => {
         navigate("/categories");
+        setDrawerOpen(false);
+      },
+    },
+    {
+      icon: <SafetyOutlined />,
+      label: "Retirement",
+      onClick: () => {
+        navigate("/retirement");
         setDrawerOpen(false);
       },
     },

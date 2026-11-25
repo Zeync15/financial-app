@@ -1470,6 +1470,31 @@ body {
   touch-action: pan-y;
 }
 
+/* Retirement details form: the buttons follow the last field, and only stick
+   to the bottom (right above the bottom nav) once the form is taller than the
+   screen and the page scrolls. */
+.fm-full:has(.rt-form) > .fm-foot {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin-top: 0;
+  background: var(--bg);
+}
+
+/* Retirement page: summary rail beside the cards, stacked above them when the
+   content area is too narrow for both. */
+.rt-grid {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 1100px) {
+  .rt-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* ---------------- Form drawer (mobile bottom sheet for form modals) ---------------- */
 .fm-drawer .ant-drawer-content {
   background: var(--panel) !important;
