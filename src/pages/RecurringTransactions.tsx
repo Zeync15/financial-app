@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Empty, Spin, message, Tag, Switch } from "antd";
+import { Spin, message, Tag, Switch } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   PlusOutlined,
@@ -10,6 +10,8 @@ import { api } from "@/lib/api";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useFabAction } from "@/hooks/useFabAction";
 import CategoryIcon from "@/components/common/CategoryIcon";
+import CategoryGrid from "@/components/common/CategoryGrid";
+import EmptyState from "@/components/common/EmptyState";
 import { DEFAULT_CATEGORY_COLOR } from "@/lib/categoryIcons";
 import {
   Modal,
@@ -56,6 +58,8 @@ interface CategoryLite {
   id: string;
   name: string;
   type: string;
+  icon: string | null;
+  color: string | null;
 }
 
 function fmt(n: number) {
@@ -208,22 +212,12 @@ function RecurringForm({
             <AmountInput value={state.amount} onChange={(v) => set("amount", v)} />
           </Field>
         </Row>
-        <Field label="Description">
-          <TextInput
-            value={state.description}
-            onChange={(v) => set("description", v)}
-            placeholder="e.g. Rent, Netflix, Salary"
-          />
-        </Field>
         <Row>
-          <Field label="Category">
-            <SelectInput
-              value={state.categoryId}
-              onChange={(v) => set("categoryId", v)}
-              options={[
-                { value: "", label: "—" },
-                ...filteredCategories.map((c) => ({ value: c.id, label: c.name })),
-              ]}
+          <Field label="Description">
+            <TextInput
+              value={state.description}
+              onChange={(v) => set("description", v)}
+              placeholder="e.g. Rent, Netflix, Salary"
             />
           </Field>
           <Field label="Payment Day" required hint="Day of month (1–31)">
@@ -243,6 +237,15 @@ function RecurringForm({
             <DateInput value={state.endDate} onChange={(v) => set("endDate", v)} />
           </Field>
         </Row>
+        <Field label="Category" aside="Optional · tap again to clear">
+          <CategoryGrid
+            categories={filteredCategories}
+            value={state.categoryId}
+            onChange={(id) => set("categoryId", id)}
+            capped
+            allowNone
+          />
+        </Field>
       </FormBody>
       <FormFooter
         primary={isEditing ? "Save Changes" : "Add Recurring"}
@@ -506,8 +509,8 @@ export default function RecurringTransactions() {
       </div>
 
       {items.length === 0 ? (
-        <div className="panel" style={{ padding: 40 }}>
-          <Empty description="No recurring transactions yet" />
+        <div className="panel">
+          <EmptyState emoji="repeat_button">No recurring transactions yet</EmptyState>
         </div>
       ) : (
         <div

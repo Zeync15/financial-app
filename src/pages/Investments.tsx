@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Spin, Empty, message, ColorPicker } from "antd";
+import { Spin, message, ColorPicker } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   PlusOutlined,
@@ -11,6 +11,7 @@ import {
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { api } from "@/lib/api";
+import EmptyState from "@/components/common/EmptyState";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useFabAction } from "@/hooks/useFabAction";
 import { getQuote, isAutoPriceable } from "@/lib/priceService";
@@ -1035,8 +1036,8 @@ export default function Investments() {
       </div>
 
       {enriched.length === 0 ? (
-        <div className="panel" style={{ padding: 40 }}>
-          <Empty description="No investments yet — add your first holding" />
+        <div className="panel">
+          <EmptyState emoji="chart_increasing">No investments yet — add your first holding</EmptyState>
         </div>
       ) : isMobile ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>

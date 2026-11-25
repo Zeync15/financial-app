@@ -1,25 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Spin, Empty, message } from "antd";
+import { Spin, message } from "antd";
 import {
-  DollarOutlined,
-  BankOutlined,
   RiseOutlined,
   PlusOutlined,
-  SaveOutlined,
-  CreditCardOutlined,
-  MobileOutlined,
-  FundOutlined,
-  FileTextOutlined,
-  ScheduleOutlined,
   ArrowUpOutlined,
   ArrowDownOutlined,
 } from "@ant-design/icons";
 import { api } from "@/lib/api";
+import EmptyState from "@/components/common/EmptyState";
 import { getRatesToMYR } from "@/lib/fxService";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useFabAction } from "@/hooks/useFabAction";
-import IconCircle from "@/components/common/IconCircle";
+import { EmojiIcon } from "@/components/common/CategoryIcon";
+import { accountEmoji, loanEmoji } from "@/lib/typeEmoji";
+import CategoryGrid from "@/components/common/CategoryGrid";
 import {
   Modal,
   FormBody,
@@ -53,28 +48,35 @@ interface Account {
   isActive: boolean;
   /** Second line for synthetic rows (investments, loans, instalments). */
   sub?: string;
+  /** Emoji key for synthetic rows that pick their own (a loan's kind). */
+  emoji?: string;
 }
 
+// In the order the New Account type grid shows them. "checking" keeps its
+// database name and shows as the everyday bank account.
 const ACCOUNT_TYPES = [
-  { value: "checking", label: "Checking" },
+  { value: "checking", label: "Bank Account" },
   { value: "savings", label: "Savings" },
-  { value: "credit_card", label: "Credit Card" },
   { value: "cash", label: "Cash" },
   { value: "ewallet", label: "E-Wallet" },
+  { value: "foreign_currency", label: "Foreign Currency" },
+  { value: "credit_card", label: "Credit Card" },
+  { value: "fixed_deposit", label: "Fixed Deposit" },
+  { value: "unit_trust", label: "ASB / Unit Trust" },
+  { value: "tabung_haji", label: "Tabung Haji" },
+  { value: "gold", label: "Gold" },
+  { value: "retirement", label: "Retirement Fund" },
+  { value: "receivable", label: "Money Lent Out" },
   { value: "investment", label: "Investment" },
   { value: "loan", label: "Loan" },
 ];
 
-const TYPE_ICONS: Record<string, React.ReactNode> = {
-  checking: <BankOutlined />,
-  savings: <SaveOutlined />,
-  credit_card: <CreditCardOutlined />,
-  cash: <DollarOutlined />,
-  ewallet: <MobileOutlined />,
-  investment: <FundOutlined />,
-  loan: <FileTextOutlined />,
-  instalment: <ScheduleOutlined />,
-};
+// The account types as emoji tiles for the type grid.
+const TYPE_TILES = ACCOUNT_TYPES.map((t) => ({
+  id: t.value,
+  name: t.label,
+  icon: `emoji:${accountEmoji(t.value)}`,
+}));
 
 const TYPE_COLORS: Record<string, string> = {
   checking: "#1677ff",
@@ -82,6 +84,13 @@ const TYPE_COLORS: Record<string, string> = {
   credit_card: "#ff4d4f",
   cash: "#fa8c16",
   ewallet: "#722ed1",
+  foreign_currency: "#2f54eb",
+  fixed_deposit: "#faad14",
+  unit_trust: "#a0d911",
+  tabung_haji: "#9254de",
+  gold: "#d4b106",
+  retirement: "#36cfc9",
+  receivable: "#ff85c0",
   investment: "#13c2c2",
   loan: "#fa541c",
   instalment: "#eb2f96",
@@ -94,7 +103,20 @@ const TYPE_LABELS: Record<string, string> = {
   instalment: "Instalment",
 };
 
-const ASSET_TYPES = new Set(["checking", "savings", "cash", "ewallet", "investment"]);
+const ASSET_TYPES = new Set([
+  "checking",
+  "savings",
+  "cash",
+  "ewallet",
+  "foreign_currency",
+  "fixed_deposit",
+  "unit_trust",
+  "tabung_haji",
+  "gold",
+  "retirement",
+  "receivable",
+  "investment",
+]);
 // Palette for the per-loan allocation donut (one colour per loan, by index).
 // High-level groupings shown on the Accounts tab. Group totals reflect each
 // row at face value — debt group totals are rendered negative.
@@ -107,9 +129,18 @@ const ACCOUNT_GROUPS: {
   {
     id: "banking",
     title: "Banking & Cash",
-    types: ["checking", "savings", "cash", "ewallet"],
+    // Money you can spend now.
+    types: ["checking", "savings", "cash", "ewallet", "foreign_currency"],
   },
-  { id: "investments", title: "Investments", types: ["investment"] },
+  {
+    id: "investments",
+    title: "Investments",
+    // Put away to grow; not for day-to-day spending.
+    types: ["investment", "unit_trust", "fixed_deposit", "tabung_haji", "gold"],
+  },
+  // Locked until retirement, and often bigger than everything else, so apart.
+  { id: "retirement", title: "Retirement", types: ["retirement"] },
+  { id: "owed", title: "Owed to You", types: ["receivable"] },
   {
     id: "loans",
     title: "Loans",
@@ -194,9 +225,6 @@ function AccountModal({
         <Field label="Name" required>
           <TextInput value={state.name} onChange={(v) => set("name", v)} placeholder="e.g. Maybank Savings" autoFocus />
         </Field>
-        <Field label="Type" required>
-          <SelectInput value={state.type} onChange={(v) => set("type", v)} options={ACCOUNT_TYPES} />
-        </Field>
         <Field label="Institution">
           <TextInput value={state.institution} onChange={(v) => set("institution", v)} placeholder="e.g. Maybank" />
         </Field>
@@ -208,6 +236,15 @@ function AccountModal({
             <AmountInput value={state.balance} onChange={(v) => set("balance", v)} currency={state.currency} />
           </Field>
         </Row>
+        <Field label="Type" required>
+          <CategoryGrid
+            categories={TYPE_TILES}
+            value={state.type}
+            onChange={(v) => set("type", v)}
+            capped
+            label="Account type"
+          />
+        </Field>
       </FormBody>
       <FormFooter
         primary={editing ? "Save Changes" : "Add Account"}
@@ -366,8 +403,6 @@ function holdingSub(h: HoldingLite) {
 const DEBT_TYPES = new Set(["credit_card", "loan", "instalment"]);
 
 function AcctRow({ a, onClick, showBorder }: { a: Account; onClick: () => void; showBorder: boolean }) {
-  const color = TYPE_COLORS[a.type] ?? "#8c8c8c";
-  const icon = TYPE_ICONS[a.type] ?? <BankOutlined />;
   const raw = Number(a.balance);
   const isDebt = DEBT_TYPES.has(a.type);
   // Debt-type rows are stored as positive magnitudes but read as negative.
@@ -388,7 +423,7 @@ function AcctRow({ a, onClick, showBorder }: { a: Account; onClick: () => void; 
         borderBottom: showBorder ? "1px solid var(--line-soft)" : "none",
       }}
     >
-      <IconCircle icon={icon} color={color} size={36} />
+      <EmojiIcon emoji={a.emoji ?? accountEmoji(a.type)} size={36} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
@@ -581,6 +616,7 @@ interface LoanLite {
   paymentType?: string;
   loanTermMonths: number;
   monthsPaid: number;
+  kind?: string | null;
 }
 
 interface HoldingLite {
@@ -733,6 +769,7 @@ export default function Dashboard() {
       institution: "Loan",
       balance: String(l.remainingBalance),
       isActive: true,
+      emoji: loanEmoji(l.kind),
       sub: `${l.paymentType === "fixed" ? "Fixed rate" : "Reducing balance"} · ${Number(l.interestRate).toFixed(2)}% p.a. · ${l.monthsPaid}/${l.loanTermMonths} paid`,
     }));
 
@@ -987,9 +1024,7 @@ export default function Dashboard() {
       <div className="panel" style={{ overflow: "hidden", display: "flex", flexDirection: "column" }}>
         {tab === "accounts" ? (
           displayAccounts.length === 0 ? (
-            <div style={{ padding: 40 }}>
-              <Empty description="No accounts yet — add your first account" />
-            </div>
+            <EmptyState emoji="bank">No accounts yet — add your first account</EmptyState>
           ) : (
             <div
               style={
@@ -999,8 +1034,8 @@ export default function Dashboard() {
               }
             >
               {[
-                groups.filter(
-                  (g) => g.id === "banking" || g.id === "investments",
+                groups.filter((g) =>
+                  ["banking", "investments", "retirement", "owed"].includes(g.id),
                 ),
                 groups.filter(
                   (g) => g.id === "loans" || g.id === "instalments",
@@ -1049,9 +1084,7 @@ export default function Dashboard() {
             </div>
           )
         ) : allocation.length === 0 && dsrData.length === 0 ? (
-          <div style={{ padding: 40 }}>
-            <Empty description="No accounts yet" />
-          </div>
+          <EmptyState emoji="bar_chart">No accounts yet</EmptyState>
         ) : (
           <div>
             {allocation.length > 0 && (
