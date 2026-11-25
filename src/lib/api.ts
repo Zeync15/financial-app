@@ -788,6 +788,71 @@ async function getDashboard() {
   };
 }
 
+// ─── retirement (EPF / PRS) ────────────────────────────────────────────────
+// Accounts of type 'retirement', each with its details (retirement_plan, one
+// row per account, may be missing) and its dividend history. Saving goes
+// through save_retirement_account so the details and a new balance land together.
+const RETIREMENT_PLAN_COLS =
+  "accountId:account_id, scheme, birthDate:birth_date, contributing, monthlySalary:monthly_salary, employeeRate:employee_rate, employerRate:employer_rate, monthlyAmount:monthly_amount, ownRate:own_rate, persaraan, sejahtera, fleksibel, balanceAsOf:balance_as_of";
+const RETIREMENT_DIVIDEND_COLS = "id, accountId:account_id, year, rate, amount";
+
+async function listRetirement() {
+  const [accounts, plans, dividends] = await Promise.all([
+    supabase
+      .from("financial_account")
+      .select("id, name, currency, balance, updatedAt:updated_at, createdAt:created_at")
+      .eq("type", "retirement")
+      .eq("is_active", true)
+      .order("created_at"),
+    supabase.from("retirement_plan").select(RETIREMENT_PLAN_COLS),
+    supabase.from("retirement_dividend").select(RETIREMENT_DIVIDEND_COLS).order("year", { ascending: false }),
+  ]);
+  const accs = unwrap(accounts) as Array<Record<string, any>>;
+  const planRows = unwrap(plans) as Array<Record<string, any>>;
+  const divRows = unwrap(dividends) as Array<Record<string, any>>;
+  return accs.map((a) => ({
+    ...a,
+    plan: planRows.find((p) => p.accountId === a.id) ?? null,
+    dividends: divRows.filter((d) => d.accountId === a.id),
+  }));
+}
+
+async function saveRetirement(b: Body) {
+  const { data, error } = await supabase.rpc("save_retirement_account", {
+    p_account_id: b.accountId ?? null,
+    p_name: b.name ?? null,
+    p_balance: b.balance ?? null,
+    p_balance_as_of: b.balanceAsOf || null,
+    p_plan: b.plan ?? {},
+  });
+  if (error) throw new Error(error.message);
+  return { id: data as string };
+}
+
+async function saveRetirementDividend(accountId: string, b: Body) {
+  const user_id = await getUserId();
+  const row = {
+    user_id,
+    account_id: accountId,
+    year: Number(b.year),
+    rate: b.rate,
+    amount: b.amount === "" || b.amount == null ? null : b.amount,
+  };
+  // Editing a row may move it to another year: update by id, else upsert on the year.
+  if (b.id) {
+    return unwrap(
+      await supabase.from("retirement_dividend").update(row).eq("id", b.id).select(RETIREMENT_DIVIDEND_COLS).single(),
+    );
+  }
+  return unwrap(
+    await supabase
+      .from("retirement_dividend")
+      .upsert(row, { onConflict: "account_id,year" })
+      .select(RETIREMENT_DIVIDEND_COLS)
+      .single(),
+  );
+}
+
 // ─── user settings (key/value) ─────────────────────────────────────────────
 async function listSettings(): Promise<Record<string, string>> {
   const rows = unwrap(
@@ -898,6 +963,17 @@ async function route(method: "GET" | "POST" | "PUT" | "DELETE", path: string, bo
       if (method === "PUT" && p2 === "holdings") return updateHolding(p1!, p3!, body!);
       if (method === "DELETE" && p2 === "holdings") return deleteHolding(p1!, p3!);
       if (method === "DELETE") return deleteRow("portfolio", p1!);
+      break;
+
+    case "retirement":
+      // GET    /retirement                          -> accounts with plan + dividends
+      // POST   /retirement                          -> save details (+ balance); creates the account when no accountId
+      // POST   /retirement/:accountId/dividends     -> add or edit a year
+      // DELETE /retirement/:accountId/dividends/:id -> remove a year
+      if (method === "GET") return listRetirement();
+      if (method === "POST" && p1 && p2 === "dividends") return saveRetirementDividend(p1, body!);
+      if (method === "POST") return saveRetirement(body!);
+      if (method === "DELETE" && p2 === "dividends") return deleteRow("retirement_dividend", p3!);
       break;
 
     case "settings":

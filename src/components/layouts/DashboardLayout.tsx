@@ -15,6 +15,7 @@ import {
   MenuUnfoldOutlined,
   UserOutlined,
   LogoutOutlined,
+  SafetyOutlined,
 } from "@ant-design/icons";
 import { useSession, signOut } from "@/lib/auth-client";
 import { api } from "@/lib/api";
@@ -41,6 +42,7 @@ const topMenuItems: MenuProps["items"] = [
   { key: "/budgets", icon: <PieChartOutlined />, label: "Budgets" },
   { key: "/categories", icon: <TagOutlined />, label: "Categories" },
   { key: "/investments", icon: <FundOutlined />, label: "Investments" },
+  { key: "/retirement", icon: <SafetyOutlined />, label: "Retirement" },
   { key: "/loans", icon: <AccountBookOutlined />, label: "Loans" },
   { key: "/instalments", icon: <CreditCardOutlined />, label: "Instalments" },
   { key: "/recurring", icon: <RetweetOutlined />, label: "Recurring" },
@@ -131,7 +133,9 @@ export default function DashboardLayout() {
     location.pathname === "/transactions/new" ||
     location.pathname === "/investments/new" ||
     location.pathname === "/loans/new" ||
-    location.pathname.endsWith("/edit");
+    location.pathname === "/retirement/new" ||
+    location.pathname.endsWith("/edit") ||
+    location.pathname.endsWith("/dividend");
 
   // Mobile: a fixed-height (100dvh) app shell where the content pane scrolls
   // internally and the bottom nav sits in normal flow. Because the document
