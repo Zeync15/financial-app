@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Empty, Spin, message, ColorPicker } from "antd";
+import { Spin, message, ColorPicker } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   PlusOutlined,
@@ -9,12 +9,14 @@ import {
   CalendarOutlined,
   UnorderedListOutlined,
   PercentageOutlined,
-  FileTextOutlined,
 } from "@ant-design/icons";
 import { api } from "@/lib/api";
+import EmptyState from "@/components/common/EmptyState";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useFabAction } from "@/hooks/useFabAction";
-import IconCircle from "@/components/common/IconCircle";
+import { EmojiIconDot } from "@/components/common/CategoryIcon";
+import CategoryGrid from "@/components/common/CategoryGrid";
+import { LOAN_KINDS, loanEmoji } from "@/lib/typeEmoji";
 import {
   Modal,
   FormBody,
@@ -44,6 +46,7 @@ interface Loan {
   monthsPaid: number;
   payoffMonths: number;
   color: string | null;
+  kind: string | null;
 }
 
 interface AmortRow {
@@ -209,11 +212,7 @@ function LoanCard({
           marginBottom: 18,
         }}
       >
-        <IconCircle
-          icon={<FileTextOutlined />}
-          color={color}
-          size={isMobile ? 36 : 40}
-        />
+        <EmojiIconDot emoji={loanEmoji(loan.kind)} color={color} size={isMobile ? 36 : 40} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
@@ -422,7 +421,15 @@ interface LoanFormState {
   startDate: string;
   paymentType: string;
   color: string;
+  kind: string;
 }
+
+// The loan kinds as emoji tiles, in the same grid as the category picker.
+const KIND_TILES = LOAN_KINDS.map((k) => ({
+  id: k.value,
+  name: k.label,
+  icon: `emoji:${k.emoji}`,
+}));
 
 function AddLoanModal({
   open,
@@ -447,6 +454,7 @@ function AddLoanModal({
     startDate: editing?.startDate ?? "",
     paymentType: editing?.paymentType ?? "fixed",
     color: initialColor,
+    kind: editing?.kind ?? "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -459,6 +467,10 @@ function AddLoanModal({
       !state.startDate
     ) {
       message.error("All fields are required");
+      return;
+    }
+    if (!state.kind) {
+      message.error("Pick a loan type");
       return;
     }
     setSaving(true);
@@ -531,6 +543,14 @@ function AddLoanModal({
             showText
             disabledAlpha
             presets={[{ label: "Loan palette", colors: LOAN_PALETTE }]}
+          />
+        </Field>
+        <Field label="Loan Type" required>
+          <CategoryGrid
+            categories={KIND_TILES}
+            value={state.kind}
+            onChange={(k) => set("kind", k)}
+            label="Loan type"
           />
         </Field>
       </FormBody>
@@ -784,6 +804,7 @@ export default function Loans() {
       startDate: v.startDate,
       paymentType: v.paymentType,
       color: v.color,
+      kind: v.kind,
     };
     try {
       if (editingLoan) {
@@ -1041,8 +1062,8 @@ export default function Loans() {
       </div>
 
       {loans.length === 0 ? (
-        <div className="panel" style={{ padding: 40 }}>
-          <Empty description="No loans yet" />
+        <div className="panel">
+          <EmptyState emoji="scroll">No loans yet</EmptyState>
         </div>
       ) : (
         <div

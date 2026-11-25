@@ -7,10 +7,13 @@ import {
   Progress,
   Button,
   message,
-  Empty,
 } from "antd";
 import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import { api } from "@/lib/api";
+import CategoryIcon from "@/components/common/CategoryIcon";
+import CategoryGrid from "@/components/common/CategoryGrid";
+import EmptyState from "@/components/common/EmptyState";
+import { DEFAULT_CATEGORY_COLOR } from "@/lib/categoryIcons";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useFabAction } from "@/hooks/useFabAction";
 import {
@@ -35,12 +38,15 @@ interface Budget {
   period: string;
   categoryName: string | null;
   categoryColor: string | null;
+  categoryIcon: string | null;
   spent: string;
 }
 interface Category {
   id: string;
   name: string;
   type: string;
+  icon: string | null;
+  color: string | null;
 }
 
 const PERIOD_OPTS = [
@@ -141,7 +147,7 @@ export default function Budgets() {
       </div>
 
       {budgets.length === 0 && !loading ? (
-        <Empty description="No budgets yet" />
+        <EmptyState emoji="bullseye">No budgets yet</EmptyState>
       ) : (
         <Row gutter={isMobile ? [8, 8] : [16, 16]}>
           {budgets.map((b) => {
@@ -153,7 +159,17 @@ export default function Budgets() {
             return (
               <Col xs={24} md={8} key={b.id}>
                 <Card
-                  title={b.categoryName || b.name || "Budget"}
+                  title={
+                    <span className="card-title-emoji">
+                      <CategoryIcon
+                        name={b.categoryName}
+                        iconKey={b.categoryIcon}
+                        color={b.categoryColor ?? DEFAULT_CATEGORY_COLOR}
+                        size={isMobile ? 28 : 32}
+                      />
+                      <span className="truncate">{b.categoryName || b.name || "Budget"}</span>
+                    </span>
+                  }
                   styles={{ body: { padding: isMobile ? 12 : 24 } }}
                   extra={
                     <Button
@@ -200,17 +216,6 @@ export default function Budgets() {
         icon="plus"
       >
         <FormBody>
-          <Field label="Category" required>
-            <SelectInput
-              value={state.categoryId}
-              onChange={(v) => set("categoryId", v)}
-              options={expenseCategories.map((c) => ({
-                value: c.id,
-                label: c.name,
-              }))}
-              placeholder="Select category"
-            />
-          </Field>
           <Field label="Budget Amount" required>
             <AmountInput
               value={state.amount}
@@ -222,6 +227,14 @@ export default function Budgets() {
               value={state.period}
               onChange={(v) => set("period", v)}
               options={PERIOD_OPTS}
+            />
+          </Field>
+          <Field label="Category" required>
+            <CategoryGrid
+              categories={expenseCategories}
+              value={state.categoryId}
+              onChange={(id) => set("categoryId", id)}
+              capped
             />
           </Field>
         </FormBody>

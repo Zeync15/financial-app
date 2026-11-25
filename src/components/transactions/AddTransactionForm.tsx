@@ -18,8 +18,7 @@ import {
   FormFooter,
   useFormState,
 } from "@/components/forms/FormKit";
-import CategoryIcon from "@/components/common/CategoryIcon";
-import { DEFAULT_CATEGORY_COLOR } from "@/lib/categoryIcons";
+import CategoryGrid from "@/components/common/CategoryGrid";
 
 interface Account {
   id: string;
@@ -254,31 +253,11 @@ export default function AddTransactionForm({
         </Field>
         {!isTransfer && (
           <Field label="Category" required className="field-fill">
-            <div className="qcat-grid fm-scroll" role="radiogroup" aria-label="Category">
-              {filteredCategories.map((c) => {
-                const on = c.id === state.categoryId;
-                return (
-                  <button
-                    key={c.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={on}
-                    className={on ? "qcat on" : "qcat"}
-                    onClick={() => set("categoryId", c.id)}
-                  >
-                    <span className="qcat-ic">
-                      <CategoryIcon
-                        name={c.name}
-                        iconKey={c.icon}
-                        color={c.color ?? DEFAULT_CATEGORY_COLOR}
-                        size={36}
-                      />
-                    </span>
-                    <span className="qcat-name">{c.name}</span>
-                  </button>
-                );
-              })}
-            </div>
+            <CategoryGrid
+              categories={filteredCategories}
+              value={state.categoryId}
+              onChange={(id) => set("categoryId", id)}
+            />
           </Field>
         )}
       </FormBody>

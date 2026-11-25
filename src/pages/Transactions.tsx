@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Button, DatePicker, Input, Spin, Empty, message } from "antd";
+import { Button, DatePicker, Input, Spin, message } from "antd";
 import {
   PlusOutlined,
   SearchOutlined,
@@ -13,10 +13,11 @@ import {
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
 import { api } from "@/lib/api";
+import EmptyState from "@/components/common/EmptyState";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useFabAction } from "@/hooks/useFabAction";
 import CategoryIcon from "@/components/common/CategoryIcon";
-import { DEFAULT_CATEGORY_COLOR } from "@/lib/categoryIcons";
+import { DEFAULT_CATEGORY_COLOR, isVeryDark } from "@/lib/categoryIcons";
 import AddTransactionForm, {
   type EditableTransaction,
 } from "@/components/transactions/AddTransactionForm";
@@ -42,14 +43,6 @@ interface CategoryLite {
 }
 
 type Direction = "all" | "in" | "out";
-
-// True for colours too dark to see on the dark panel (relative luminance, 0–255).
-function isVeryDark(hex: string) {
-  const m = /^#?([0-9a-f]{6})$/i.exec(hex);
-  if (!m) return false;
-  const n = parseInt(m[1], 16);
-  return 0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255) < 60;
-}
 
 function fmt(n: number) {
   return n.toLocaleString(undefined, {
@@ -705,9 +698,7 @@ export default function Transactions() {
   const timeline = (
     <div className="panel" style={{ overflow: "hidden" }} {...swipeHandlers}>
       {dayGroups.length === 0 ? (
-        <div style={{ padding: 40 }}>
-          <Empty description="No transactions" />
-        </div>
+        <EmptyState emoji="receipt">No transactions</EmptyState>
       ) : (
         dayGroups.map((day) => (
           <div key={day.date}>

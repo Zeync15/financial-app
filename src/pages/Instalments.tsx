@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Empty, Spin, message } from "antd";
+import { Spin, message } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   PlusOutlined,
@@ -7,12 +7,13 @@ import {
   CalendarOutlined,
   UnorderedListOutlined,
   PercentageOutlined,
-  FileTextOutlined,
 } from "@ant-design/icons";
 import { api } from "@/lib/api";
+import EmptyState from "@/components/common/EmptyState";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useFabAction } from "@/hooks/useFabAction";
-import IconCircle from "@/components/common/IconCircle";
+import { EmojiIcon } from "@/components/common/CategoryIcon";
+import { accountEmoji } from "@/lib/typeEmoji";
 import {
   Modal,
   FormBody,
@@ -98,7 +99,7 @@ function InstalmentCard({
           marginBottom: 18,
         }}
       >
-        <IconCircle icon={<FileTextOutlined />} color="#ff6b6b" size={isMobile ? 36 : 40} />
+        <EmojiIcon emoji={accountEmoji("instalment")} size={isMobile ? 36 : 40} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
@@ -633,8 +634,8 @@ export default function Instalments() {
       </div>
 
       {items.length === 0 ? (
-        <div className="panel" style={{ padding: 40 }}>
-          <Empty description="No instalments yet" />
+        <div className="panel">
+          <EmptyState emoji="spiral_calendar">No instalments yet</EmptyState>
         </div>
       ) : (
         <div

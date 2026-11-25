@@ -807,6 +807,54 @@ body {
   color: #fff;
   font-weight: 600;
 }
+/* In a form that scrolls as a page (Budget, Recurring): about two and a half
+   rows, so the cut-off row shows the grid scrolls. */
+.qcat-grid.qcat-capped {
+  max-height: 220px;
+}
+
+/* Empty list: a large emoji over a line of text. */
+.empty-emoji {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 16px;
+  text-align: center;
+}
+.empty-emoji img {
+  display: block;
+  opacity: 0.9;
+}
+.empty-emoji-text {
+  font-size: 14px;
+  color: var(--t3);
+}
+
+/* Emoji with a dot in the item's own colour (Loans: matches its chart slice). */
+.emoji-dot-wrap {
+  position: relative;
+  flex: 0 0 auto;
+  display: block;
+}
+.emoji-dot {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--panel);
+}
+
+
+/* Emoji in front of a card title (Budgets). */
+.card-title-emoji {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
 
 /* Date as one field that names the day, with a Today / Yesterday pill inside.
    A see-through native date input lies over it, so a tap opens the calendar. */

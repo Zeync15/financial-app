@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button, message, Spin, Empty } from "antd";
+import { Button, message, Spin } from "antd";
 import {
   Modal,
   FormBody,
@@ -34,6 +34,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { api } from "@/lib/api";
+import EmptyState from "@/components/common/EmptyState";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useFabAction } from "@/hooks/useFabAction";
 import { DEFAULT_CATEGORY_COLOR } from "@/lib/categoryIcons";
@@ -353,10 +354,7 @@ export default function Categories() {
       </div>
 
       {filtered.length === 0 ? (
-        <Empty
-          description={`No ${activeTab} categories yet`}
-          className="mt-10"
-        />
+        <EmptyState emoji="label">{`No ${activeTab} categories yet`}</EmptyState>
       ) : (
         <DndContext
           sensors={sensors}

@@ -70,6 +70,14 @@ const CATEGORY_ICON_MAP: Record<string, React.ReactNode> = {
 
 export const DEFAULT_CATEGORY_COLOR = "#8c8c8c";
 
+// True for colours too dark to see on the dark panel (relative luminance, 0–255).
+export function isVeryDark(hex: string) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return false;
+  const n = parseInt(m[1], 16);
+  return 0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255) < 60;
+}
+
 export function getCategoryIcon(
   categoryName: string | null,
   categoryIcon?: string | null,

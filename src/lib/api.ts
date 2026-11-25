@@ -241,7 +241,7 @@ async function listBudgets() {
     await supabase.from("budget").select(
       `id, categoryId:category_id, name, amount, currency, period,
          startDate:start_date, endDate:end_date,
-         category ( name, color )`,
+         category ( name, color, icon )`,
     ),
   ) as any[];
 
@@ -270,6 +270,7 @@ async function listBudgets() {
         endDate: b.endDate,
         categoryName: b.category?.name ?? null,
         categoryColor: b.category?.color ?? null,
+        categoryIcon: b.category?.icon ?? null,
         spent: String(spent),
       };
     }),
@@ -379,7 +380,7 @@ async function updateHolding(portfolioId: string, holdingId: string, b: Body) {
 
 // ─── loans ────────────────────────────────────────────────────────────────
 const LOAN_COLS =
-  "id, name, principal, currency, interestRate:interest_rate, loanTermMonths:loan_term_months, startDate:start_date, paymentType:payment_type, monthlyPayment:monthly_payment, color, createdAt:created_at";
+  "id, name, principal, currency, interestRate:interest_rate, loanTermMonths:loan_term_months, startDate:start_date, paymentType:payment_type, monthlyPayment:monthly_payment, color, kind, createdAt:created_at";
 
 const LOAN_EVENT_COLS =
   "id, loanId:loan_id, effectiveDate:effective_date, type, amount, note, createdAt:created_at";
@@ -467,6 +468,8 @@ async function updateLoan(id: string, b: Body) {
           start_date: b.startDate,
           payment_type: b.paymentType,
           color: b.color,
+          // "" clears the kind; left out keeps it.
+          kind: b.kind === undefined ? undefined : b.kind || null,
           updated_at: nowIso(),
         }),
       )
@@ -514,6 +517,7 @@ async function createLoan(b: Body) {
         start_date: b.startDate,
         payment_type: b.paymentType,
         color: b.color ?? null,
+        kind: b.kind || null,
       })
       .select()
       .single(),
